@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class HomingMissile : MonoBehaviour
 {
-    public float speed = 100f;
+    public float speed = 1000f;
     public float steer = 1000f;
     public float lockRadius = 100f; // Adjust the search radius as needed
     public int damage = 10;
@@ -23,7 +23,7 @@ public class HomingMissile : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        rb.velocity = transform.forward * speed * Time.fixedDeltaTime * 10f;
+        rb.velocity = transform.forward * speed * Time.fixedDeltaTime * 50f;
 
         // Find the nearest enemy within the search radius
         Collider[] colliders = Physics.OverlapSphere(transform.position, lockRadius);
@@ -42,9 +42,15 @@ public class HomingMissile : MonoBehaviour
             }
         }
 
-        Vector3 direction = (nearestEnemy.position - transform.position).normalized;
-        float rotationSteer = Vector3.Cross(transform.forward, direction).x;
-        rb.angularVelocity = new Vector3(rotationSteer * steer * 10f, 0, 0);
+        if (nearestEnemy != null)
+        {
+            // Move towards the enemy
+            transform.position = Vector3.MoveTowards(transform.position, nearestEnemy.position, speed * Time.deltaTime);
+
+            // Rotate towards the enemy
+            Vector3 direction = (nearestEnemy.position - transform.position).normalized;
+            transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+        }
 
         // Check if the bullet is outside the camera's view
         Vector3 viewportPosition = Camera.main.WorldToViewportPoint(transform.position);
