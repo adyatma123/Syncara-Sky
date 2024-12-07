@@ -5,7 +5,7 @@ using UnityEngine;
 public class HomingMissile : MonoBehaviour
 {
     public float speed = 1000f;
-    public float steer = 1000f;
+    public float steer = 5f;
     public float lockRadius = 100f; // Adjust the search radius as needed
     public int damage = 10;
 
@@ -47,9 +47,12 @@ public class HomingMissile : MonoBehaviour
             // Move towards the enemy
             transform.position = Vector3.MoveTowards(transform.position, nearestEnemy.position, speed * Time.deltaTime);
 
-            // Rotate towards the enemy
+            // Rotate towards the enemy smoothly
             Vector3 direction = (nearestEnemy.position - transform.position).normalized;
-            transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+            Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+            transform.rotation = Quaternion.Slerp(transform.rotation,
+           targetRotation,
+           steer * Time.deltaTime);
         }
 
         // Check if the bullet is outside the camera's view
