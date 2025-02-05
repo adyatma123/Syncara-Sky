@@ -33,14 +33,6 @@ public class PlayerController : MonoBehaviour
             if (hit.collider == planecollider)
             {
                 transform.position = Vector3.MoveTowards(transform.position, hit.point, Time.deltaTime * movSpeed);
-            }   
-        }
-
-        if (Physics.Raycast(ray, out hit))
-        {
-            if (hit.collider == planecollider)
-            {
-                transform.position = Vector3.MoveTowards(transform.position, hit.point, Time.deltaTime * movSpeed);
 
                 // Calculate the rotation angle based on movement direction
                 Vector3 direction = hit.point - transform.position;

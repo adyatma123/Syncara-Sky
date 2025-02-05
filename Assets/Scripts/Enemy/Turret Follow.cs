@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class TurretFollow : MonoBehaviour
 {
-    public string targetTag = "Player"; // Tag of the object to follow
     public float rotationSpeed = 10f; // Speed of rotation in degrees per second
     public float shootRange = 10f; // Range within which the object can "shoot" (perform an action)
 
@@ -13,11 +12,11 @@ public class TurretFollow : MonoBehaviour
     void Start()
     {
         // Find the target object by tag at the start of the game.
-        GameObject targetObject = GameObject.FindGameObjectWithTag(targetTag);
+        GameObject targetObject = GameObject.FindGameObjectWithTag("Player");
 
         if (targetObject == null)
         {
-            Debug.LogError("No object found with tag '" + targetTag + "' in the scene!");
+            Debug.LogError("No object found with tag '" + targetObject + "' in the scene!");
             return; // Exit early if no object with the tag is found.
         }
 
@@ -39,11 +38,13 @@ public class TurretFollow : MonoBehaviour
         // Only rotate on the Y-axis.
         direction.y = 0f;
 
+        // *** KEY CHANGE: Rotate the direction 180 degrees around the Y-axis ***
+        direction = Quaternion.AngleAxis(180, Vector3.up) * direction; // Or -180
+
         // If the target is close enough, calculate the rotation.
         if (direction.magnitude <= shootRange)
         {
             Quaternion targetRotation = Quaternion.LookRotation(direction);
-            targetRotation *= Quaternion.AngleAxis(180, Vector3.up); // Or -180
             transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
 
