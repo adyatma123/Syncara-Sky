@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class EnemyController : MonoBehaviour
 {
-    public float minX;
-    public float maxX;
     public float speed = 100f;
     public float initialMoveDistance = 10f;
     public float initialMoveDuration = 2f;
@@ -18,9 +16,13 @@ public class EnemyController : MonoBehaviour
     private bool isFollowing = false;
 
 
+
     void Update()
     {
-        
+        // Calculate viewport boundaries
+        float minX = Camera.main.ViewportToWorldPoint(new Vector3(0, 0, 0)).x;
+        float maxX = Camera.main.ViewportToWorldPoint(new Vector3(1, 0, 0)).x;
+
         if (!isPatrolling)
         {
             initialMoveTimer += Time.deltaTime;
@@ -41,7 +43,7 @@ public class EnemyController : MonoBehaviour
             }
             else
             {
-                Patrol();
+                Patrol(minX, maxX);
             }
         }
     }
@@ -65,7 +67,7 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    void Patrol()
+    void Patrol(float minX, float maxX)
     {
         if (movingRight)
         {
