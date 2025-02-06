@@ -7,7 +7,7 @@ public class MissileController : MonoBehaviour
     public Transform[] missileSpawnPoints;
     public GameObject missilePrefab;
     public PlayerController playerCon;
-    public int damage;
+    public Missile missile;
     public float missileReload = 1f; // Delay in seconds
     private int currentMissileIndex = 0;
     private bool isReloading = false;
@@ -18,16 +18,7 @@ public class MissileController : MonoBehaviour
         {
             Transform spawnPoint = missileSpawnPoints[currentMissileIndex];
             GameObject missile = Instantiate(missilePrefab, spawnPoint.position, spawnPoint.rotation);
-            HomingMissile missileScript = missile.GetComponent<HomingMissile>();
-            if (missileScript != null)
-            {
-                missileScript = NewMethod(missileScript);
-                missile.GetComponent<Rigidbody>().velocity = spawnPoint.forward;
-            }
-            else
-            {
-                Debug.LogError("HomingMissile component not found on missile!");
-            }
+            AudioManager.Instance.PlaySFX("Missile");
 
             currentMissileIndex++;
 
@@ -46,9 +37,4 @@ public class MissileController : MonoBehaviour
         }
     }
 
-    private HomingMissile NewMethod(HomingMissile missileScript)
-    {
-        missileScript.Mdamage = damage; // Set the HomingMissile's damage here!
-        return missileScript;
-    }
 }
