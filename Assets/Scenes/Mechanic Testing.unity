@@ -558,9 +558,6 @@ PrefabInstance:
       addedObject: {fileID: 1360733827}
     - targetCorrespondingSourceObject: {fileID: 2960888944991467842, guid: 39a034aa202e50c40b5a5e7a6a9439f3, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1360733828}
-    - targetCorrespondingSourceObject: {fileID: 2960888944991467842, guid: 39a034aa202e50c40b5a5e7a6a9439f3, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 1360733829}
   m_SourcePrefab: {fileID: 100100000, guid: 39a034aa202e50c40b5a5e7a6a9439f3, type: 3}
 --- !u!1001 &251333179
@@ -1728,106 +1725,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b41a71d327e9e14ebc48d7018ad1997, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  guns: {fileID: 11400000, guid: 34f7f34fa68ddbf44993fd09de497ad6, type: 2}
+  guns: {fileID: 11400000, guid: fbd5a8de2430ddc4caeb42f3ff7cfbf8, type: 2}
   bulletSpawnPoint: {fileID: 1840143207}
   bulletPrefab: {fileID: 4003252818657007039, guid: 3b0d95941ba040f48af31b8bdfd254c8, type: 3}
   aimbot: {fileID: 1840143209}
---- !u!82 &1360733828
-AudioSource:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1360733820}
-  m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 9481c4fe9410a7a4b9c844507fafde73, type: 3}
-  m_PlayOnAwake: 1
-  m_Volume: 0.417
-  m_Pitch: 2.75
-  Loop: 0
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 1
-  MinDistance: 1
-  MaxDistance: 500
-  Pan2D: 0
-  rolloffMode: 0
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0.0959301
-      value: 0.7645912
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
 --- !u!114 &1360733829
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1901,6 +1802,8 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 966cd2d0eea6a934d95634a552de9a70, type: 3}
   - name: Rocket
     clip: {fileID: 8300000, guid: 46cd242901a213c4081727ba3580747b, type: 3}
+  - name: Explode
+    clip: {fileID: 8300000, guid: bb48cea4b8055634ab67fe0006e2ac1d, type: 3}
   musicSource: {fileID: 1224775791}
   sfxSource: {fileID: 1171451227}
 --- !u!4 &1477792701

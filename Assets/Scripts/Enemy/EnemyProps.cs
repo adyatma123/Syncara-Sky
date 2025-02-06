@@ -24,7 +24,7 @@ public class EnemyProps : MonoBehaviour
         if (currentHealth <= 0)
         {
             Destroy(gameObject);
-
+            AudioManager.Instance.PlaySFX("Explode");
         }
     }
 }
