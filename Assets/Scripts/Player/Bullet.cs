@@ -7,7 +7,7 @@ public class Bullet : MonoBehaviour
     public Gun gun;
     public EnemyProps enemy;
 
-    public int damage = 10;
+    public int damage = 100;
 
     void Update()
     {

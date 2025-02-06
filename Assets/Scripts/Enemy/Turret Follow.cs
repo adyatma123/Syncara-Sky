@@ -50,12 +50,12 @@ public class TurretFollow : MonoBehaviour
 
         // 2. "Shooting" (Example Action):
 
-        // Check if the target is within shoot range.
-        if (direction.magnitude <= shootRange)
-        {
-            // Perform your "shooting" action here.  This is just an example:
-            Debug.Log("Target in range! Performing action...");
-            // You could instantiate a projectile, play a sound, trigger an animation, etc.
-        }
+        //// Check if the target is within shoot range.
+        //if (direction.magnitude <= shootRange)
+        //{
+        //    // Perform your "shooting" action here.  This is just an example:
+        //    Debug.Log("Target in range! Performing action...");
+        //    // You could instantiate a projectile, play a sound, trigger an animation, etc.
+        //}
     }
 }

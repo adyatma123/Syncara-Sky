@@ -7,7 +7,7 @@ public class HomingMissile : MonoBehaviour
     public float speed = 1000f;
     public float steer = 5f;
     public float lockRadius = 100f; // Adjust the search radius as needed
-    public int damage = 10;
+    public int Mdamage = 100;
 
     private Transform nearestEnemy;
     public EnemyProps enemy;
@@ -72,7 +72,7 @@ public class HomingMissile : MonoBehaviour
         {
             if (enemy != null)
             {
-                enemy.TakeDamage(damage);
+                enemy.TakeDamage(Mdamage);
                 Destroy(gameObject);
             }
         }
