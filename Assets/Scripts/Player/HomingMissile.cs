@@ -16,6 +16,7 @@ public class HomingMissile : MonoBehaviour
     public EnemyProps enemy;
     Rigidbody rb;
     public bool showTargetFollowRadiusGizmo = true;
+    public ParticleSystem missileBurn;
 
     // Start is called before the first frame update
     void Start()
@@ -26,6 +27,7 @@ public class HomingMissile : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        missileBurn.Play();
         rb.velocity = transform.forward * speed * Time.fixedDeltaTime * 50f;
 
         if (isTracking)

@@ -9,6 +9,7 @@ public class Gun : MonoBehaviour
     public Transform bulletSpawnPoint;
     public GameObject bulletPrefab;
     public TextMeshProUGUI overheatText;
+    public ParticleSystem muzzleFlash;
     //public Image heatBar;
 
     public Aimbot aimbot;
@@ -109,6 +110,7 @@ public class Gun : MonoBehaviour
             Bullet bulletScript = bullet.GetComponent<Bullet>();
             bulletScript.damage = guns.damage; // Set the bullet's damage to the gun's damage
             bullet.GetComponent<Rigidbody>().velocity = bulletSpawnPoint.forward * guns.bulletSpeed;
+            muzzleFlash.Play();
         }
     }
 
