@@ -127,8 +127,8 @@
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@2.6.0\Editor\Views\PendingChanges\PendingChangesSelection.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@2.6.0\Editor\Views\Merge\Developer\DirectoryConflicts\DeleteMoveMenu.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@2.6.0\Editor\UI\MeasureMaxWidth.cs" />
-    <Compile Include="Library\PackageCache\com.unity.collab-proxy@2.6.0\Editor\UI\EnumPopupSetting.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@2.6.0\Editor\Views\History\HistoryListViewMenu.cs" />
+    <Compile Include="Library\PackageCache\com.unity.collab-proxy@2.6.0\Editor\UI\EnumPopupSetting.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@2.6.0\Editor\Configuration\ClientConfiguration.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@2.6.0\Editor\Hub\Operations\OperationParams.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@2.6.0\Editor\Views\Merge\Developer\MergeTreeHeaderState.cs" />
@@ -1270,13 +1270,13 @@
       <Project>{B6BED45B-E9AB-C63E-19A8-DDB402C85F6D}</Project>
       <Name>UnityEngine.UI</Name>
     </ProjectReference>
-    <ProjectReference Include="UnityEngine.TestRunner.csproj">
-      <Project>{7915C830-5B32-7122-6B0A-05B088968878}</Project>
-      <Name>UnityEngine.TestRunner</Name>
-    </ProjectReference>
     <ProjectReference Include="UnityEditor.TestRunner.csproj">
       <Project>{69A518B0-5CB6-580C-DA77-34E4F3192926}</Project>
       <Name>UnityEditor.TestRunner</Name>
+    </ProjectReference>
+    <ProjectReference Include="UnityEngine.TestRunner.csproj">
+      <Project>{7915C830-5B32-7122-6B0A-05B088968878}</Project>
+      <Name>UnityEngine.TestRunner</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

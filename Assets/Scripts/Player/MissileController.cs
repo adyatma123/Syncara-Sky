@@ -18,6 +18,7 @@ public class MissileController : MonoBehaviour
         {
             Transform spawnPoint = missileSpawnPoints[currentMissileIndex];
             GameObject missile = Instantiate(missilePrefab, spawnPoint.position, spawnPoint.rotation);
+            missile.transform.Rotate(0f, 180f, 0f); // Rotate 180 degrees around Y-axis. Adjust if necessary.
             AudioManager.Instance.PlaySFX("Missile");
 
             currentMissileIndex++;
