@@ -8,6 +8,9 @@ public class HomingMissile : MonoBehaviour
     public float steer = 5f;
     public float lockRadius = 100f; // Adjust the search radius as needed
     public int Mdamage = 100;
+    public float trackingTime = 1f; // Time in seconds before tracking stops
+    public float timeSinceTrackingStarted = 0f;
+    private bool isTracking = true;
 
     private Transform nearestEnemy;
     public EnemyProps enemy;
@@ -25,34 +28,67 @@ public class HomingMissile : MonoBehaviour
     {
         rb.velocity = transform.forward * speed * Time.fixedDeltaTime * 50f;
 
-        // Find the nearest enemy within the search radius
-        Collider[] colliders = Physics.OverlapSphere(transform.position, lockRadius);
-        float nearestDistance = Mathf.Infinity;
-
-        foreach (Collider collider in colliders)
+        if (isTracking)
         {
-            if (collider.tag == "Enemy")
+            // Find the nearest enemy within the search radius
+            Collider[] colliders = Physics.OverlapSphere(transform.position, lockRadius);
+            float nearestDistance = Mathf.Infinity;
+
+            foreach (Collider collider in colliders)
             {
-                float distance = Vector3.Distance(transform.position, collider.transform.position);
-                if (distance < nearestDistance)
+                if (collider.tag == "Enemy")
                 {
-                    nearestDistance = distance;
-                    nearestEnemy = collider.transform;
+                    float distance = Vector3.Distance(transform.position, collider.transform.position);
+                    if (distance < nearestDistance)
+                    {
+                        nearestDistance = distance;
+                        nearestEnemy = collider.transform;
+                    }
                 }
             }
-        }
 
-        if (nearestEnemy != null)
-        {
-            // Move towards the enemy
-            transform.position = Vector3.MoveTowards(transform.position, nearestEnemy.position, speed * Time.deltaTime);
+            if (nearestEnemy != null)
+            {
+                if (nearestEnemy != null)
 
-            // Rotate towards the enemy smoothly
-            Vector3 direction = (nearestEnemy.position - transform.position).normalized;
-            Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation,
-           targetRotation,
-           steer * Time.deltaTime);
+                {
+
+                    // Move towards the enemy
+                    transform.position = Vector3.MoveTowards(transform.position, nearestEnemy.position, Time.deltaTime);
+
+
+
+                    // Rotate towards the enemy smoothly
+
+                    Vector3 direction = (nearestEnemy.position - transform.position).normalized;
+                    Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, steer * Time.deltaTime);
+
+
+
+                    // Increment the tracking timer
+                    timeSinceTrackingStarted += Time.deltaTime;
+
+
+
+                    // Check if tracking time has elapsed
+                    if (timeSinceTrackingStarted >= trackingTime)
+                    {
+                        isTracking = false; // Disable tracking
+                        nearestEnemy = null; // Optional: Clear the nearest enemy
+                    }
+                }
+
+                // Increment the tracking timer
+                timeSinceTrackingStarted += Time.deltaTime;
+
+                // Check if tracking time has elapsed
+                if (timeSinceTrackingStarted >= trackingTime)
+                {
+                    isTracking = false; // Disable tracking
+                    nearestEnemy = null;    // Optional: Clear the nearest enemy
+                }
+            }
         }
 
         // Check if the bullet is outside the camera's view
