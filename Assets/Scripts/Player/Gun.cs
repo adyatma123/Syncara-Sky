@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using TMPro;
 using UnityEngine;
 
@@ -54,7 +55,7 @@ public class Gun : MonoBehaviour
 
         if (!gunOverheated) // Only allow shooting if not overheated
         {
-            if (Input.GetButton("Fire1") && Time.time >= nextFireTime)
+            if (Input.GetButton("Gun") && Time.time >= nextFireTime)
             {
                 Shoot();
                 nextFireTime = Time.time + 1f / guns.rateOfFire;
@@ -259,10 +260,10 @@ public class Gun : MonoBehaviour
         Quaternion bulletRotation = spawnPoint.rotation;
         bulletRotation *= Quaternion.Euler(0f, randomXRotation, 0f); // Add rotation around X-axis
 
-        GameObject bullet = Instantiate(bulletPrefab, spawnPoint.position, bulletRotation);
-        Bullet bulletScript = bullet.GetComponent<Bullet>();
+        GameObject bulletInstance = Instantiate(guns.bulletPrefab, spawnPoint.position, spawnPoint.rotation);
+        Bullet bulletScript = bulletInstance.GetComponent<Bullet>();
         bulletScript.damage = guns.damage;
-        bullet.GetComponent<Rigidbody>().velocity = bulletRotation * Vector3.forward * guns.bulletSpeed; // Apply rotation to velocity
+        bulletInstance.GetComponent<Rigidbody>().velocity = bulletRotation * Vector3.forward * guns.bulletSpeed; // Apply rotation to velocity
     }
 
     private void UpdateActiveGunCount()

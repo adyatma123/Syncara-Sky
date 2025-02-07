@@ -9,6 +9,7 @@ public class PlayerController : MonoBehaviour
     public float maxRot = 45f;
     public float lockRadius = 113f;
     public MissileController missileController;
+    public RocketController rocketController;
 
     Camera cam;
     Collider planecollider;
@@ -36,7 +37,7 @@ public class PlayerController : MonoBehaviour
 
                 // Calculate the rotation angle based on movement direction
                 Vector3 direction = hit.point - transform.position;
-                float angle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+                float angle = Mathf.Atan2(direction.x, 0) * Mathf.Rad2Deg;
 
                 // Clamp the angle to a desired range (adjust min and max as needed)
                 float clampedAngle = Mathf.Clamp(angle, maxRot, -maxRot);
@@ -51,12 +52,15 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonDown(1)) // Left Shift
         {
             missileController.LaunchMissile();
-
         }
 
+        if (Input.GetButtonDown("Rocket")) // 
+        {
+            rocketController.LaunchRocket();
+        }
 
     }
 }

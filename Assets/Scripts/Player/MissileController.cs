@@ -7,7 +7,6 @@ public class MissileController : MonoBehaviour
     public Transform[] payloadPoints1;
     public Transform[] payloadPoints2;
     public Transform[] payloadPoints3;
-    public GameObject missilePrefab;
     public PlayerController playerCon;
     public Missile missile;
     public float missileReload = 1f; // Delay in seconds
@@ -16,16 +15,20 @@ public class MissileController : MonoBehaviour
 
     public void LaunchMissile()
     {
-        if (!isReloading && currentMissileIndex < payloadPoints1.Length)
+        if (!isReloading && currentMissileIndex < payloadPoints3.Length)
         {
-            Transform spawnPoint = payloadPoints1[currentMissileIndex];
-            GameObject missile = Instantiate(missilePrefab, spawnPoint.position, spawnPoint.rotation);
-            missile.transform.Rotate(0f, 180f, 0f); // Rotate 180 degrees around Y-axis. Adjust if necessary.
+            Transform spawnPoint = payloadPoints3[currentMissileIndex];
+            GameObject missileInstance = Instantiate(missile.missilePrefab, spawnPoint.position, spawnPoint.rotation);
+
+            // Get the transform of the INSTANTIATED GameObject
+            Transform missileTransform = missileInstance.transform; // This is the correct way!
+
+            missileTransform.Rotate(0f, 180f, 0f); // Rotate 180 degrees around Y-axis. Adjust if necessary.
             AudioManager.Instance.PlaySFX("Missile");
 
             currentMissileIndex++;
 
-            if (currentMissileIndex >= payloadPoints1.Length)
+            if (currentMissileIndex >= payloadPoints3.Length)
             {
                 currentMissileIndex = 0;
                 isReloading = true;

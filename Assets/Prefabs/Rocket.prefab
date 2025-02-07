@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2489232558179133746}
   - component: {fileID: -6712275605287594268}
+  - component: {fileID: 1449160003750743560}
   - component: {fileID: 503198186400866882}
   - component: {fileID: 6118989651770616431}
   - component: {fileID: -7445110925990102040}
@@ -63,7 +64,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &503198186400866882
+--- !u!114 &1449160003750743560
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -71,6 +72,21 @@ MonoBehaviour:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1198153631106594642}
   m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66ab49b41bf91a445a2d6580ce345f71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 100
+  Rdamage: 100
+  missileBurn: {fileID: 841822248893468551}
+--- !u!114 &503198186400866882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1198153631106594642}
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cb7c99f9d79de5a4d8e2e84ed647f321, type: 3}
   m_Name: 
@@ -81,7 +97,6 @@ MonoBehaviour:
   Mdamage: 100
   trackingTime: 2
   timeSinceTrackingStarted: 0
-  trailEnds: 1
   enemy: {fileID: 0}
   showTargetFollowRadiusGizmo: 1
   missileBurn: {fileID: 841822248893468551}
@@ -114,7 +129,7 @@ TrailRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1198153631106594642}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -1028,7 +1043,7 @@ ParticleSystem:
           m_RotationOrder: 4
     arc:
       value: 360
-      mode: 0
+      mode: 1
       spread: 0
       speed:
         serializedVersion: 2
@@ -1089,7 +1104,7 @@ ParticleSystem:
     rateOverTime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 10
+      scalar: 37.42
       minScalar: 10
       maxCurve:
         serializedVersion: 2
