@@ -10,6 +10,7 @@ public class Rockets : ScriptableObject
 
     public Sprite artwork;
     public GameObject rocketPrefab;
+    public GameObject rocketPodPrefab;
     AudioSource Shootsound;
 
     public int damage;
