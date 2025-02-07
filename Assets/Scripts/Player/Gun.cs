@@ -6,10 +6,14 @@ using UnityEngine;
 public class Gun : MonoBehaviour
 {
     public Guns guns;
-    public Transform bulletSpawnPoint;
+    public Transform[] bulletSpawnPoint1;
+    public Transform[] bulletSpawnPoint2;
+    public Transform[] bulletSpawnPoint3;
+    public ParticleSystem[] muzzleFlashes1;
+    public ParticleSystem[] muzzleFlashes2;
+    public ParticleSystem[] muzzleFlashes3;
     public GameObject bulletPrefab;
     public TextMeshProUGUI overheatText;
-    public ParticleSystem muzzleFlash;
     //public Image heatBar;
 
     public Aimbot aimbot;
@@ -22,6 +26,9 @@ public class Gun : MonoBehaviour
     public float blinkDuration = 1f; // Total duration of one blink (fade in + fade out)
     private float blinkTimer = 0f;   // Timer to track the current blink phase
     public float overheatMinCD = 30f;
+    public float gunSpread = 0.1f;
+    public int gunStage = 1;
+    public int totalGunActive;
 
     private void Start()
     {
@@ -31,6 +38,20 @@ public class Gun : MonoBehaviour
 
     void Update()
     {
+        UpdateActiveGunCount(); // Calculate active guns at start
+
+        if (Input.GetKeyDown(KeyCode.X))
+        {
+            // Cycle through stages
+            gunStage++;
+            if (gunStage > 4)
+            {
+                gunStage = 1; // Reset to stage 1 after stage 4
+            }
+
+            Debug.Log("Current Stage: " + gunStage); // Optional: Log the current stage
+        }
+
         if (!gunOverheated) // Only allow shooting if not overheated
         {
             if (Input.GetButton("Fire1") && Time.time >= nextFireTime)
@@ -40,7 +61,7 @@ public class Gun : MonoBehaviour
                 AudioManager.Instance.PlaySFX("GunShoot");
 
                 // Increase heat
-                currentHeat += guns.heatRate;
+                currentHeat += guns.heatRate * totalGunActive;
 
                 // Check for overheat
                 if (currentHeat >= maxHeat)
@@ -106,12 +127,154 @@ public class Gun : MonoBehaviour
 
         void Shoot()
         {
-            GameObject bullet = Instantiate(bulletPrefab, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
-            Bullet bulletScript = bullet.GetComponent<Bullet>();
-            bulletScript.damage = guns.damage; // Set the bullet's damage to the gun's damage
-            bullet.GetComponent<Rigidbody>().velocity = bulletSpawnPoint.forward * guns.bulletSpeed;
-            muzzleFlash.Play();
+            UpdateActiveGunCount(); // Update active gun count *before* shooting
+
+            // Stage 1: bulletSpawnPoint1 only
+            if (gunStage == 1)
+            {
+                foreach (Transform spawnPoint in bulletSpawnPoint1)
+                {
+                    if (spawnPoint.gameObject.activeInHierarchy)
+                    {
+                        FireBullet(spawnPoint);
+                        totalGunActive++;
+                    }
+
+                    // Play all muzzle flashes at once (outside the bullet instantiation loop)
+                    foreach (ParticleSystem muzzleFlash in muzzleFlashes1)
+                    {
+                        muzzleFlash.Play();
+                    }
+                }
+            }
+            // Stage 2: bulletSpawnPoint2 only
+            else if (gunStage == 2)
+            {
+                foreach (Transform spawnPoint in bulletSpawnPoint2)
+                {
+                    if (spawnPoint.gameObject.activeInHierarchy)
+                    {
+                        FireBullet(spawnPoint);
+                        totalGunActive++;
+                    }
+                }
+
+                // Play all muzzle flashes at once (outside the bullet instantiation loop)
+                foreach (ParticleSystem muzzleFlash in muzzleFlashes2)
+                {
+                    muzzleFlash.Play();
+                }
+            }
+            // Stage 3: bulletSpawnPoint1 and bulletSpawnPoint2
+            else if (gunStage == 3)
+            {
+                foreach (Transform spawnPoint in bulletSpawnPoint1)
+                {
+                    if (spawnPoint.gameObject.activeInHierarchy)
+                    {
+                        FireBullet(spawnPoint);
+                        totalGunActive++;
+                    }
+                }
+
+                // Play all muzzle flashes at once (outside the bullet instantiation loop)
+                foreach (ParticleSystem muzzleFlash in muzzleFlashes1)
+                {
+                    muzzleFlash.Play();
+                }
+
+                foreach (Transform spawnPoint in bulletSpawnPoint2)
+                {
+                    if (spawnPoint.gameObject.activeInHierarchy)
+                    {
+                        FireBullet(spawnPoint);
+                        totalGunActive++;
+                    }
+                }
+
+                // Play all muzzle flashes at once (outside the bullet instantiation loop)
+                foreach (ParticleSystem muzzleFlash in muzzleFlashes2)
+                {
+                    muzzleFlash.Play();
+                }
+            }
+            // Stage 4: bulletSpawnPoint1, bulletSpawnPoint2, and bulletSpawnPoint3
+            else if (gunStage == 4)
+            {
+                foreach (Transform spawnPoint in bulletSpawnPoint1)
+                {
+                    if (spawnPoint.gameObject.activeInHierarchy)
+                    {
+                        FireBullet(spawnPoint);
+                        totalGunActive++;
+                    }
+                }
+
+                // Play all muzzle flashes at once (outside the bullet instantiation loop)
+                foreach (ParticleSystem muzzleFlash in muzzleFlashes1)
+                {
+                    muzzleFlash.Play();
+                }
+
+                foreach (Transform spawnPoint in bulletSpawnPoint2)
+                {
+                    if (spawnPoint.gameObject.activeInHierarchy)
+                    {
+                        FireBullet(spawnPoint);
+                        totalGunActive++;
+                    }
+                }
+
+                // Play all muzzle flashes at once (outside the bullet instantiation loop)
+                foreach (ParticleSystem muzzleFlash in muzzleFlashes2)
+                {
+                    muzzleFlash.Play();
+                }
+
+                foreach (Transform spawnPoint in bulletSpawnPoint3)
+                {
+                    if (spawnPoint.gameObject.activeInHierarchy)
+                    {
+                        FireBullet(spawnPoint);
+                        totalGunActive++;
+                    }
+                }
+
+                // Play all muzzle flashes at once (outside the bullet instantiation loop)
+                foreach (ParticleSystem muzzleFlash in muzzleFlashes3)
+                {
+                    muzzleFlash.Play();
+                }
+            }
         }
+    }
+
+    // Helper function to fire a bullet (reduces code duplication)
+    private void FireBullet(Transform spawnPoint)
+    {
+        // Calculate random X rotation offset
+        float randomXRotation = Random.Range(-gunSpread, gunSpread);
+
+        // Create a new rotation by adding the random offset to the existing X rotation
+        Quaternion bulletRotation = spawnPoint.rotation;
+        bulletRotation *= Quaternion.Euler(0f, randomXRotation, 0f); // Add rotation around X-axis
+
+        GameObject bullet = Instantiate(bulletPrefab, spawnPoint.position, bulletRotation);
+        Bullet bulletScript = bullet.GetComponent<Bullet>();
+        bulletScript.damage = guns.damage;
+        bullet.GetComponent<Rigidbody>().velocity = bulletRotation * Vector3.forward * guns.bulletSpeed; // Apply rotation to velocity
+    }
+
+    private void UpdateActiveGunCount()
+    {
+        totalGunActive = 0; // Reset count
+        /*foreach (Transform spawnPoint in bulletSpawnPoint2)
+        {
+            if (spawnPoint.gameObject.activeInHierarchy)
+            {
+                totalGunActive++;
+            }
+        }*/
     }
 
 

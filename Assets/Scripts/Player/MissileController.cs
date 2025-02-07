@@ -4,7 +4,9 @@ using UnityEngine;
 
 public class MissileController : MonoBehaviour
 {
-    public Transform[] missileSpawnPoints;
+    public Transform[] payloadPoints1;
+    public Transform[] payloadPoints2;
+    public Transform[] payloadPoints3;
     public GameObject missilePrefab;
     public PlayerController playerCon;
     public Missile missile;
@@ -14,16 +16,16 @@ public class MissileController : MonoBehaviour
 
     public void LaunchMissile()
     {
-        if (!isReloading && currentMissileIndex < missileSpawnPoints.Length)
+        if (!isReloading && currentMissileIndex < payloadPoints1.Length)
         {
-            Transform spawnPoint = missileSpawnPoints[currentMissileIndex];
+            Transform spawnPoint = payloadPoints1[currentMissileIndex];
             GameObject missile = Instantiate(missilePrefab, spawnPoint.position, spawnPoint.rotation);
             missile.transform.Rotate(0f, 180f, 0f); // Rotate 180 degrees around Y-axis. Adjust if necessary.
             AudioManager.Instance.PlaySFX("Missile");
 
             currentMissileIndex++;
 
-            if (currentMissileIndex >= missileSpawnPoints.Length)
+            if (currentMissileIndex >= payloadPoints1.Length)
             {
                 currentMissileIndex = 0;
                 isReloading = true;
