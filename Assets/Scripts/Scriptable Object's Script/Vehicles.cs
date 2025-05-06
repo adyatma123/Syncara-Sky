@@ -18,4 +18,5 @@ public class Vehicles : ScriptableObject
     public float rotSpeed;
     public float maxRot = 45f;
     public int PayloadLevel;
+    public int Price;
 }

@@ -9817,7 +9817,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6283477439204921711}
-  - component: {fileID: 6800233456852290113}
   m_Layer: 0
   m_Name: BulletSpawnPoint 1
   m_TagString: Player
@@ -9841,22 +9840,6 @@ Transform:
   - {fileID: 5229252261156976680}
   m_Father: {fileID: 5052261013142881444}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6800233456852290113
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1727290047400745319}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51e5a3a44a59f704395ee7bfec6afeb4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerCon: {fileID: 7203951078624928340}
-  rotationSpeed: 20
-  lockRadius: 113
-  showTargetFollowRadiusGizmo: 1
 --- !u!1 &2104093320276749024
 GameObject:
   m_ObjectHideFlags: 0
@@ -14754,7 +14737,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7194286186750426104}
-  - component: {fileID: 6692977406794643959}
   m_Layer: 0
   m_Name: BulletSpawnPoint 3 L
   m_TagString: Player
@@ -14778,22 +14760,6 @@ Transform:
   - {fileID: 7950244414940940048}
   m_Father: {fileID: 5052261013142881444}
   m_LocalEulerAnglesHint: {x: 0, y: -5, z: 0}
---- !u!114 &6692977406794643959
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2715835725276126977}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51e5a3a44a59f704395ee7bfec6afeb4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerCon: {fileID: 7203951078624928340}
-  rotationSpeed: 20
-  lockRadius: 113
-  showTargetFollowRadiusGizmo: 1
 --- !u!1 &2960888944991467842
 GameObject:
   m_ObjectHideFlags: 0
@@ -14805,7 +14771,6 @@ GameObject:
   - component: {fileID: 5127676812520409347}
   - component: {fileID: 5256994963960343308}
   - component: {fileID: 4272150595347900857}
-  - component: {fileID: 7203951078624928340}
   - component: {fileID: 1183040165861744137}
   - component: {fileID: 7383958742644371523}
   - component: {fileID: 851283644624834451}
@@ -14816,7 +14781,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &5127676812520409347
 Transform:
   m_ObjectHideFlags: 0
@@ -14866,7 +14831,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2960888944991467842}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: edc6ad1a277d87e43ab5a321ecb6e3ad, type: 3}
   m_Name: 
@@ -14877,19 +14842,6 @@ MonoBehaviour:
   maxRotAngle: 45
   missileController: {fileID: 851283644624834451}
   rocketController: {fileID: 5087825200247357864}
---- !u!114 &7203951078624928340
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2960888944991467842}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 837f1560dcf0ae243ab471168699934f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lockRadius: 150
 --- !u!114 &1183040165861744137
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14897,7 +14849,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2960888944991467842}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 291cea61a7c64db4485d2323bf654525, type: 3}
   m_Name: 
@@ -14934,7 +14886,7 @@ MonoBehaviour:
   - {fileID: 1587470858261837404}
   bulletPrefab: {fileID: 4003252818657007039, guid: 3b0d95941ba040f48af31b8bdfd254c8, type: 3}
   overheatText: {fileID: 0}
-  aimbot: {fileID: 6800233456852290113}
+  aimbot: {fileID: 0}
   heatRate: 1
   maxHeat: 500
   currentHeat: 0
@@ -14998,7 +14950,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6928330022906346436}
-  - component: {fileID: 3745334966022185159}
   m_Layer: 0
   m_Name: BulletSpawnPoint 2 R
   m_TagString: Player
@@ -15022,22 +14973,6 @@ Transform:
   - {fileID: 4945579927504791286}
   m_Father: {fileID: 5052261013142881444}
   m_LocalEulerAnglesHint: {x: 0, y: 1, z: 0}
---- !u!114 &3745334966022185159
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2987736035582792159}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51e5a3a44a59f704395ee7bfec6afeb4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerCon: {fileID: 7203951078624928340}
-  rotationSpeed: 20
-  lockRadius: 113
-  showTargetFollowRadiusGizmo: 1
 --- !u!1 &3701104973538881188
 GameObject:
   m_ObjectHideFlags: 0
@@ -15079,7 +15014,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6737670871972878203}
-  - component: {fileID: 1953976355781579160}
   m_Layer: 0
   m_Name: BulletSpawnPoint 3 R
   m_TagString: Player
@@ -15103,22 +15037,6 @@ Transform:
   - {fileID: 7328121392124439019}
   m_Father: {fileID: 5052261013142881444}
   m_LocalEulerAnglesHint: {x: 0, y: 5, z: 0}
---- !u!114 &1953976355781579160
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3904198910788966774}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51e5a3a44a59f704395ee7bfec6afeb4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerCon: {fileID: 7203951078624928340}
-  rotationSpeed: 20
-  lockRadius: 113
-  showTargetFollowRadiusGizmo: 1
 --- !u!1 &5017772424371085617
 GameObject:
   m_ObjectHideFlags: 0
@@ -35049,7 +34967,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7469991789459961584}
-  - component: {fileID: 128906435653139308}
   m_Layer: 0
   m_Name: BulletSpawnPoint 2 L
   m_TagString: Player
@@ -35073,22 +34990,6 @@ Transform:
   - {fileID: 3517699021006859122}
   m_Father: {fileID: 5052261013142881444}
   m_LocalEulerAnglesHint: {x: 0, y: -1, z: 0}
---- !u!114 &128906435653139308
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7489874869382503302}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51e5a3a44a59f704395ee7bfec6afeb4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerCon: {fileID: 7203951078624928340}
-  rotationSpeed: 20
-  lockRadius: 113
-  showTargetFollowRadiusGizmo: 1
 --- !u!1 &7549522416307767293
 GameObject:
   m_ObjectHideFlags: 0
@@ -35760,7 +35661,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 743cefde4a25c64479b4f398b2dd2160, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -1
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 743cefde4a25c64479b4f398b2dd2160, type: 3}
       propertyPath: m_LocalRotation.z
@@ -35772,7 +35673,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 743cefde4a25c64479b4f398b2dd2160, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -180
+      value: 180
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 743cefde4a25c64479b4f398b2dd2160, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z

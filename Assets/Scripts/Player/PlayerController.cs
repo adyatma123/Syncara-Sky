@@ -5,6 +5,7 @@ public class PlayerController : MonoBehaviour
 {
     public float lockRadius = 113f; // Potentially player-related?
 
+    public Transform spawnPoint;
     private Camera cam;
     private Collider planeCollider; // Reference to the "ground" plane for mouse interaction
     private Ray ray;
@@ -16,6 +17,35 @@ public class PlayerController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        if (VhcChgr.vehicleToLoad != null)
+        {
+            // Instantiate the vehicle at the spawn point.
+            Instantiate(VhcChgr.vehicleToLoad, spawnPoint.position, spawnPoint.rotation);
+            // Optionally, you can set VhcChgr.vehicleToLoad to null after instantiating
+            // so that it doesn't get instantiated again if the scene is reloaded.
+            VhcChgr.vehicleToLoad = null;
+        }
+        else
+        {
+            Debug.LogError("No vehicle to load!");
+        }
+
+        GameObject[] playerObjects = GameObject.FindGameObjectsWithTag("Player");
+
+        // Iterate through each GameObject found.
+        foreach (GameObject playerObject in playerObjects)
+        {
+            // Get all MonoBehaviour components (which includes scripts) on the current GameObject.
+            MonoBehaviour[] scripts = playerObject.GetComponents<MonoBehaviour>();
+
+            // Iterate through each script component.
+            foreach (MonoBehaviour script in scripts)
+            {
+                // Disable the script.
+                script.enabled = true;
+            }
+        }
+
         cam = Camera.main;
         planeCollider = GameObject.Find("Plane").GetComponent<Collider>(); // Consider a more robust way to find this
 

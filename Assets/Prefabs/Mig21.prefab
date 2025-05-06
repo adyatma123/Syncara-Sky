@@ -284,7 +284,6 @@ GameObject:
   - component: {fileID: 7224338700736563351}
   - component: {fileID: 2608405879711570133}
   - component: {fileID: 4827435328657963494}
-  - component: {fileID: 913246889881407483}
   - component: {fileID: 4728826072515958348}
   - component: {fileID: 2026456884288482776}
   - component: {fileID: 8890298602130286108}
@@ -343,7 +342,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5904075619844980881}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: edc6ad1a277d87e43ab5a321ecb6e3ad, type: 3}
   m_Name: 
@@ -354,19 +353,6 @@ MonoBehaviour:
   maxRotAngle: 45
   missileController: {fileID: 2026456884288482776}
   rocketController: {fileID: 8890298602130286108}
---- !u!114 &913246889881407483
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5904075619844980881}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 837f1560dcf0ae243ab471168699934f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lockRadius: 113
 --- !u!114 &4728826072515958348
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -374,7 +360,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5904075619844980881}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7b41a71d327e9e14ebc48d7018ad1997, type: 3}
   m_Name: 
@@ -390,7 +376,7 @@ MonoBehaviour:
   muzzleFlashes3: []
   bulletPrefab: {fileID: 4003252818657007039, guid: 3b0d95941ba040f48af31b8bdfd254c8, type: 3}
   overheatText: {fileID: 0}
-  aimbot: {fileID: 8308248657470267585}
+  aimbot: {fileID: 0}
   heatRate: 1
   maxHeat: 100
   currentHeat: 0
@@ -727,7 +713,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1723837594862513249}
-  - component: {fileID: 8308248657470267585}
   m_Layer: 0
   m_Name: BulletSpawnPoint 1
   m_TagString: Player
@@ -751,22 +736,6 @@ Transform:
   - {fileID: 6432036568955337583}
   m_Father: {fileID: 551318537704151107}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8308248657470267585
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8406089246548683360}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51e5a3a44a59f704395ee7bfec6afeb4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerCon: {fileID: 0}
-  rotationSpeed: 20
-  lockRadius: 113
-  showTargetFollowRadiusGizmo: 1
 --- !u!1 &8921975149834215263
 GameObject:
   m_ObjectHideFlags: 0

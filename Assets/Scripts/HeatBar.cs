@@ -7,6 +7,7 @@ public class HeatBar : MonoBehaviour
     public Image heatImage; // Assign your Image in the Inspector
     public Gun gun; // Assign the script that has the heat variable
 
+    private bool gunFound = false; // Added a flag to track if the gun is found
     private float initialHeight;
 
     private void Start()
@@ -23,6 +24,28 @@ public class HeatBar : MonoBehaviour
 
     private void Update()
     {
+        if (!gunFound) // Only search for the gun if it hasn't been found yet
+        {
+            // Find the Gun script.
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                gun = player.GetComponent<Gun>();
+                if (gun != null)
+                {
+                    gunFound = true; // Stop searching once found
+                }
+                else
+                {
+                    Debug.LogError("Gun script not found on Player!");
+                }
+            }
+            else
+            {
+                //Debug.LogError("No object with 'Player' tag found!"); // Removed this error message because the player might not exist at the very beginning of the scene.  This prevents a spam of errors.
+            }
+        }
+
         if (heatBarRect != null && gun != null)
         {
             float heat = gun.currentHeat;
