@@ -58,7 +58,7 @@ public class Gun : MonoBehaviour
             if (Input.GetButton("Gun") && Time.time >= nextFireTime)
             {
                 Shoot();
-                nextFireTime = Time.time + 1f / guns.rateOfFire;
+                nextFireTime = Time.time + (60f / guns.rateOfFire);
                 AudioManager.Instance.PlaySFX("GunShoot");
 
                 // Increase heat

@@ -9,7 +9,7 @@ public class Vehicles : ScriptableObject
     public string description;
 
     public Sprite artwork;
-    public GameObject vehicleePrefab;
+    public GameObject vehiclePrefab;
     public AudioSource Shootsound;
 
     public int health;

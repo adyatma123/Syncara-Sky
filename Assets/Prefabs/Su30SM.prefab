@@ -14804,6 +14804,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5127676812520409347}
   - component: {fileID: 5256994963960343308}
+  - component: {fileID: 4272150595347900857}
   - component: {fileID: 7203951078624928340}
   - component: {fileID: 1183040165861744137}
   - component: {fileID: 7383958742644371523}
@@ -14815,7 +14816,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &5127676812520409347
 Transform:
   m_ObjectHideFlags: 0
@@ -14856,9 +14857,9 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4.61, y: 3.5, z: 17.778011}
+  m_Size: {x: 1.9, y: 3.5, z: 17.778011}
   m_Center: {x: 0.47, y: 0, z: 4.17}
---- !u!114 &7203951078624928340
+--- !u!114 &4272150595347900857
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -14867,15 +14868,28 @@ MonoBehaviour:
   m_GameObject: {fileID: 2960888944991467842}
   m_Enabled: 1
   m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edc6ad1a277d87e43ab5a321ecb6e3ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  health: 1000
+  movSpeed: 50
+  rotSpeed: 1
+  maxRotAngle: 45
+  missileController: {fileID: 851283644624834451}
+  rocketController: {fileID: 5087825200247357864}
+--- !u!114 &7203951078624928340
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2960888944991467842}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 837f1560dcf0ae243ab471168699934f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movSpeed: 50
-  rotSpeed: 5
-  maxRot: 45
   lockRadius: 150
-  missileController: {fileID: 851283644624834451}
-  rocketController: {fileID: 5087825200247357864}
 --- !u!114 &1183040165861744137
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14901,7 +14915,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b41a71d327e9e14ebc48d7018ad1997, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  guns: {fileID: 11400000, guid: b272609fe349e1843b968a8af925245e, type: 2}
+  guns: {fileID: 11400000, guid: 34f7f34fa68ddbf44993fd09de497ad6, type: 2}
   bulletSpawnPoint1:
   - {fileID: 6283477439204921711}
   bulletSpawnPoint2:
@@ -14922,7 +14936,7 @@ MonoBehaviour:
   overheatText: {fileID: 0}
   aimbot: {fileID: 6800233456852290113}
   heatRate: 1
-  maxHeat: 100
+  maxHeat: 500
   currentHeat: 0
   blinkDuration: 1
   overheatMinCD: 30

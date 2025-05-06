@@ -106,6 +106,11 @@ public class HomingMissile : MonoBehaviour
         // Get the EnemyProps component (assuming it exists)
         EnemyProps enemy = collision.gameObject.GetComponent<EnemyProps>();
 
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            return;
+        }
+
         if (collision.gameObject.CompareTag("Enemy"))
         {
             if (enemy != null)
