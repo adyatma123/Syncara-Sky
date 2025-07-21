@@ -16,4 +16,6 @@ public class Missile : ScriptableObject
     public int ammo;
     public float missileSpeed;
     public float missileReload;
+    public int Tier;
+    public int Price;
 }

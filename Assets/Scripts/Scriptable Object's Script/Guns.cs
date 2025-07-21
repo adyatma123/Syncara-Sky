@@ -17,4 +17,6 @@ public class Guns : ScriptableObject
     public float rateOfFire;
     public float bulletSpeed;
     public float heatRate;
+    public int Tier;
+    public int Price;
 }

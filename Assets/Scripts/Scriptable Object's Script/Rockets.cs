@@ -17,4 +17,6 @@ public class Rockets : ScriptableObject
     public int ammo;
     public float rocketSpeed;
     public float rocketReload;
+    public int Tier;
+    public int Price;
 }
