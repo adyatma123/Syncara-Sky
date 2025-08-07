@@ -33,8 +33,26 @@ public class Gun : MonoBehaviour
 
     private void Start()
     {
+        // Automatically find the TextMeshProUGUI with the "OverheatText" tag
+        GameObject overheatTextObject = GameObject.FindWithTag("OverheatText");
+        if (overheatTextObject != null)
+        {
+            overheatText = overheatTextObject.GetComponent<TextMeshProUGUI>();
+            if (overheatText != null)
+            {
+                overheatText.enabled = false;
+            }
+            else
+            {
+                Debug.LogError("The GameObject with tag 'OverheatText' does not have a TextMeshProUGUI component.");
+            }
+        }
+        else
+        {
+            Debug.LogError("No GameObject with tag 'OverheatText' found in the scene.");
+        }
+
         aimbot.enabled = false;
-        overheatText.enabled = false;
     }
 
     void Update()
