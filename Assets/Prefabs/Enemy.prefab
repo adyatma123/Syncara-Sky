@@ -178,8 +178,6 @@ MonoBehaviour:
   modelRenderer: {fileID: 0}
   enemyBehaviors:
   - {fileID: 2082574229018968803}
-  - {fileID: 279653681701497994}
-  - {fileID: 65931468653883995}
   bulletPrefab: {fileID: 4003252818657007039, guid: fb4595b122610474b9906d4c3d181755, type: 3}
   bulletSpeed: 200
 --- !u!114 &-1312910388570423107
@@ -194,12 +192,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5f2ab45c1abba54b9fa8be9e963df8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100
+  enemyDataSource: {fileID: 11400000, guid: 4c7a89ffb79b35945ac2d0c31be4de7a, type: 2}
   currentHealth: 100
-  movSpeed: 20
-  enemyDmg: 20
-  fireRate: 60
-  scoreVal: 100
 --- !u!65 &-2576863313067048581
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -265,6 +259,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53fc13c47b6457f4fa8e2bd5b398791e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  patrolSpeed: 20
 --- !u!1001 &2686553463986598182
 PrefabInstance:
   m_ObjectHideFlags: 0

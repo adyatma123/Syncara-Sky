@@ -1,196 +1,253 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System; // Required for Action event if you want EnemyController to listen to OnEnemyDestroyedByPlayer
 
 public class EnemyController : MonoBehaviour
 {
-    public float initialMoveDistance = 10f;
+    [Header("Enemy Setup")]
+    [Tooltip("Reference to the EnemyProps component on this GameObject.")]
+    public EnemyProps enemyProps; // Reference to the EnemyProps MonoBehaviour
+
+    [Tooltip("Duration of the initial forward movement before choosing a main behavior.")]
     public float initialMoveDuration = 2f;
-    public float destroyDelay = 3f;      // Time delay before destroying the object after the model is destroyed
-    public EnemySpawner spawner;
-    public float followSpeed = 5f; // Adjust the follow speed as needed
-    public Renderer modelRenderer;    // Reference to the model's Renderer component
-    public MonoBehaviour[] enemyBehaviors;
+    [Tooltip("Time delay before destroying the GameObject after the model is destroyed (e.g., after an explosion effect).")]
+    public float destroyDelay = 3f;
+    public EnemySpawner spawner; // Consider if this is still needed directly or can be handled via events
+
+    [Tooltip("Adjustable follow speed for the 'FollowPlayer' behavior.")]
+    public float followSpeed = 5f;
+    [Tooltip("Reference to the enemy's visual model Renderer component for off-screen checks.")]
+    public Renderer modelRenderer;
     public GameObject bulletPrefab; // The bullet GameObject to instantiate
+    [Tooltip("The initial speed at which bullets fired by this enemy travel.")]
     public float bulletSpeed = 200f;
+    [Tooltip("The maximum Z-axis rotation angle when the enemy is moving horizontally.")]
+    public float maxZRotation = 15f; // New public variable for max Z rotation
+    [Tooltip("The speed at which the Z-rotation interpolates back to zero.")]
+    public float rotationSmoothSpeed = 5f; // New public variable for rotation smoothing
 
+    [Header("Runtime Properties (Managed by Controller)")]
     private float nextFireTime;
-    private bool movingRight = false;
-    private bool isPatrolling = false;
+    private bool movingRight = false; // Used specifically for the Patrol behavior
+    private bool isInitialMovementComplete = false;
     private float initialMoveTimer = 0f;
-    private bool isFollowing = false;
-    private bool isOffScreen = false; // Flag to track if the model has gone off-screen
+    private bool isOffScreen = false;
 
-    private EnemyProps enemyProperties; // Reference to the enemyProps script
-    private EnemyBullet enemyBullet; // Reference to the enemyProps script
+    // New: To track the previous X position for velocity calculation
+    private float lastXPosition;
+
+    // Define an enum to clearly differentiate between the enemy's potential behaviors
+    private enum EnemyMovementBehavior
+    {
+        FollowPlayer,
+        Patrol,
+        ForwardMove
+    }
+
+    private EnemyMovementBehavior chosenBehavior; // The specific behavior chosen for this enemy
 
     void Start()
     {
-        // Ensure the modelRenderer is assigned
+        // Validate essential components and data
+        enemyProps = GetComponent<EnemyProps>();
+        if (enemyProps == null)
+        {
+            Debug.LogError("EnemyProps script not found on " + gameObject.name + ". EnemyController requires EnemyProps to function.", this);
+            enabled = false; // Disable the script if EnemyProps is missing
+            return;
+        }
+
         if (modelRenderer == null)
         {
-            // Attempt to get the Renderer component from the current GameObject
             modelRenderer = GetComponentInChildren<Renderer>();
             if (modelRenderer == null)
             {
-                Debug.LogError("Model Renderer is not assigned! Please assign a Renderer component to the EnemyBehavior script.");
-                enabled = false; // Disable the script if no renderer is found
+                Debug.LogError("Model Renderer is not assigned! Please assign a Renderer component to the EnemyController script on " + gameObject.name + ".", this);
+                enabled = false;
                 return;
             }
         }
 
-        enemyProperties = GetComponent<EnemyProps>();
+        // Log the enemy's name and movement speed from the EnemyProps component
+        Debug.Log($"Enemy {enemyProps.EnemyName} initialized with move speed: {enemyProps.MovSpeed}");
+        Debug.Log($"Enemy {enemyProps.EnemyName} is Helicopter: {enemyProps.IsHelicopter}, Armed MG: {enemyProps.IsArmedMG}, Armed RKT: {enemyProps.IsArmedRKT}, Armed MSL: {enemyProps.IsArmedMSL}");
 
-        if (enemyProperties == null)
-        {
-            Debug.LogError("EnemyProps script not found on this GameObject. Enemy speed and damage data is missing!");
-            enabled = false; // Disable the script if required properties are missing
-            return;
-        }
 
-        // *** FIX: Initialize nextFireTime to allow firing based on fireRate from enemyProps ***
-        // Calculate the delay for the first shot based on the fire rate
-        // Ensure enemyProperties is not null and fireRate is greater than 0 before calculating
-        if (enemyProperties != null && enemyProperties.fireRate > 0)
+        // Initialize nextFireTime based on FireRate from EnemyProps
+        if (enemyProps.FireRate > 0)
         {
-            // Assuming fireRate is in RPM, convert to seconds per round
-            nextFireTime = Time.time + (60f / enemyProperties.fireRate);
+            nextFireTime = Time.time + (60f / enemyProps.FireRate);
         }
         else
         {
-            // If fireRate is not set, is zero, or enemyProperties is null, default to a 1-second delay for the first shot
-            nextFireTime = Time.time + 1f;
+            nextFireTime = Time.time + 1f; // Default to a 1-second delay if fireRate is invalid
         }
+
+        // Initialize lastXPosition with the current X position
+        lastXPosition = transform.position.x;
     }
 
     void Update()
     {
-        float speed = enemyProperties.movSpeed;
+        // Calculate X velocity
+        float currentX = transform.position.x;
+        float xVelocity = (currentX - lastXPosition) / Time.deltaTime;
+        lastXPosition = currentX; // Update lastXPosition for the next frame
 
-        // Get the speed from enemyProperties
-        // Ensure enemyProperties is not null before accessing its properties
-        float currentSpeed = (enemyProperties != null) ? enemyProperties.movSpeed : 0f;
-        // Use a default fire rate (60 RPM = 1 RPS) if props are missing or fireRate is zero
-        float currentFireRate = (enemyProperties != null && enemyProperties.fireRate > 0) ? enemyProperties.fireRate : 60f;
+        // Apply Z-rotation based on X velocity
+        RotateBasedOnXVelocity(xVelocity);
 
-        // Calculate viewport boundaries
-        float minX = Camera.main.ViewportToWorldPoint(new Vector3(0, 0, 0)).x;
-        float maxX = Camera.main.ViewportToWorldPoint(new Vector3(1, 0, 0)).x;
+        float speed = enemyProps.MovSpeed;
+        float currentFireRate = enemyProps.FireRate > 0 ? enemyProps.FireRate : 60f;
 
-        if (!isPatrolling)
+        float minX = 0f;
+        float maxX = 0f;
+
+        // Calculate viewport boundaries for Patrol behavior
+        if (Camera.main == null)
+        {
+            Debug.LogError("Main Camera is null! Cannot calculate viewport boundaries for enemy movement. Please tag a Camera as 'MainCamera' in your scene.");
+            return;
+        }
+        else
+        {
+            minX = Camera.main.ViewportToWorldPoint(new Vector3(0, 0, transform.position.z - Camera.main.transform.position.z)).x;
+            maxX = Camera.main.ViewportToWorldPoint(new Vector3(1, 0, transform.position.z - Camera.main.transform.position.z)).x;
+        }
+
+        if (!isInitialMovementComplete)
         {
             initialMoveTimer += Time.deltaTime;
             transform.position += Vector3.back * speed * Time.deltaTime;
 
             if (initialMoveTimer >= initialMoveDuration)
             {
-                isPatrolling = true;
-                // Randomly choose between patrolling and following
-                isFollowing = Random.value > 0.5f;
+                isInitialMovementComplete = true;
+
+                if (enemyProps.IsHelicopter)
+                {
+                    int randomBehaviorIndex = UnityEngine.Random.Range(0, 2);
+                    switch (randomBehaviorIndex)
+                    {
+                        case 0:
+                            chosenBehavior = EnemyMovementBehavior.FollowPlayer;
+                            Debug.Log($"Enemy {enemyProps.EnemyName} (Helicopter) chosen behavior: FollowPlayer");
+                            break;
+                        case 1:
+                            chosenBehavior = EnemyMovementBehavior.Patrol;
+                            movingRight = UnityEngine.Random.value > 0.5f;
+                            Debug.Log($"Enemy {enemyProps.EnemyName} (Helicopter) chosen behavior: Patrol (starts movingRight: {movingRight}) at X: {transform.position.x}, minX: {minX}, maxX: {maxX}");
+                            break;
+                    }
+                }
+                else
+                {
+                    chosenBehavior = EnemyMovementBehavior.ForwardMove;
+                    Debug.Log($"Enemy {enemyProps.EnemyName} (Non-Helicopter) chosen behavior: ForwardMove");
+                }
             }
         }
-        else
+        else // Once the initial movement is complete, execute the chosen randomized behavior
         {
-            if (isFollowing)
+            switch (chosenBehavior)
             {
-                FollowPlayer();
-            }
-            else if (movingRight)
-            {
-                Patrol(minX, maxX);
-            }
-            else
-            {
-                Forward();
+                case EnemyMovementBehavior.FollowPlayer:
+                    FollowPlayer();
+                    break;
+                case EnemyMovementBehavior.Patrol:
+                    Patrol(minX, maxX);
+                    break;
+                case EnemyMovementBehavior.ForwardMove:
+                    Forward();
+                    break;
             }
         }
 
+        // Handle shooting regardless of movement behavior
         if (Time.time >= nextFireTime)
         {
             Shoot();
-            // Calculate the time for the next shot
             nextFireTime = Time.time + (60f / currentFireRate);
         }
     }
 
-    //====================================PLAYER BEHAVIOR SCRIPTS===============================================//
+    /// <summary>
+    /// Rotates the enemy around its Z-axis based on its horizontal (X) velocity.
+    /// Moves left -> rotates Z positive (leans right)
+    /// Moves right -> rotates Z negative (leans left)
+    /// No movement -> rotates Z back to 0
+    /// </summary>
+    /// <param name="xVelocity">The velocity of the enemy along the X-axis.</param>
+    void RotateBasedOnXVelocity(float xVelocity)
+    {
+        float targetZRotation = 0f;
 
+        // Determine target Z rotation based on X velocity
+        if (xVelocity > 0.01f) // Moving right
+        {
+            targetZRotation = -maxZRotation; // Negative Z rotation for leaning left
+        }
+        else if (xVelocity < -0.01f) // Moving left
+        {
+            targetZRotation = maxZRotation; // Positive Z rotation for leaning right
+        }
+        // If velocity is near zero, targetZRotation remains 0
 
+        // Smoothly interpolate the current Z rotation towards the target Z rotation
+        Quaternion currentRotation = transform.localRotation;
+        float newZRotation = Mathf.LerpAngle(currentRotation.eulerAngles.z, targetZRotation, rotationSmoothSpeed * Time.deltaTime);
+        transform.localRotation = Quaternion.Euler(currentRotation.eulerAngles.x, currentRotation.eulerAngles.y, newZRotation);
+    }
 
     void Shoot()
     {
-        if (bulletPrefab != null && enemyProperties != null)
+        if (bulletPrefab != null && enemyProps != null)
         {
-            // Instantiate the bullet at the enemy's position and rotation
-            // You might want to adjust the spawn position slightly forward (e.g., transform.position + transform.forward * offset)
             GameObject instantiatedBullet = Instantiate(bulletPrefab, transform.position, transform.rotation);
-
-            // Get the EnemyBullet script component from the instantiated bullet
-            // *** FIX: Get the component from the instantiated bullet GameObject ***
             EnemyBullet bulletScript = instantiatedBullet.GetComponent<EnemyBullet>();
 
-            // If the bullet has an EnemyBullet script, set its damage and initial movement
             if (bulletScript != null)
             {
-                bulletScript.damage = (int)enemyProperties.enemyDmg; // Set bullet damage from enemyProps (cast to int if enemyDmg is float)
-
-                bulletScript.owner = this.gameObject; // Set the enemy as the bullet's owner
-                // *** Set the bullet's initial direction and speed ***
-                // We want the bullet to go backwards relative to the enemy's forward direction
-                Vector3 shootDirection = -transform.forward; // Shoot backwards from the enemy
-
-                // If the EnemyBullet script has a method to set direction and speed:
+                bulletScript.damage = (int)enemyProps.EnemyDmg;
+                bulletScript.owner = this.gameObject;
+                Vector3 shootDirection = -transform.forward;
                 bulletScript.SetDirectionAndSpeed(shootDirection, bulletSpeed);
-
-                // Option if using Rigidbody on the bullet prefab and applying force:
-                // Rigidbody bulletRigidbody = instantiatedBullet.GetComponent<Rigidbody>(); // Use instantiatedBullet
-                // if (bulletRigidbody != null)
-                // {
-                //     // Apply force in the calculated shootDirection
-                //     bulletRigidbody.AddForce(shootDirection * bulletSpeed, ForceMode.VelocityChange); // Use VelocityChange for immediate speed
-                // }
-                // else
-                // {
-                //      Debug.LogWarning("Instantiated bullet prefab does not have a Rigidbody or a SetDirectionAndSpeed method on EnemyBullet.");
-                // }
-
             }
             else
             {
-                // This warning is correct if EnemyBullet.cs is not on the bullet prefab
                 Debug.LogWarning("Instantiated bullet prefab does not have an 'EnemyBullet' script attached.");
             }
         }
         else
         {
-            // This warning should ideally not happen if checks in Update are correct,
-            // but good for safety.
-            Debug.LogWarning("Cannot shoot: bulletPrefab or enemyProperties is null.");
+            Debug.LogWarning("Cannot shoot: bulletPrefab or enemyProps is null.");
         }
     }
 
-    //Following Player Behavior
     void FollowPlayer()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
 
         if (player != null)
         {
-            // Calculate the desired position on the X-axis
             float targetX = player.transform.position.x;
             float desiredX = Mathf.Lerp(transform.position.x, targetX, followSpeed * Time.deltaTime);
 
-            // Maintain the Y and Z positions of the follower object
             Vector3 newPosition = new Vector3(desiredX, transform.position.y, transform.position.z);
-
-            // Set the new position of the follower object
             transform.position = newPosition;
         }
     }
 
     void Patrol(float minX, float maxX)
     {
-        float speed = enemyProperties.movSpeed;
+        float speed = enemyProps.MovSpeed;
+
+        if (speed <= 0)
+        {
+            Debug.LogWarning($"Patrol speed is zero or negative ({speed}) for {enemyProps.EnemyName}. Enemy will not move. Check assigned EnemyData asset.");
+            return;
+        }
 
         if (movingRight)
         {
@@ -199,6 +256,7 @@ public class EnemyController : MonoBehaviour
             if (transform.position.x >= maxX)
             {
                 movingRight = false;
+                Debug.Log($"Patrol: {enemyProps.EnemyName} hit MaxX ({maxX}), reversing to left. Current X: {transform.position.x}");
             }
         }
         else
@@ -208,17 +266,17 @@ public class EnemyController : MonoBehaviour
             if (transform.position.x <= minX)
             {
                 movingRight = true;
+                Debug.Log($"Patrol: {enemyProps.EnemyName} hit MinX ({minX}), reversing to right. Current X: {transform.position.x}");
             }
         }
     }
+
     void Forward()
     {
-        float speed = enemyProperties.movSpeed;
+        float speed = enemyProps.MovSpeed;
 
-        // Move the enemy forward
         transform.Translate(Vector3.back * speed * Time.deltaTime);
 
-        // Check if the model is off the camera's view
         if (!IsModelInView() && !isOffScreen)
         {
             isOffScreen = true;
@@ -226,14 +284,12 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    //===================================================================================//
-
     bool IsModelInView()
     {
         if (Camera.main == null)
         {
-            Debug.LogError("Main Camera is null.  Make sure you have a Camera tagged as MainCamera in your scene.");
-            return true; // Return true to prevent premature destruction.  You could also disable the script.
+            Debug.LogError("Main Camera is null. Make sure you have a Camera tagged as MainCamera in your scene.");
+            return true;
         }
         Plane[] planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
         return GeometryUtility.TestPlanesAABB(planes, modelRenderer.bounds);
@@ -241,19 +297,16 @@ public class EnemyController : MonoBehaviour
 
     void HandleOffScreen()
     {
-        // 1. Destroy the model (Renderer)
         if (modelRenderer != null)
         {
             Destroy(modelRenderer.gameObject);
         }
-
-        // 2. Start the coroutine to destroy the entire object after a delay
         StartCoroutine(DestroyWithDelay());
     }
 
     IEnumerator DestroyWithDelay()
     {
         yield return new WaitForSeconds(destroyDelay);
-        Destroy(gameObject); // Destroy the entire GameObject this script is attached to
+        Destroy(gameObject);
     }
 }

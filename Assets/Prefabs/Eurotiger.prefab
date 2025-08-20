@@ -322,9 +322,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2637052252847701960}
+  - component: {fileID: 830004170369408645}
+  - component: {fileID: 5721191807766834696}
+  - component: {fileID: -776494569964048702}
   m_Layer: 0
   m_Name: Eurotiger
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -339,12 +342,69 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2723099741882136797}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &830004170369408645
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5098264257078755976}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59eeae4b6be8f6f41ba3881281663787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enemyProps: {fileID: 0}
+  initialMoveDuration: 2
+  destroyDelay: 3
+  spawner: {fileID: 0}
+  followSpeed: 5
+  modelRenderer: {fileID: 0}
+  bulletPrefab: {fileID: 4003252818657007039, guid: fb4595b122610474b9906d4c3d181755, type: 3}
+  bulletSpeed: 200
+  maxZRotation: 15
+  rotationSmoothSpeed: 5
+--- !u!114 &5721191807766834696
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5098264257078755976}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5f2ab45c1abba54b9fa8be9e963df8c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enemyDataSource: {fileID: 11400000, guid: 39b1d37db190d184e8dd001caa0f9e58, type: 2}
+  currentHealth: 0
+--- !u!65 &-776494569964048702
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5098264257078755976}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 6.18, y: 5.84, z: 18.85}
+  m_Center: {x: 0.37, y: 1.61, z: 3.2}
 --- !u!1 &8034399497334683116
 GameObject:
   m_ObjectHideFlags: 0
