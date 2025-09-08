@@ -16,7 +16,7 @@ public class EnemyController : MonoBehaviour
     public EnemySpawner spawner; // Consider if this is still needed directly or can be handled via events
 
     [Tooltip("Adjustable follow speed for the 'FollowPlayer' behavior.")]
-    public float followSpeed = 5f;
+    public float followSpeed = 1f;
     [Tooltip("Reference to the enemy's visual model Renderer component for off-screen checks.")]
     public Renderer modelRenderer;
     public GameObject bulletPrefab; // The bullet GameObject to instantiate
