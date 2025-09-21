@@ -1,54 +1,59 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class Patrol : MonoBehaviour
+/// <summary>
+/// This behavior script makes the enemy patrol back and forth horizontally within the screen bounds.
+/// It works in conjunction with the EnemyController to get movement speed and other properties.
+/// </summary>
+public class PatrolBehavior : MonoBehaviour
 {
-    private bool movingRight = true; // Tracks the current direction of movement
+    private EnemyController enemyController;
+    private bool movingRight = false;
 
-    public int patrolSpeed = 20;
-
-    /// <summary>
-    /// Makes the enemy patrol horizontally within the camera's view.
-    /// The enemy will move right until it hits the right edge of the camera,
-    /// then move left until it hits the left edge, and so on.
-    /// </summary>
-    /// <param name="patrolSpeed">The speed at which the enemy patrols.</param>
-    public void PatrolMovement(float patrolSpeed)
+    void Start()
     {
-        // Ensure there's a main camera in the scene
-        if (Camera.main == null)
+        // Get the reference to the main EnemyController script on this same GameObject.
+        enemyController = GetComponent<EnemyController>();
+        if (enemyController == null)
         {
-            Debug.LogError("Main Camera is null. Please ensure you have a Camera tagged as 'MainCamera' in your scene.");
-            return; // Exit if no camera is found to prevent errors
+            Debug.LogError("PatrolBehavior requires an EnemyController component on the same GameObject.", this);
+            enabled = false;
+            return;
         }
 
-        // Calculate the world coordinates of the left and right edges of the camera's viewport
-        // The Z-position of the object is used to get the correct world point at the object's depth.
-        float minX = Camera.main.ViewportToWorldPoint(new Vector3(0, 0, transform.position.z - Camera.main.transform.position.z)).x;
-        float maxX = Camera.main.ViewportToWorldPoint(new Vector3(1, 0, transform.position.z - Camera.main.transform.position.z)).x;
+        // Randomly choose the initial patrol direction
+        movingRight = Random.value > 0.5f;
+    }
 
-        // Move the enemy based on the current direction
-        if (movingRight)
+    void Update()
+    {
+        // Only start patrolling after the initial forward movement is complete.
+        if (enemyController.isInitialMovementComplete)
         {
-            // Move right
-            transform.position += Vector3.right * patrolSpeed * Time.deltaTime;
-
-            // If the enemy moves beyond the right edge, reverse direction
-            if (transform.position.x >= maxX)
+            float speed = enemyController.enemyProps.MovSpeed;
+            if (speed <= 0)
             {
-                movingRight = false;
+                return;
             }
-        }
-        else
-        {
-            // Move left
-            transform.position -= Vector3.right * patrolSpeed * Time.deltaTime;
 
-            // If the enemy moves beyond the left edge, reverse direction
-            if (transform.position.x <= minX)
+            // Calculate viewport boundaries dynamically
+            float minX = Camera.main.ViewportToWorldPoint(new Vector3(0, 0, transform.position.z - Camera.main.transform.position.z)).x;
+            float maxX = Camera.main.ViewportToWorldPoint(new Vector3(1, 0, transform.position.z - Camera.main.transform.position.z)).x;
+
+            if (movingRight)
             {
-                movingRight = true;
+                transform.position += Vector3.right * speed * Time.deltaTime;
+                if (transform.position.x >= maxX)
+                {
+                    movingRight = false;
+                }
+            }
+            else
+            {
+                transform.position -= Vector3.right * speed * Time.deltaTime;
+                if (transform.position.x <= minX)
+                {
+                    movingRight = true;
+                }
             }
         }
     }

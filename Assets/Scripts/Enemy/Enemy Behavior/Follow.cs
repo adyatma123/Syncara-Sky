@@ -1,25 +1,50 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class Follow : MonoBehaviour
+/// <summary>
+/// This behavior makes the enemy follow the player's horizontal position after the initial move.
+/// It works in conjunction with the EnemyController to get movement speed and other properties.
+/// </summary>
+public class FollowPlayerBehavior : MonoBehaviour
 {
-    // Update is called once per frame
-    public void FollowPlayer(float followSpeed)
+    private EnemyController enemyController;
+    private GameObject player;
+
+    void Start()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-
-        if (player != null)
+        // Get the reference to the main EnemyController script on this same GameObject.
+        enemyController = GetComponent<EnemyController>();
+        if (enemyController == null)
         {
-            // Calculate the desired position on the X-axis
-            float targetX = player.transform.position.x;
-            float desiredX = Mathf.Lerp(transform.position.x, targetX, followSpeed * Time.deltaTime);
+            Debug.LogError("FollowPlayerBehavior requires an EnemyController component on the same GameObject.", this);
+            enabled = false;
+            return;
+        }
 
-            // Maintain the Y and Z positions of the follower object
-            Vector3 newPosition = new Vector3(desiredX, transform.position.y, transform.position.z);
+        // Find the player once during initialization for performance
+        player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            Debug.LogWarning("Player not found! The FollowPlayer behavior will not function correctly.");
+        }
+    }
 
-            // Set the new position of the follower object
-            transform.position = newPosition;
+    void Update()
+    {
+        // Only start the behavior after the initial forward movement is complete.
+        if (enemyController.isInitialMovementComplete)
+        {
+            if (player != null)
+            {
+                float targetX = player.transform.position.x;
+                float desiredX = Mathf.Lerp(
+                    transform.position.x,
+                    targetX,
+                    enemyController.followSpeed * Time.deltaTime
+                );
+
+                Vector3 newPosition = new Vector3(desiredX, transform.position.y, transform.position.z);
+                transform.position = newPosition;
+            }
         }
     }
 }

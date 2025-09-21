@@ -21,6 +21,7 @@ public class AircraftController : MonoBehaviour
     public MissileController missileController;
     public RocketController rocketController;
 
+    private PlayerHealthBar playerHealthBar;
     private Vector3 targetPosition;
     private bool hasTargetPosition = false;
 
@@ -31,6 +32,21 @@ public class AircraftController : MonoBehaviour
     {
         currentHealth = maxHealth; // Initialize current health to max health
         Debug.Log($"Aircraft '{gameObject.name}' health initialized: {currentHealth}/{maxHealth}");
+
+        /// Try to find the health bar GameObject in the scene by its tag.
+        GameObject healthBarObject = GameObject.FindWithTag("HealthBar"); // Make sure your health bar GameObject has this tag
+        if (healthBarObject != null)
+        {
+            playerHealthBar = healthBarObject.GetComponent<PlayerHealthBar>();
+            if (playerHealthBar == null)
+            {
+                Debug.LogError("PlayerHealthBar component not found on the health bar GameObject. Make sure the script is attached to it.");
+            }
+        }
+        else
+        {
+            Debug.LogError("PlayerHealthBar GameObject not found in the scene. Ensure it exists and has the 'HealthBar' tag.");
+        }
     }
 
     /// <summary>
@@ -91,6 +107,11 @@ public class AircraftController : MonoBehaviour
     public void TakeDamage(int damageAmount)
     {
         currentHealth -= damageAmount;
+        // Call the health bar's method to trigger the fade effect
+        if (playerHealthBar != null)
+        {
+            playerHealthBar.OnTakeDamage();
+        }
         currentHealth = Mathf.Max(currentHealth, 0); // Ensure health doesn't go below 0
         Debug.Log($"Aircraft '{gameObject.name}' took {damageAmount} damage. Current Health: {currentHealth}/{maxHealth}");
 

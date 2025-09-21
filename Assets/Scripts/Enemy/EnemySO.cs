@@ -19,12 +19,15 @@ public class EnemyData : ScriptableObject
     public int enemyDmg = 1;
     [Tooltip("The fire rate of this enemy's attacks (e.g., bullets per minute).")]
     public float fireRate = 60f; // Default 60 RPM (1 shot per second)
+    [Tooltip("The speed at which the bullet travels.")]
+    public float bulletSpeed = 200f;
     [Tooltip("The score value awarded to the player when this enemy is destroyed.")]
     public int scoreVal = 100;
 
     [Header("Enemy Type Specifics")]
     [Tooltip("Set to true if this enemy is a helicopter type (or flies).")]
     public bool isHelicopter = false;
+    public bool isBoss = false;
     public bool isArmedMG = false;
     public bool isArmedRKT = false;
     public bool isArmedMSL = false;

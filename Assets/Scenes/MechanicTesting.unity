@@ -5771,7 +5771,7 @@ GameObject:
   - component: {fileID: 919596957}
   m_Layer: 5
   m_Name: Canvas - Worldspace
-  m_TagString: Untagged
+  m_TagString: HealthBar
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5789,9 +5789,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   aircraftTag: Player
-  offset: {x: 0, y: 2.5, z: -2}
-  followSpeed: 10
+  offset: {x: 0, y: 7, z: -20}
+  followSpeed: 20
   healthSlider: {fileID: 1723692809}
+  fadeSpeed: 2
+  fadeDelay: 3
 --- !u!114 &919596953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5883,7 +5885,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 919596951}
   m_Enabled: 1
-  m_Alpha: 0
+  m_Alpha: 1
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0

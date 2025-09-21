@@ -19,33 +19,32 @@ public class PlayerHealthBar : MonoBehaviour
     [Tooltip("The UI Slider component that represents the health bar fill.")]
     public Slider healthSlider; // Reference to the UI Slider
 
+    [Header("Fade Settings")]
+    [Tooltip("The speed at which the health bar fades in and out.")]
+    public float fadeSpeed = 2f;
+    [Tooltip("The time (in seconds) the health bar stays visible after taking damage.")]
+    public float fadeDelay = 3f;
+
     private GameObject aircraftGameObject;
     private AircraftController aircraftController; // Reference to the AircraftController script
+    private CanvasGroup canvasGroup;
+    private float fadeTimer;
 
     /// <summary>
     /// Called when the script instance is being loaded.
     /// Used to find the aircraft and get its controller component.
     /// </summary>
-    void Start()
+    void Awake()
     {
-        FindAircraftAndController();
+        canvasGroup = GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+        {
+            Debug.LogError("PlayerHealthBar requires a CanvasGroup component on the same GameObject.", this);
+            enabled = false;
+        }
 
-        if (aircraftController != null && healthSlider != null)
-        {
-            // Initialize the slider's max value to aircraft's max health
-            healthSlider.maxValue = aircraftController.maxHealth;
-            // Set initial health value to the current health of the aircraft
-            healthSlider.value = aircraftController.currentHealth;
-            Debug.Log("Aircraft 3D Health Bar initialized successfully.");
-        }
-        else
-        {
-            if (aircraftController == null)
-                Debug.LogError($"AircraftController not found on GameObject with tag '{aircraftTag}' or aircraft GameObject not found. Health bar cannot function! Ensure player is tagged correctly and has AircraftController.", this);
-            if (healthSlider == null)
-                Debug.LogError("Health Slider UI component not assigned! Please assign it in the Inspector.", this);
-            enabled = false; // Disable script if essential components are missing
-        }
+        // Set the initial alpha to 0 (invisible)
+        canvasGroup.alpha = 0f;
     }
 
     /// <summary>
@@ -57,6 +56,22 @@ public class PlayerHealthBar : MonoBehaviour
         if (aircraftGameObject != null)
         {
             aircraftController = aircraftGameObject.GetComponent<AircraftController>();
+            if (aircraftController != null && healthSlider != null)
+            {
+                // Initialize the slider's max value to aircraft's max health
+                healthSlider.maxValue = aircraftController.maxHealth;
+                // Set initial health value to the current health of the aircraft
+                healthSlider.value = aircraftController.currentHealth;
+                Debug.Log("Aircraft 3D Health Bar initialized successfully.");
+            }
+            else
+            {
+                if (aircraftController == null)
+                    Debug.LogError($"AircraftController not found on GameObject with tag '{aircraftTag}'. Health bar cannot function! Ensure player has AircraftController.", this);
+                if (healthSlider == null)
+                    Debug.LogError("Health Slider UI component not assigned! Please assign it in the Inspector.", this);
+                enabled = false; // Disable script if essential components are missing
+            }
         }
     }
 
@@ -100,5 +115,29 @@ public class PlayerHealthBar : MonoBehaviour
         {
             Debug.LogWarning("Main Camera not found for health bar billboard effect. Ensure your camera is tagged 'MainCamera'.");
         }
+
+        // --- Manage the fade timer and alpha ---
+        if (fadeTimer > 0)
+        {
+            fadeTimer -= Time.deltaTime;
+            // Fade in smoothly when timer starts
+            canvasGroup.alpha = Mathf.MoveTowards(canvasGroup.alpha, 1f, fadeSpeed * Time.deltaTime);
+        }
+        else
+        {
+            // Fade out smoothly when timer is complete
+            canvasGroup.alpha = Mathf.MoveTowards(canvasGroup.alpha, 0f, fadeSpeed * Time.deltaTime);
+        }
+    }
+
+    /// <summary>
+    /// Public method to be called by another script (e.g., AircraftController)
+    /// when the aircraft takes damage.
+    /// </summary>
+    public void OnTakeDamage()
+    {
+        fadeTimer = fadeDelay;
+        // Optionally, make it instantly visible on damage
+        canvasGroup.alpha = 1f;
     }
 }

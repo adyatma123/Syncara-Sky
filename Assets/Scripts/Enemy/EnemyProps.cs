@@ -19,6 +19,7 @@ public class EnemyProps : MonoBehaviour
     private float _movSpeed;
     private int _enemyDmg;
     private float _fireRate;
+    private float _bulletSpeed;
     private int _scoreVal;
     private bool _isHelicopter;
     private bool _isArmedMG;
@@ -35,6 +36,7 @@ public class EnemyProps : MonoBehaviour
     public float MovSpeed => _movSpeed;
     public int EnemyDmg => _enemyDmg;
     public float FireRate => _fireRate;
+    public float BulletSpeed => _bulletSpeed;
     public int ScoreVal => _scoreVal;
     public bool IsHelicopter => _isHelicopter;
     public bool IsArmedMG => _isArmedMG;
@@ -64,6 +66,7 @@ public class EnemyProps : MonoBehaviour
         _movSpeed = enemyDataSource.movSpeed;
         _enemyDmg = enemyDataSource.enemyDmg;
         _fireRate = enemyDataSource.fireRate;
+        _bulletSpeed = enemyDataSource.bulletSpeed;
         _scoreVal = enemyDataSource.scoreVal;
         _isHelicopter = enemyDataSource.isHelicopter;
         _isArmedMG = enemyDataSource.isArmedMG;
