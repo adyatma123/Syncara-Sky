@@ -59,7 +59,7 @@ public class Gun : MonoBehaviour
     {
         UpdateActiveGunCount(); // Calculate active guns at start
 
-        if (Input.GetKeyDown(KeyCode.X))
+        if (Input.GetKeyDown(KeyCode.C))
         {
             // Cycle through stages
             gunStage++;

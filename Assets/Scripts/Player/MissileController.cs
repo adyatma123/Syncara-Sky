@@ -7,8 +7,8 @@ public class MissileController : MonoBehaviour
     public Transform[] payloadPoints1;
     public Transform[] payloadPoints2;
     public Transform[] payloadPoints3;
-    public PlayerController playerCon;
-    public Missile missile;
+    public AircraftController playerCon;
+    public Payload payload;
     public float missileReload = 1f; // Delay in seconds
     private int currentMissileIndex = 0;
     private bool isReloading = false;
@@ -18,7 +18,7 @@ public class MissileController : MonoBehaviour
         if (!isReloading && currentMissileIndex < payloadPoints3.Length)
         {
             Transform spawnPoint = payloadPoints3[currentMissileIndex];
-            GameObject missileInstance = Instantiate(missile.missilePrefab, spawnPoint.position, spawnPoint.rotation);
+            GameObject missileInstance = Instantiate(payload.payloadPrefab, spawnPoint.position, spawnPoint.rotation);
 
             // Get the transform of the INSTANTIATED GameObject
             Transform missileTransform = missileInstance.transform; // This is the correct way!

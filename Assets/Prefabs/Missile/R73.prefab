@@ -10,9 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2489232558179133746}
   - component: {fileID: -6712275605287594268}
-  - component: {fileID: 921153541466471734}
   - component: {fileID: 6118989651770616431}
   - component: {fileID: -7445110925990102040}
+  - component: {fileID: 2012845143761306782}
   m_Layer: 0
   m_Name: R73
   m_TagString: Untagged
@@ -63,27 +63,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &921153541466471734
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1198153631106594642}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb7c99f9d79de5a4d8e2e84ed647f321, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  missileName: AA-73
-  missileDescription: A standard air-to-air missile for engaging aerial targets.
-  speed: 125
-  homingRotationSpeed: 4
-  Mdamage: 150
-  guidanceTime: 4
-  lockRadius: 340
-  maxHomingAngle: 40
-  missileBurn: {fileID: 841822248893468551}
 --- !u!65 &6118989651770616431
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -218,6 +197,19 @@ TrailRenderer:
   m_Autodestruct: 0
   m_Emitting: 1
   m_ApplyActiveColorSpace: 1
+--- !u!114 &2012845143761306782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1198153631106594642}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91fbc1255b6b78f4994cf771032ff534, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  payloadData: {fileID: 11400000, guid: cd9bd3ee8f7805c48bb0bf11e0a51539, type: 2}
 --- !u!1 &7628789642850715252
 GameObject:
   m_ObjectHideFlags: 0

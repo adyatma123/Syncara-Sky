@@ -18,8 +18,8 @@ public class AircraftController : MonoBehaviour
     public float maxRotAngle = 45f;
 
     [Header("Weapon Systems")]
-    public MissileController missileController;
-    public RocketController rocketController;
+    [Tooltip("Reference to the single PayloadManager script on this GameObject.")]
+    public PayloadManager payloadManager;
 
     private PlayerHealthBar playerHealthBar;
     private Vector3 targetPosition;
@@ -33,7 +33,7 @@ public class AircraftController : MonoBehaviour
         currentHealth = maxHealth; // Initialize current health to max health
         Debug.Log($"Aircraft '{gameObject.name}' health initialized: {currentHealth}/{maxHealth}");
 
-        /// Try to find the health bar GameObject in the scene by its tag.
+        // Try to find the health bar GameObject in the scene by its tag.
         GameObject healthBarObject = GameObject.FindWithTag("HealthBar"); // Make sure your health bar GameObject has this tag
         if (healthBarObject != null)
         {
@@ -46,6 +46,12 @@ public class AircraftController : MonoBehaviour
         else
         {
             Debug.LogError("PlayerHealthBar GameObject not found in the scene. Ensure it exists and has the 'HealthBar' tag.");
+        }
+
+        // Validate the payload manager reference
+        if (payloadManager == null)
+        {
+            Debug.LogError("PayloadManager reference not assigned! Please assign it in the Inspector.");
         }
     }
 
@@ -132,7 +138,6 @@ public class AircraftController : MonoBehaviour
         Debug.Log($"Aircraft '{gameObject.name}' healed {healAmount} health. Current Health: {currentHealth}/{maxHealth}");
     }
 
-
     /// <summary>
     /// Resets the aircraft's rotation to its default (identity) orientation.
     /// </summary>
@@ -151,32 +156,24 @@ public class AircraftController : MonoBehaviour
     }
 
     /// <summary>
-    /// Triggers the missile launch sequence, if a MissileController is assigned.
+    /// Calls the FireCurrentPayload method on the PayloadManager.
     /// </summary>
-    public void FireMissile()
+    public void FirePayload()
     {
-        if (missileController != null)
+        if (payloadManager != null)
         {
-            missileController.LaunchMissile();
-        }
-        else
-        {
-            Debug.LogWarning("MissileController not assigned to AircraftController!");
+            payloadManager.FireCurrentPayload();
         }
     }
 
     /// <summary>
-    /// Triggers the rocket launch sequence, if a RocketController is assigned.
+    /// Calls the SwitchPayload method on the PayloadManager.
     /// </summary>
-    public void FireRocket()
+    public void SwitchPayload()
     {
-        if (rocketController != null)
+        if (payloadManager != null)
         {
-            rocketController.LaunchRocket();
-        }
-        else
-        {
-            Debug.LogWarning("RocketController not assigned to AircraftController!");
+            payloadManager.SwitchPayload();
         }
     }
 
@@ -187,8 +184,8 @@ public class AircraftController : MonoBehaviour
     {
         Debug.Log($"Aircraft '{gameObject.name}' has been destroyed!");
         Destroy(gameObject); // Destroy the aircraft GameObject
-    //Example: Play explosion sound effect
-         if (AudioManager.Instance != null)
+                             //Example: Play explosion sound effect
+        if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlaySFX("Explode");
         }

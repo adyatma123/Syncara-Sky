@@ -101,14 +101,13 @@ public class PlayerController : MonoBehaviour
     {
         if (controlledAircraft == null) return;
 
-        if (Input.GetMouseButtonDown(1)) // Right Mouse Button for missiles
-        {
-            controlledAircraft.FireMissile();
+        if (Input.GetButtonDown("Payload")) // Right Mouse Button for missiles
+        {
+            controlledAircraft.FirePayload();
         }
-
-        if (Input.GetButtonDown("Rocket")) // Defined in Input Manager
-        {
-            controlledAircraft.FireRocket();
+        if (Input.GetButtonDown("Change Payload")) // X key to switch payload
+        {
+            controlledAircraft.SwitchPayload();
         }
     }
 

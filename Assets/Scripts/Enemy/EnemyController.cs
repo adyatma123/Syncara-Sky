@@ -35,11 +35,14 @@ public class EnemyController : MonoBehaviour
     private float initialMoveTimer = 0f;
 
     // References to other components on this GameObject
+    private Rigidbody rb;
     private AIShoot aiShoot;
     private float lastXPosition;
 
     void Start()
     {
+        rb = GetComponent<Rigidbody>();
+
         // Validate essential components
         enemyProps = GetComponent<EnemyProps>();
         if (enemyProps == null)
@@ -54,6 +57,8 @@ public class EnemyController : MonoBehaviour
 
         Debug.Log($"Enemy {enemyProps.EnemyName} initialized with move speed: {enemyProps.MovSpeed}");
         lastXPosition = transform.position.x;
+
+        rb.constraints = RigidbodyConstraints.FreezePositionZ;
     }
 
     void Update()

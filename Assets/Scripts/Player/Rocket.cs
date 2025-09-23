@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class Rocket : MonoBehaviour
 {
-    public float speed = 1000f;
-    public int Rdamage = 100;
+    public float speed;
+    public int damage;
+    public int lifeTime;
 
     Rigidbody rb;
     public ParticleSystem missileBurn;
@@ -51,7 +52,7 @@ public class Rocket : MonoBehaviour
             EnemyProps enemy = collision.gameObject.GetComponent<EnemyProps>();
             if (enemy != null)
             {
-                enemy.TakeDamage(Rdamage);
+                enemy.TakeDamage(damage);
                 Destroy(gameObject);
             }
         }

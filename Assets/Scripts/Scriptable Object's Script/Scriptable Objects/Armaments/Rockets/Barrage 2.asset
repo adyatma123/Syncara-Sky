@@ -9,15 +9,26 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 10c83b54d755aef4eb57176b28f89ec9, type: 3}
+  m_Script: {fileID: 11500000, guid: 23cf440571015064795e5607f10db38d, type: 3}
   m_Name: Barrage 2
   m_EditorClassIdentifier: 
-  name: ARS-8KO Barrage Rocket
-  description: Small rockets with high rate of fire but mediocre damage
+  isMissile: 0
+  payloadName: ARS-8KO Barrage Rocket
+  payloadDescription: Small rockets with high rate of fire but mediocre damage
+  Tier: 0
+  Price: 0
   artwork: {fileID: 0}
-  rocketPrefab: {fileID: 0}
-  rocketPodPrefab: {fileID: 0}
+  payloadPrefab: {fileID: 1198153631106594642, guid: 4a230b035b777eb42a97a15c06acb6b8, type: 3}
+  podPrefab: {fileID: 111446151636525437, guid: 2b1b92b6f762cde4891c224eeee8a9a2, type: 3}
+  shootSound: {fileID: 0}
+  explodeSound: {fileID: 0}
+  speed: 200
   damage: 50
-  ammo: 40
-  rocketSpeed: 0
-  rocketReload: 0
+  reloadTime: 0
+  lifeTime: 5
+  maxAmmo: 64
+  multiTargets: 0
+  proximityRadius: 0
+  rotationSpeed: 0
+  lockRadius: 100
+  maxHomingAngle: 60
