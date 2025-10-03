@@ -114,9 +114,9 @@ public class PayloadManager : MonoBehaviour
         currentSlot.nextFireTime = Time.time + currentPayload.reloadTime;
 
         // Play shoot sound
-        if (currentPayload.shootSound != null)
+        if (SoundManager.Instance != null)
         {
-            AudioSource.PlayClipAtPoint(currentPayload.shootSound, spawnPoint.position);
+            SoundManager.Instance.PlaySFX("Player Missile");
         }
 
         Debug.Log($"Fired {currentPayload.payloadName}. Ammo remaining: {currentSlot.currentAmmo}");

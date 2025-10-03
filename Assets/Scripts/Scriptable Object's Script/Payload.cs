@@ -27,6 +27,8 @@ public class Payload : ScriptableObject
     public AudioClip explodeSound;
 
     [Header("Payload Stats")]
+    [Tooltip("The minimum vehicle tier to equip the payload.")]
+    public int tier;
     [Tooltip("The initial speed of the projectile after launch.")]
     public float speed;
     [Tooltip("The damage this payload inflicts on enemies.")]

@@ -110,9 +110,9 @@ public class EnemyProps : MonoBehaviour
             Destroy(gameObject);
 
             //Example of playing an SFX, assuming an AudioManager.Instance exists:
-             if (AudioManager.Instance != null)
+             if (SoundManager.Instance != null)
             {
-                AudioManager.Instance.PlaySFX("Explode");
+                SoundManager.Instance.PlaySFX("Explode");
             }
             else
             {

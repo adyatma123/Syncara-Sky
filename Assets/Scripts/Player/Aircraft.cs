@@ -185,13 +185,9 @@ public class AircraftController : MonoBehaviour
         Debug.Log($"Aircraft '{gameObject.name}' has been destroyed!");
         Destroy(gameObject); // Destroy the aircraft GameObject
                              //Example: Play explosion sound effect
-        if (AudioManager.Instance != null)
+        if (SoundManager.Instance != null)
         {
-            AudioManager.Instance.PlaySFX("Explode");
-        }
-        else
-        {
-            Debug.LogWarning("AudioManager.Instance not found. Cannot play 'Explode' SFX.");
+            SoundManager.Instance.PlaySFX("Explode");
         }
     }
 }

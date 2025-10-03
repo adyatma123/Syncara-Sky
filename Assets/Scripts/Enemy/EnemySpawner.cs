@@ -11,6 +11,11 @@ public class EnemySpawner : MonoBehaviour
 
     void Start()
     {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayMusic("Stage 1-1");
+        }
+
         // Optional: Add a check to ensure the array is not empty
         if (enemyPrefabs == null || enemyPrefabs.Length == 0)
         {

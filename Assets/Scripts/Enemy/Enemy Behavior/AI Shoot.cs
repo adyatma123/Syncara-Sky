@@ -94,6 +94,10 @@ public class AIShoot : MonoBehaviour
             // Instantiate the bullet at the firePoint's position and rotation
             GameObject instantiatedBullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
             EnemyBullet bulletScript = instantiatedBullet.GetComponent<EnemyBullet>();
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySFX("Player Shoot");
+            }
 
             if (bulletScript != null)
             {

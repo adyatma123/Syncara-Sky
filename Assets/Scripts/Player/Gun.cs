@@ -77,7 +77,7 @@ public class Gun : MonoBehaviour
             {
                 Shoot();
                 nextFireTime = Time.time + (60f / guns.rateOfFire);
-                AudioManager.Instance.PlaySFX("GunShoot");
+                SoundManager.Instance.PlaySFX("Player Shoot");
 
                 // Increase heat
                 currentHeat += guns.heatRate * totalGunActive;
