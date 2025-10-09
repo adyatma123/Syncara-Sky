@@ -28,15 +28,6 @@ public class ForwardMoveBehavior : MonoBehaviour
         {
             float speed = enemyController.enemyProps.MovSpeed;
             transform.Translate(Vector3.back * speed * Time.deltaTime);
-
-            if (enemyController.modelRenderer != null)
-            {
-                if (!IsModelInView() && !isOffScreen)
-                {
-                    isOffScreen = true;
-                    enemyController.HandleOffScreen();
-                }
-            }
         }
     }
 

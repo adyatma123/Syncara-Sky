@@ -6223,6 +6223,55 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1306453988}
   m_CullTransparentMesh: 1
+--- !u!1 &1394191195
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1394191197}
+  - component: {fileID: 1394191196}
+  m_Layer: 0
+  m_Name: WaveSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1394191196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1394191195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d371ee9d2229655489750ef11fef8a1b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  waves:
+  - waveContainerPrefab: {fileID: 4025014854116225683, guid: ba112daa29a95b6428c248115f21fba2, type: 3}
+    delayAfterClear: 0
+  - waveContainerPrefab: {fileID: 4025014854116225683, guid: b99ee845f0c8b864487161ccfc148d51, type: 3}
+    delayAfterClear: 0
+--- !u!4 &1394191197
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1394191195}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 267}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1487758540
 GameObject:
   m_ObjectHideFlags: 0
@@ -6393,7 +6442,7 @@ Transform:
   m_GameObject: {fileID: 1545079214}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.9779, y: 12.723158, z: -5.9910455}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6439,6 +6488,54 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0.85, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1693997836
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1693997838}
+  - component: {fileID: 1693997837}
+  m_Layer: 0
+  m_Name: Viewpoint Field Debug
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1693997837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1693997836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6b6deb05f728e84e8a4f8f5af6ee601, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  drawBounds: 1
+  gizmoColor: {r: 1, g: 0, b: 0, a: 1}
+  sizeX: 175
+  sizeZ: 193
+--- !u!4 &1693997838
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1693997836}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 72.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6565,7 +6662,7 @@ MonoBehaviour:
   masterMixer: {fileID: 24100000, guid: 6f84129c93fb0db4e88481b2ac36245f, type: 2}
   audioGroups:
   - groupName: Music
-    mixerGroup: {fileID: 24300002, guid: 605a273522664ae4b881361f783254b2, type: 2}
+    mixerGroup: {fileID: -7034521575333633907, guid: 6f84129c93fb0db4e88481b2ac36245f, type: 2}
     soundClips:
     - keyName: Hangar BGM
       volume: 1
@@ -6576,7 +6673,7 @@ MonoBehaviour:
       clips:
       - {fileID: 8300000, guid: c9703f9929a7f164c932ebb0a60dd13f, type: 3}
   - groupName: SFX
-    mixerGroup: {fileID: 24300002, guid: cc659cf900de9134d81ec7c948d0d841, type: 2}
+    mixerGroup: {fileID: -5335768885569913699, guid: 6f84129c93fb0db4e88481b2ac36245f, type: 2}
     soundClips:
     - keyName: Player Shoot
       volume: 1
@@ -6595,7 +6692,7 @@ MonoBehaviour:
       clips:
       - {fileID: 8300000, guid: bb48cea4b8055634ab67fe0006e2ac1d, type: 3}
   - groupName: Voice
-    mixerGroup: {fileID: 24300002, guid: 3787f9303e1e4974594a7455f37a62b8, type: 2}
+    mixerGroup: {fileID: -3198709200151570932, guid: 6f84129c93fb0db4e88481b2ac36245f, type: 2}
     soundClips: []
 --- !u!4 &2040496391
 Transform:
@@ -6723,3 +6820,5 @@ SceneRoots:
   - {fileID: 476801481}
   - {fileID: 2040496391}
   - {fileID: 3877910}
+  - {fileID: 1394191197}
+  - {fileID: 1693997838}

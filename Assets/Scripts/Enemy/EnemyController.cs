@@ -14,8 +14,11 @@ public class EnemyController : MonoBehaviour
     [Tooltip("Reference to the EnemyProps component on this GameObject.")]
     public EnemyProps enemyProps;
 
-    [Tooltip("Duration of the initial forward movement before the behavior takes over.")]
-    public float initialMoveDuration = 2f;
+    // --- MODIFIED PROPERTY FOR DISTANCE-BASED INITIAL MOVEMENT ---
+    [Tooltip("The World Z position where the initial forward movement stops and the main behavior takes over.")]
+    public float initialMovementEndZ = 10f; // Example: Set to 10 to stop movement near the top of the screen
+                                            // -------------------------------------------------------------
+
     [Tooltip("Time delay before destroying the GameObject after its model is destroyed.")]
     public float destroyDelay = 3f;
 
@@ -30,14 +33,22 @@ public class EnemyController : MonoBehaviour
     [Tooltip("The speed at which the Z-rotation interpolates back to zero.")]
     public float rotationSmoothSpeed = 5f;
 
+    [Header("Boundary and State")]
+    [Tooltip("The World Z position where the enemy will be destroyed (e.g., -10 for off-screen bottom).")]
+    public float destroyBoundaryZ = -10f;
+    // Flag to track whether the enemy has entered the player's camera view at least once.
+    private bool hasBeenVisible = false;
+    private bool isCurrentlyVisible = false;
+
     [Header("Runtime Properties (Managed by Controller)")]
     public bool isInitialMovementComplete = false;
-    private float initialMoveTimer = 0f;
 
     // References to other components on this GameObject
     private Rigidbody rb;
     private AIShoot aiShoot;
     private float lastXPosition;
+
+    private Plane[] cameraPlanes; // Cache for frustum planes
 
     void Start()
     {
@@ -52,39 +63,166 @@ public class EnemyController : MonoBehaviour
             return;
         }
 
+        // Validate Renderer
+        if (modelRenderer == null)
+        {
+            Debug.LogError("modelRenderer is not assigned on " + gameObject.name + ". Off-screen and shooting logic will fail.", this);
+        }
+
         // Get optional components
         aiShoot = GetComponent<AIShoot>();
 
         Debug.Log($"Enemy {enemyProps.EnemyName} initialized with move speed: {enemyProps.MovSpeed}");
         lastXPosition = transform.position.x;
 
-        rb.constraints = RigidbodyConstraints.FreezePositionZ;
+        // Ensure the Rigidbody is set up correctly (assuming a 3D shmup setup)
+        if (rb != null)
+        {
+            // Freeze Z movement during behavior and rotation on X/Y
+            rb.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY;
+            rb.useGravity = false;
+        }
+
+        // Cache the camera frustum planes once if the camera exists
+        if (Camera.main != null)
+        {
+            cameraPlanes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
+        }
     }
+
+    /// <summary>
+    /// Checks if the enemy's model is currently within the main camera's view frustum.
+    /// This replaces the unreliable OnBecameVisible/Invisible events for state management.
+    /// </summary>
+    private bool IsRendererVisible()
+    {
+        if (modelRenderer == null || Camera.main == null)
+        {
+            return false; // Cannot check visibility without a Renderer or Camera
+        }
+
+        // Re-calculate frustum planes for the current camera position
+        cameraPlanes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
+
+        // Test the bounds of the Renderer against the camera frustum planes
+        return GeometryUtility.TestPlanesAABB(cameraPlanes, modelRenderer.bounds);
+    }
+
+    /// <summary>
+    /// Called by the Renderer system when the object is visible by any camera.
+    /// This is kept only to ensure the flag is set as a fallback.
+    /// </summary>
+    void OnBecameVisible()
+    {
+        if (!hasBeenVisible)
+        {
+            hasBeenVisible = true;
+            Debug.Log($"[{gameObject.name}] entered the screen (OnBecameVisible fallback). Destruction eligibility enabled.");
+        }
+    }
+
+    /// <summary>
+    /// Called by the Renderer system when the object is no longer visible by any camera.
+    /// This method is intentionally empty as visibility state is managed in Update().
+    /// </summary>
+    void OnBecameInvisible()
+    {
+        // Intentionally empty.
+    }
+
 
     void Update()
     {
-        // Calculate X velocity for Z-rotation
+        // 1. Visibility State Management (Manual Check)
+        CheckVisibilityAndToggleState();
+
+        // 2. Boundary Destruction Check
+        CheckForBoundaryDestruction();
+
+        // 3. Calculate X velocity for Z-rotation
         float currentX = transform.position.x;
         float xVelocity = (currentX - lastXPosition) / Time.deltaTime;
         lastXPosition = currentX;
         RotateBasedOnXVelocity(xVelocity);
 
-        // Initial forward movement
+        // 4. Initial forward movement (Distance-based)
         if (!isInitialMovementComplete)
         {
-            initialMoveTimer += Time.deltaTime;
+            // Move forward until the target Z position is reached
             transform.position += Vector3.back * enemyProps.MovSpeed * Time.deltaTime;
 
-            if (initialMoveTimer >= initialMoveDuration)
+            // Check for completion based on Z position
+            if (transform.position.z <= initialMovementEndZ)
             {
                 isInitialMovementComplete = true;
+                Debug.Log($"Enemy {enemyProps.EnemyName} completed initial movement at Z={transform.position.z}.");
+            }
+        }
+    }
 
-                // Activate shooting if applicable
-                if (aiShoot != null && enemyProps.IsArmedMG)
+    /// <summary>
+    /// Checks the current visibility status and toggles the AIShoot component accordingly.
+    /// </summary>
+    private void CheckVisibilityAndToggleState()
+    {
+        bool nowVisible = IsRendererVisible();
+
+        // If shooting logic is disabled, we don't need to run this check.
+        if (aiShoot == null) return;
+
+        // Enemy must be armed with EITHER MG or MSL to attempt activation/deactivation
+        bool isArmed = enemyProps.IsArmedMG || enemyProps.IsArmedMSL;
+
+        if (nowVisible && !isCurrentlyVisible)
+        {
+            // Just became visible
+            isCurrentlyVisible = true;
+            if (!hasBeenVisible)
+            {
+                hasBeenVisible = true; // Set eligibility for destruction
+                Debug.Log($"[{gameObject.name}] Visibility Check: Entered view (Visible: True). Destruction eligible.");
+            }
+
+            // --- CRITICAL FIX: Only Activate if Initial Movement is also complete ---
+            if (isArmed && isInitialMovementComplete)
+            {
+                aiShoot.Activate();
+                Debug.Log($"Enemy {enemyProps.EnemyName} activated shooting (Visibility/Move Check).");
+            }
+        }
+        else if (!nowVisible && isCurrentlyVisible)
+        {
+            // Just became invisible
+            isCurrentlyVisible = false;
+            Debug.Log($"[{gameObject.name}] Visibility Check: Left view (Visible: False).");
+
+            // Deactivate AI Shoot
+            aiShoot.Deactivate();
+        }
+    }
+
+
+    /// <summary>
+    /// Checks if the enemy has been visible and subsequently crossed the lower destruction boundary.
+    /// </summary>
+    private void CheckForBoundaryDestruction()
+    {
+        // Only check for boundary destruction if the enemy has been visible.
+        if (hasBeenVisible)
+        {
+            // Check if the enemy has moved beyond the lower viewpoint boundary on the Z-axis.
+            if (transform.position.z < destroyBoundaryZ)
+            {
+                Debug.Log($"[{gameObject.name}] passed Z boundary ({destroyBoundaryZ}). Destroying object.");
+
+                // Ensure AI shoot is explicitly stopped before destruction
+                if (aiShoot != null)
                 {
-                    aiShoot.Activate();
-                    Debug.Log($"Enemy {enemyProps.EnemyName} activated shooting.");
+                    aiShoot.Deactivate();
                 }
+
+                // Perform the destruction
+                Destroy(gameObject);
             }
         }
     }
@@ -108,21 +246,5 @@ public class EnemyController : MonoBehaviour
         Quaternion currentRotation = transform.localRotation;
         float newZRotation = Mathf.LerpAngle(currentRotation.eulerAngles.z, targetZRotation, rotationSmoothSpeed * Time.deltaTime);
         transform.localRotation = Quaternion.Euler(currentRotation.eulerAngles.x, currentRotation.eulerAngles.y, newZRotation);
-    }
-
-    // This method is now public for behavior scripts to call
-    public void HandleOffScreen()
-    {
-        if (modelRenderer != null)
-        {
-            Destroy(modelRenderer.gameObject);
-        }
-        StartCoroutine(DestroyWithDelay());
-    }
-
-    private IEnumerator DestroyWithDelay()
-    {
-        yield return new WaitForSeconds(destroyDelay);
-        Destroy(gameObject);
     }
 }

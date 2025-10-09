@@ -13,7 +13,6 @@ public class EnemyProps : MonoBehaviour
     public EnemyData enemyDataSource; // Reference to the EnemyData ScriptableObject
 
     // Private fields to store the properties synchronized from EnemyData.
-    // They are not directly editable in the Inspector for clarity, as they come from the ScriptableObject.
     private string _enemyName;
     private int _maxHealth;
     private float _movSpeed;
@@ -21,7 +20,12 @@ public class EnemyProps : MonoBehaviour
     private float _fireRate;
     private float _bulletSpeed;
     private int _scoreVal;
-    private bool _isHelicopter;
+
+    // --- UPDATED FIELD ---
+    private EnemyType _enemyType; // Now synchronized from the EnemyData enum
+                                  // ---------------------
+
+    private bool _isBoss;
     private bool _isArmedMG;
     private bool _isArmedRKT;
     private bool _isArmedMSL;
@@ -38,7 +42,12 @@ public class EnemyProps : MonoBehaviour
     public float FireRate => _fireRate;
     public float BulletSpeed => _bulletSpeed;
     public int ScoreVal => _scoreVal;
-    public bool IsHelicopter => _isHelicopter;
+
+    // --- UPDATED PROPERTY ---
+    public EnemyType EnemyType => _enemyType;
+    // ------------------------
+
+    public bool IsBoss => _isBoss;
     public bool IsArmedMG => _isArmedMG;
     public bool IsArmedRKT => _isArmedRKT;
     public bool IsArmedMSL => _isArmedMSL;
@@ -68,7 +77,12 @@ public class EnemyProps : MonoBehaviour
         _fireRate = enemyDataSource.fireRate;
         _bulletSpeed = enemyDataSource.bulletSpeed;
         _scoreVal = enemyDataSource.scoreVal;
-        _isHelicopter = enemyDataSource.isHelicopter;
+
+        // --- SYNCHRONIZE NEW ENUM PROPERTY ---
+        _enemyType = enemyDataSource.enemyType;
+        // -------------------------------------
+
+        _isBoss = enemyDataSource.isBoss;
         _isArmedMG = enemyDataSource.isArmedMG;
         _isArmedRKT = enemyDataSource.isArmedRKT;
         _isArmedMSL = enemyDataSource.isArmedMSL;
@@ -105,12 +119,10 @@ public class EnemyProps : MonoBehaviour
             }
 
             // Destroy the GameObject this script is attached to.
-            // Any visual explosion effects or sound effects should typically be handled
-            // by a separate component or triggered just before destruction (e.g., via a particle system).
             Destroy(gameObject);
 
             //Example of playing an SFX, assuming an AudioManager.Instance exists:
-             if (SoundManager.Instance != null)
+            if (SoundManager.Instance != null)
             {
                 SoundManager.Instance.PlaySFX("Explode");
             }
