@@ -152,22 +152,23 @@ public class HomingMissile : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        // Check if the missile hit a Player to prevent unintended destruction
+        // --- FIX: IGNORE COLLISION WITH PLAYER TAG ---
         if (collision.gameObject.CompareTag("Player"))
         {
-            Debug.Log($"{missileName} hit player, but will not be destroyed.");
-            return;
+            Debug.Log($"{missileName}: Ignoring collision with Player.");
+            return; // Exit without applying damage or destroying the missile
         }
+        // ---------------------------------------------
+
 
         // Only destroy the missile if it hits an enemy.
-        // Otherwise, it passes through.
         if (collision.gameObject.CompareTag("Enemy"))
         {
             Debug.Log($"{missileName} hit " + collision.gameObject.name);
             EnemyProps enemy = collision.gameObject.GetComponent<EnemyProps>();
             if (enemy != null)
             {
-                enemy.TakeDamage(mDamage);
+                enemy.TakeDamage(mDamage, this.gameObject); // Assuming TakeDamage needs the source
             }
             // Destroy the missile after hitting the enemy
             Destroy(gameObject);

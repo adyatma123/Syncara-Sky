@@ -1,89 +1,95 @@
 using UnityEngine;
+using System.Collections; // Needed for coroutines, though not used here, often included.
 
 /// <summary>
-/// Controls a homing missile projectile shot by an enemy.
-/// The missile tracks the player for a limited duration and maintains a constant speed.
-/// 
-/// REQUIRES: A Rigidbody component for physics-based movement.
+/// A homing missile that automatically seeks the player.
+/// It has two phases: active guidance (tracking) and post-guidance (flies straight until destruction).
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
 public class EnemyHomingMissile : MonoBehaviour
 {
-    [Header("Homing Settings")]
+    // Properties are typically set by the EnemyMSL script upon instantiation
+    [HideInInspector] public int damage;
+    [HideInInspector] public GameObject owner;
+
+    [Header("Missile Homing Settings")]
     [Tooltip("The speed at which the missile travels.")]
     public float speed = 15f;
-    [Tooltip("The rotational speed for homing (how quickly it turns to track the player).")]
+    [Tooltip("The speed at which the missile rotates to track the target.")]
     public float homingRotationSpeed = 5f;
-    [Tooltip("The time (in seconds) the missile will actively track the target before self-destructing/flying straight.")]
-    public float guidanceTime = 5f;
 
-    // Runtime state
+    [Tooltip("The duration (in seconds) that the missile actively tracks the player.")]
+    public float guidanceTime = 3f;
+
+    [Tooltip("The time (in seconds) the missile continues flying straight after guidance expires before self-destructing.")]
+    public float timeAfterGuidance = 1.0f;
+
     private Rigidbody rb;
-    private Transform playerTarget;
-    private float currentGuidanceTimer;
+    private Transform target;
 
-    // Properties typically set by the spawning enemy
-    [HideInInspector] public int damage = 1;
-    [HideInInspector] public GameObject owner;
+    private float totalLifetime;
+    private float timeElapsed = 0f;
+    private bool isGuided = true; // Tracks whether homing rotation should be applied
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
         if (rb == null)
         {
-            Debug.LogError("Rigidbody component not found. HomingMissile requires a Rigidbody.", this);
+            Debug.LogError("Rigidbody component not found on the missile.", this);
             enabled = false;
+            return;
         }
 
-        // Initialize timer
-        currentGuidanceTimer = guidanceTime;
+        // Ensure the Rigidbody is set up
+        rb.isKinematic = false;
+        rb.useGravity = false;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
-        // Ensure Rigidbody settings are correct
-        if (rb != null)
+        // Calculate the total time the missile will exist
+        totalLifetime = guidanceTime + timeAfterGuidance;
+
+        // Find the player once at the start
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        if (playerObject != null)
         {
-            rb.isKinematic = false;
-            rb.useGravity = false;
-            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            target = playerObject.transform;
+        }
+        else
+        {
+            Debug.LogWarning("Player not found (tag 'Player'). Missile will fly straight.");
         }
     }
 
     void Start()
     {
-        // 1. Find the player (assumes the player has the tag "Player")
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-        {
-            playerTarget = player.transform;
-        }
-        else
-        {
-            Debug.LogWarning("Player not found! Missile will fly straight.");
-        }
-
-        // 2. Give the missile its initial forward velocity
-        if (rb != null)
-        {
-            rb.velocity = transform.forward * speed;
-        }
+        // Removed initial velocity set here. Velocity is now set in FixedUpdate.
     }
 
     void Update()
     {
-        // Decrement the guidance timer
-        currentGuidanceTimer -= Time.deltaTime;
+        // Increment time elapsed
+        timeElapsed += Time.deltaTime;
 
-        // Check if guidance time has expired
-        if (currentGuidanceTimer <= 0f && playerTarget != null)
+        // 1. Check for Guidance Expiration
+        if (isGuided && timeElapsed >= guidanceTime)
         {
-            // Stop tracking after the guidance time runs out
-            playerTarget = null;
-            Debug.Log($"{gameObject.name}: Guidance time expired. Flying straight.");
+            isGuided = false;
+
+            // --- CRITICAL FIX: FREEZE ROTATION ---
+            // Explicitly set the angular velocity to zero to stop any wild spinning 
+            // the moment guidance is disabled, ensuring it glides straight.
+            if (rb != null)
+            {
+                rb.angularVelocity = Vector3.zero;
+            }
+            // ------------------------------------
+
+            Debug.Log($"Missile Guidance Expired. Rotation maintained. Flying straight for {timeAfterGuidance} seconds.");
         }
 
-        // Basic self-destruction outside the guidance system (e.g., if it goes way off-screen)
-        // You can use your EnemyController's boundary Z check logic here if needed, 
-        // but for a bullet/missile, a simple distance or timer check is often enough.
-        if (currentGuidanceTimer < -5f) // Destroy 5 seconds after guidance ends
+        // 2. Check for Final Destruction
+        if (timeElapsed >= totalLifetime)
         {
             Destroy(gameObject);
         }
@@ -91,48 +97,51 @@ public class EnemyHomingMissile : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Only home if we have a target
-        if (playerTarget != null)
+        // Only apply homing rotation if a target exists AND the missile is still in its guidance phase
+        if (target != null && isGuided)
         {
-            // Calculate the direction vector to the target
-            Vector3 directionToTarget = (playerTarget.position - transform.position).normalized;
-
-            // Calculate the rotation needed to look at the target
-            Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
-
-            // Smoothly rotate the missile's current rotation towards the target rotation
-            rb.rotation = Quaternion.Slerp(
-                rb.rotation,
-                targetRotation,
-                Time.fixedDeltaTime * homingRotationSpeed
-            );
-
-            // Apply the forward velocity based on the new rotation
-            rb.velocity = transform.forward * speed;
+            ApplyHoming();
         }
-        else
-        {
-            // If guidance is lost, maintain current forward momentum/velocity
-            rb.velocity = transform.forward * speed;
-        }
+
+        // CRITICAL FIX: Always update the velocity based on the current forward direction.
+        // This guarantees continuous, full-speed movement whether homing is active or disabled.
+        rb.velocity = transform.forward * speed;
     }
 
-    // Example: Collision logic
-    void OnTriggerEnter(Collider other)
+    private void ApplyHoming()
     {
-        // Prevent hitting the owner enemy or other enemies
-        if (other.gameObject == owner || other.CompareTag("Enemy"))
+        // 1. Get the target position
+        Vector3 targetPosition = target.position;
+
+        // 2. CRITICAL FIX: FORCE TARGET Y TO MISSILE'S Y
+        targetPosition.y = transform.position.y;
+
+        // Calculate the direction needed to point towards the target
+        Vector3 directionToTarget = (targetPosition - transform.position).normalized;
+
+        // Calculate the rotation needed to point towards the target
+        Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
+
+        // Smoothly rotate towards the target direction
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * homingRotationSpeed);
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        // Get the EnemyProps component (assuming it exists)
+        AircraftController player = collision.gameObject.GetComponent<AircraftController>();
+
+        // Prevent hitting the owner or other enemies
+        if (collision.gameObject == owner || collision.gameObject.CompareTag("Enemy"))
         {
             return;
         }
 
-        // Check if it hit the player
-        if (other.CompareTag("Player"))
+        // Check if the missile hit the player or terrain/boundary
+        if (collision.gameObject.CompareTag("Player"))
         {
-            // Add damage logic here (e.g., calling player health script)
-            Debug.Log($"Missile hit Player! Applying {damage} damage.");
-
-            // Destroy the missile on impact
+            // Apply damage logic here (if hitting player)
+            // Destroy the missile after impact
             Destroy(gameObject);
         }
     }

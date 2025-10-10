@@ -51,8 +51,6 @@ public class Gun : MonoBehaviour
         {
             Debug.LogError("No GameObject with tag 'OverheatText' found in the scene.");
         }
-
-        aimbot.enabled = false;
     }
 
     void Update()

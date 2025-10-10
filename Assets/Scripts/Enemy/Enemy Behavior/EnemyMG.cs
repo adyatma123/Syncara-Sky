@@ -82,18 +82,13 @@ public class EnemyMG : MonoBehaviour
         if (Time.frameCount % 60 == 0)
         {
             // Log every 60 frames to prevent spam, confirming Update() execution
-            Debug.Log($"[{gameObject.name}] MG Update running. isShooting: {isShooting}.");
+            //Debug.Log($"[{gameObject.name}] MG Update running. isShooting: {isShooting}.");
         }
 
         // DEBUG CHECK 2: Should we exit early?
         if (!isShooting || enemyProps == null || !enemyProps.IsArmedMG) return;
 
-        // DEBUG CHECK 3: Is the projectile assigned?
-        if (bulletPrefab == null)
-        {
-            Debug.LogWarning($"[MG FIRE FAIL] MG ARMED but bulletPrefab is NULL on {gameObject.name}. Cannot fire MG.");
-            return;
-        }
+
 
         // Calculate the required delay based on FireRate (RPM)
         float fireInterval = (60f / enemyProps.FireRate);

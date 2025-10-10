@@ -99,7 +99,10 @@ public class PlayerController : MonoBehaviour
 
     void HandleWeaponInput()
     {
-        if (controlledAircraft == null) return;
+        if (controlledAircraft == null)
+        {
+            Debug.LogError("Couldn't found controlledAircraft");
+        }
 
         if (Input.GetButtonDown("Payload")) // Right Mouse Button for missiles
         {

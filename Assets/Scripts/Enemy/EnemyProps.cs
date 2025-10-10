@@ -108,10 +108,10 @@ public class EnemyProps : MonoBehaviour
         if (currentHealth <= 0)
         {
             // Check if the damage source was the player before invoking the score event.
-            if (damageSource != null && damageSource.CompareTag("Player"))
+            if (damageSource != null && damageSource.CompareTag("PlayerProjectile"))
             {
-                OnEnemyDestroyedByPlayer?.Invoke(_scoreVal); // Use the synchronized score value
-                Debug.Log($"[{_enemyName}] destroyed by player! Awarding {_scoreVal} points.");
+                OnEnemyDestroyedByPlayer?.Invoke(_scoreVal); // Award score
+                Debug.Log($"[{_enemyName}] destroyed by player projectile.");
             }
             else
             {

@@ -175,19 +175,11 @@ public class EnemyController : MonoBehaviour
         {
             weaponsActivated = true; // Set flag to prevent future calls
 
-            Debug.Log($"--- WEAPON ACTIVATION SUCCESS ---");
-            Debug.Log($"Enemy {enemyProps.EnemyName} activated shooting (Move and Visibility Complete).");
+            //Debug.Log($"--- WEAPON ACTIVATION SUCCESS ---");
+            //Debug.Log($"Enemy {enemyProps.EnemyName} activated shooting (Move and Visibility Complete).");
 
             if (mgShoot != null) mgShoot.Activate();
             if (mslShoot != null) mslShoot.Activate();
-        }
-        else
-        {
-            // Log block only runs if activation is still possible but one condition is missing
-            if (isArmed && !weaponsActivated)
-            {
-                Debug.Log($"ACTIVATE BLOCKED: Move Complete: {isInitialMovementComplete}, Visible: {isCurrentlyVisible}. Waiting for conditions...");
-            }
         }
     }
 
