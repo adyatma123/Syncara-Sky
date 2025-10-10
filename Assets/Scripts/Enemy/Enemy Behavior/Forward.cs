@@ -7,7 +7,6 @@ using UnityEngine;
 public class ForwardMoveBehavior : MonoBehaviour
 {
     private EnemyController enemyController;
-    private bool isOffScreen = false;
 
     void Start()
     {

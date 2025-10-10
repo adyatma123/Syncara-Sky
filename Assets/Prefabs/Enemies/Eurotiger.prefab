@@ -97,6 +97,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rotationSpeed: 1000
+  axis: 1
 --- !u!1 &2861419952546743615
 GameObject:
   m_ObjectHideFlags: 0
@@ -324,7 +325,7 @@ GameObject:
   - component: {fileID: 2637052252847701960}
   - component: {fileID: 830004170369408645}
   - component: {fileID: 5721191807766834696}
-  - component: {fileID: 1577994548332706318}
+  - component: {fileID: -4087451278422318013}
   - component: {fileID: -776494569964048702}
   - component: {fileID: -3963665742440065768}
   m_Layer: 0
@@ -385,7 +386,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyDataSource: {fileID: 11400000, guid: 39b1d37db190d184e8dd001caa0f9e58, type: 2}
   currentHealth: 0
---- !u!114 &1577994548332706318
+--- !u!114 &-4087451278422318013
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -394,12 +395,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 5098264257078755976}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac2a9af895da7aa4c8f75b990c0f7cab, type: 3}
+  m_Script: {fileID: 11500000, guid: 738fdd59ca439c3438921a7b4a87737d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   bulletPrefab: {fileID: 4003252818657007039, guid: fb4595b122610474b9906d4c3d181755, type: 3}
   useBurstFire: 1
-  burstShotCount: 2
+  burstShotCount: 3
   timeBetweenBurstShots: 0.1
   firePoint: {fileID: 5508323142726447177}
 --- !u!65 &-776494569964048702
@@ -481,3 +482,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rotationSpeed: 10000
+  axis: 1

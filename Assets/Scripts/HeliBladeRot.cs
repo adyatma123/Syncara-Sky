@@ -1,38 +1,65 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Controls the continuous rotation of a GameObject (like a helicopter blade or rotor) 
+/// around a selectable axis (X, Y, or Z).
+/// </summary>
 public class HeliBladeRot : MonoBehaviour
 {
-    public float rotationSpeed = 10f; // Public variable to control rotation speed
+    // Enum to select the desired axis of rotation in the Inspector.
+    public enum RotationAxis
+    {
+        X_Axis,
+        Y_Axis,
+        Z_Axis
+    }
+
+    [Tooltip("The speed of rotation in degrees per second.")]
+    public float rotationSpeed = 100f;
+
+    [Tooltip("Select the local axis around which the object will rotate.")]
+    public RotationAxis axis = RotationAxis.Y_Axis;
+
+    private Vector3 rotationVector;
+
+    void Start()
+    {
+        // Initialize the rotation vector based on the selected enum value.
+        SetRotationAxis();
+    }
 
     void Update()
     {
-        // Rotate the object around the Y-axis continuously.
-        transform.Rotate(Vector3.up * rotationSpeed * Time.deltaTime);
+        // Rotate the object around the determined vector continuously.
+        transform.Rotate(rotationVector * rotationSpeed * Time.deltaTime);
+    }
 
-        // Explanation of the code:
+    /// <summary>
+    /// Maps the selected enum value to the corresponding Vector3 axis.
+    /// This method can be called in Start or during initialization.
+    /// </summary>
+    private void SetRotationAxis()
+    {
+        switch (axis)
+        {
+            case RotationAxis.X_Axis:
+                rotationVector = Vector3.right;
+                break;
+            case RotationAxis.Y_Axis:
+                rotationVector = Vector3.up;
+                break;
+            case RotationAxis.Z_Axis:
+                rotationVector = Vector3.forward;
+                break;
+        }
+    }
 
-        // 1. `public float rotationSpeed = 10f;`
-        //    - This declares a public variable named `rotationSpeed` of type `float`.  
-        //    - `public` makes this variable accessible in the Unity Inspector, so you can easily adjust the speed without changing the code.
-        //    - `10f` is the initial value of the rotation speed (degrees per second). The `f` indicates it's a float.
-
-        // 2. `void Update()`
-        //    - The `Update()` function is called every frame.  This is where you put code that needs to run repeatedly.
-
-        // 3. `transform.Rotate(Vector3.up * rotationSpeed * Time.deltaTime);`
-        //    - `transform` refers to the Transform component of the GameObject this script is attached to.  The Transform component controls the object's position, rotation, and scale.
-        //    - `Rotate()` is a method of the Transform component that rotates the object.
-        //    - `Vector3.up` is a shorthand for `new Vector3(0, 1, 0)`. It represents the up direction (the Y-axis).  We're rotating around the Y-axis.
-        //    - `rotationSpeed` is the speed of rotation in degrees per second.
-        //    - `Time.deltaTime` is the time elapsed since the last frame.  Multiplying `rotationSpeed` by `Time.deltaTime` makes the rotation frame-rate independent.  This ensures the rotation speed is consistent regardless of how fast or slow the game is running.  Without `Time.deltaTime`, the rotation would appear faster on faster machines and slower on slower machines.
-
-        // How to use this script:
-
-        // 1. Create a new C# script in Unity (e.g., "RotateObject").
-        // 2. Copy and paste this code into the script.
-        // 3. Attach the script to the GameObject you want to rotate.
-        // 4. In the Inspector for the GameObject, you'll see the `Rotation Speed` field.  Adjust the value to change the rotation speed.  A positive value rotates clockwise, and a negative value rotates counter-clockwise.
+    /// <summary>
+    /// Helper method called when an inspector value changes (only runs in the Unity Editor).
+    /// This ensures the rotation axis is updated immediately if the user changes the dropdown.
+    /// </summary>
+    private void OnValidate()
+    {
+        SetRotationAxis();
     }
 }

@@ -42,10 +42,12 @@ public class EnemyController : MonoBehaviour
 
     [Header("Runtime Properties (Managed by Controller)")]
     public bool isInitialMovementComplete = false;
+    private bool weaponsActivated = false; // NEW FLAG to prevent redundant Activate() calls
 
     // References to other components on this GameObject
     private Rigidbody rb;
-    private AIShoot aiShoot;
+    private EnemyMG mgShoot; // FIX: Component name updated
+    private EnemyMSL mslShoot; // FIX: Component name updated
     private float lastXPosition;
 
     private Plane[] cameraPlanes; // Cache for frustum planes
@@ -58,7 +60,7 @@ public class EnemyController : MonoBehaviour
         enemyProps = GetComponent<EnemyProps>();
         if (enemyProps == null)
         {
-            Debug.LogError("EnemyProps script not found on " + gameObject.name + ". EnemyController requires EnemyProps to function.", this);
+            Debug.LogError("FATAL ERROR: EnemyProps script not found on " + gameObject.name + ". EnemyController requires EnemyProps to function.", this);
             enabled = false;
             return;
         }
@@ -66,13 +68,21 @@ public class EnemyController : MonoBehaviour
         // Validate Renderer
         if (modelRenderer == null)
         {
-            Debug.LogError("modelRenderer is not assigned on " + gameObject.name + ". Off-screen and shooting logic will fail.", this);
+            Debug.LogError("CONFIG ERROR: modelRenderer is not assigned on " + gameObject.name + ". Off-screen and shooting logic will fail.", this);
+        }
+        else
+        {
+            Debug.Log($"CONFIG CHECK: Model Renderer assigned on {gameObject.name}.");
         }
 
-        // Get optional components
-        aiShoot = GetComponent<AIShoot>();
+        // FIX: Get references to the new split weapon components
+        mgShoot = GetComponent<EnemyMG>();
+        mslShoot = GetComponent<EnemyMSL>();
 
-        Debug.Log($"Enemy {enemyProps.EnemyName} initialized with move speed: {enemyProps.MovSpeed}");
+        Debug.Log($"WEAPON CHECK: MG Component found: {mgShoot != null}.");
+        Debug.Log($"WEAPON CHECK: MSL Component found: {mslShoot != null}.");
+        Debug.Log($"WEAPON DATA CHECK: Is Armed MG: {enemyProps.IsArmedMG}. Is Armed MSL: {enemyProps.IsArmedMSL}.");
+
         lastXPosition = transform.position.x;
 
         // Ensure the Rigidbody is set up correctly (assuming a 3D shmup setup)
@@ -92,26 +102,18 @@ public class EnemyController : MonoBehaviour
 
     /// <summary>
     /// Checks if the enemy's model is currently within the main camera's view frustum.
-    /// This replaces the unreliable OnBecameVisible/Invisible events for state management.
     /// </summary>
     private bool IsRendererVisible()
     {
         if (modelRenderer == null || Camera.main == null)
         {
-            return false; // Cannot check visibility without a Renderer or Camera
+            return false;
         }
 
-        // Re-calculate frustum planes for the current camera position
         cameraPlanes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
-
-        // Test the bounds of the Renderer against the camera frustum planes
         return GeometryUtility.TestPlanesAABB(cameraPlanes, modelRenderer.bounds);
     }
 
-    /// <summary>
-    /// Called by the Renderer system when the object is visible by any camera.
-    /// This is kept only to ensure the flag is set as a fallback.
-    /// </summary>
     void OnBecameVisible()
     {
         if (!hasBeenVisible)
@@ -121,13 +123,9 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Called by the Renderer system when the object is no longer visible by any camera.
-    /// This method is intentionally empty as visibility state is managed in Update().
-    /// </summary>
     void OnBecameInvisible()
     {
-        // Intentionally empty.
+        // Intentionally empty. State management is in Update().
     }
 
 
@@ -136,16 +134,19 @@ public class EnemyController : MonoBehaviour
         // 1. Visibility State Management (Manual Check)
         CheckVisibilityAndToggleState();
 
-        // 2. Boundary Destruction Check
+        // 2. Weapon Activation Management (Runs every frame until activated)
+        TryActivateWeapons();
+
+        // 3. Boundary Destruction Check
         CheckForBoundaryDestruction();
 
-        // 3. Calculate X velocity for Z-rotation
+        // 4. Calculate X velocity for Z-rotation
         float currentX = transform.position.x;
         float xVelocity = (currentX - lastXPosition) / Time.deltaTime;
         lastXPosition = currentX;
         RotateBasedOnXVelocity(xVelocity);
 
-        // 4. Initial forward movement (Distance-based)
+        // 5. Initial forward movement (Distance-based)
         if (!isInitialMovementComplete)
         {
             // Move forward until the target Z position is reached
@@ -161,33 +162,52 @@ public class EnemyController : MonoBehaviour
     }
 
     /// <summary>
-    /// Checks the current visibility status and toggles the AIShoot component accordingly.
+    /// Attempts to activate weapons once the enemy is ready (visible AND initial movement complete).
+    /// </summary>
+    private void TryActivateWeapons()
+    {
+        if (weaponsActivated) return; // Already activated, exit early
+
+        bool isArmed = enemyProps.IsArmedMG || enemyProps.IsArmedMSL;
+
+        // Check the combined condition: MUST be visible AND initial move must be complete
+        if (isArmed && isInitialMovementComplete && isCurrentlyVisible)
+        {
+            weaponsActivated = true; // Set flag to prevent future calls
+
+            Debug.Log($"--- WEAPON ACTIVATION SUCCESS ---");
+            Debug.Log($"Enemy {enemyProps.EnemyName} activated shooting (Move and Visibility Complete).");
+
+            if (mgShoot != null) mgShoot.Activate();
+            if (mslShoot != null) mslShoot.Activate();
+        }
+        else
+        {
+            // Log block only runs if activation is still possible but one condition is missing
+            if (isArmed && !weaponsActivated)
+            {
+                Debug.Log($"ACTIVATE BLOCKED: Move Complete: {isInitialMovementComplete}, Visible: {isCurrentlyVisible}. Waiting for conditions...");
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// Checks the current visibility status and toggles the weapon components accordingly.
     /// </summary>
     private void CheckVisibilityAndToggleState()
     {
         bool nowVisible = IsRendererVisible();
-
-        // If shooting logic is disabled, we don't need to run this check.
-        if (aiShoot == null) return;
-
-        // Enemy must be armed with EITHER MG or MSL to attempt activation/deactivation
         bool isArmed = enemyProps.IsArmedMG || enemyProps.IsArmedMSL;
 
         if (nowVisible && !isCurrentlyVisible)
         {
-            // Just became visible
+            // Just became visible (or re-visible)
             isCurrentlyVisible = true;
             if (!hasBeenVisible)
             {
                 hasBeenVisible = true; // Set eligibility for destruction
                 Debug.Log($"[{gameObject.name}] Visibility Check: Entered view (Visible: True). Destruction eligible.");
-            }
-
-            // --- CRITICAL FIX: Only Activate if Initial Movement is also complete ---
-            if (isArmed && isInitialMovementComplete)
-            {
-                aiShoot.Activate();
-                Debug.Log($"Enemy {enemyProps.EnemyName} activated shooting (Visibility/Move Check).");
             }
         }
         else if (!nowVisible && isCurrentlyVisible)
@@ -196,8 +216,11 @@ public class EnemyController : MonoBehaviour
             isCurrentlyVisible = false;
             Debug.Log($"[{gameObject.name}] Visibility Check: Left view (Visible: False).");
 
-            // Deactivate AI Shoot
-            aiShoot.Deactivate();
+            // --- CRITICAL FIX: Deactivate both weapon systems and reset flag ---
+            if (mgShoot != null) mgShoot.Deactivate();
+            if (mslShoot != null) mslShoot.Deactivate();
+
+            weaponsActivated = false; // Enemy is now deactivated and must re-trigger Activate() when visible again
         }
     }
 
@@ -215,11 +238,9 @@ public class EnemyController : MonoBehaviour
             {
                 Debug.Log($"[{gameObject.name}] passed Z boundary ({destroyBoundaryZ}). Destroying object.");
 
-                // Ensure AI shoot is explicitly stopped before destruction
-                if (aiShoot != null)
-                {
-                    aiShoot.Deactivate();
-                }
+                // Ensure ALL weapon scripts are explicitly stopped before destruction
+                if (mgShoot != null) mgShoot.Deactivate();
+                if (mslShoot != null) mslShoot.Deactivate();
 
                 // Perform the destruction
                 Destroy(gameObject);

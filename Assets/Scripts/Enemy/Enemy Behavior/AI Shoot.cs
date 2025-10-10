@@ -61,11 +61,13 @@ public class AIShoot : MonoBehaviour
         isShooting = true;
         Debug.Log($"[{gameObject.name}] ACTIVATED shooting.");
 
-        // --- MG SETUP ---
+        // --- MG SETUP: Initialize fire time here, the Update loop will handle the rest. ---
         if (enemyProps.IsArmedMG)
         {
-            // Initializing fire time for machine gun
-            nextFireTimeMG = Time.time + (60f / enemyProps.FireRate);
+            // Set the next fire time to the current time, allowing it to fire immediately 
+            // on the first Update() call if ready.
+            nextFireTimeMG = Time.time;
+            Debug.Log($"MG initialized. Next fire time set to: {nextFireTimeMG}");
         }
 
         // --- MISSILE SETUP ---
@@ -93,19 +95,47 @@ public class AIShoot : MonoBehaviour
         if (!isShooting) return;
 
         // --- MACHINE GUN LOGIC ---
-        if (enemyProps.IsArmedMG && Time.time >= nextFireTimeMG)
+        if (enemyProps.IsArmedMG)
         {
-            if (useBurstFire)
+            if (bulletPrefab == null)
             {
-                StartCoroutine(FireBurst(bulletPrefab, enemyProps.BulletSpeed));
-            }
-            else
-            {
-                ShootProjectile(bulletPrefab, enemyProps.BulletSpeed);
+                // This check is important, ensures we don't proceed without a projectile.
+                Debug.LogWarning($"MG ARMED but bulletPrefab is NULL on {gameObject.name}. Cannot fire MG.");
+                return;
             }
 
-            // Calculate the time for the NEXT single shot/burst start
-            nextFireTimeMG = Time.time + (60f / enemyProps.FireRate);
+            // Calculate the required delay based on FireRate (RPM)
+            float fireInterval = (60f / enemyProps.FireRate);
+
+            // Fire only if current time is past the next calculated fire time
+            if (Time.time >= nextFireTimeMG)
+            {
+                if (useBurstFire)
+                {
+                    // Start the burst coroutine
+                    StartCoroutine(FireBurst(bulletPrefab, enemyProps.BulletSpeed));
+                }
+                else
+                {
+                    // Fire a single shot
+                    ShootProjectile(bulletPrefab, enemyProps.BulletSpeed);
+                }
+
+                // *** CRITICAL FIX: Ensure next fire time increments by the fixed interval ***
+                // This reliably calculates the next time the weapon should be ready.
+                nextFireTimeMG = Time.time + fireInterval;
+                // *** END CRITICAL FIX ***
+
+                // Add debug logs inside the condition to reduce console spam
+                if (useBurstFire)
+                {
+                    Debug.Log($"MG Burst fired. Next burst start time: {nextFireTimeMG}");
+                }
+                else
+                {
+                    Debug.Log($"MG Single fired. Next shot time: {nextFireTimeMG}");
+                }
+            }
         }
     }
 
@@ -119,7 +149,8 @@ public class AIShoot : MonoBehaviour
         }
 
         // --- DEBUG LOG: Confirming Actual Shot ---
-        Debug.Log($"[{gameObject.name}] Projectile launched at {Time.time}!");
+        // This log now confirms a generic projectile shot, MG or MSL.
+        Debug.Log($"[{gameObject.name}] Projectile '{projectilePrefab.name}' launched at {Time.time}!");
         // ------------------------------------------
 
         // Instantiate the projectile at the firePoint's position and rotation
@@ -133,6 +164,11 @@ public class AIShoot : MonoBehaviour
             // If it's a homing missile, initialize its properties
             missileScript.damage = (int)enemyProps.EnemyDmg;
             missileScript.owner = this.gameObject;
+
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySFX("Player Missile");
+            }
         }
         else
         {
@@ -144,6 +180,11 @@ public class AIShoot : MonoBehaviour
                 bulletScript.owner = this.gameObject;
                 Vector3 shootDirection = firePoint.forward;
                 bulletScript.SetDirectionAndSpeed(shootDirection, projectileSpeed);
+
+                if (SoundManager.Instance != null)
+                {
+                    SoundManager.Instance.PlaySFX("Player Shoot");
+                }
             }
             else
             {
@@ -152,10 +193,7 @@ public class AIShoot : MonoBehaviour
         }
 
         // Example of playing an SFX:
-        if (SoundManager.Instance != null)
-        {
-            SoundManager.Instance.PlaySFX("Shoot");
-        }
+        
     }
 
     private IEnumerator FireBurst(GameObject projectilePrefab, float projectileSpeed)
@@ -190,7 +228,7 @@ public class AIShoot : MonoBehaviour
             if (enemyProps.IsArmedMSL && missilePrefab != null)
             {
                 ShootProjectile(missilePrefab, 0f); // Speed is ignored for homing missile as its script handles it
-                nextFireTimeMSL = Time.time + delayBetweenMissiles;
+                // nextFireTimeMSL is calculated by the yield at the end of the loop, no need to set here
             }
 
             // Wait for the fire rate duration before checking again
