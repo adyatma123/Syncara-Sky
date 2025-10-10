@@ -81,10 +81,6 @@ public class HomingMissile : MonoBehaviour
         if (target == null)
         {
             FindNearestEnemy();
-            if (target != null)
-            {
-                Debug.Log($"{missileName}: Found target '{target.name}'. Homing activated.");
-            }
         }
     }
 
@@ -136,7 +132,6 @@ public class HomingMissile : MonoBehaviour
         {
             isHoming = false;
             target = null;
-            Debug.Log($"{missileName}: Homing lock lost. Target is out of range or angle.");
             return;
         }
 

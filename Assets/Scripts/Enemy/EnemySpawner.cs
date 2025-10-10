@@ -86,9 +86,10 @@ public class EnemySpawner : MonoBehaviour
 
         if (enemyProps != null && playerController != null)
         {
-            // Subscribe to the OnEnemyDestroyedByPlayer event to add score
-            enemyProps.OnEnemyDestroyedByPlayer += playerController.AddScore;
-            Debug.Log($"Spawned {enemyProps.EnemyName} (Index {prefabIndex}) at {spawnPosition}");
+            // Removed the line: enemyProps.OnEnemyDestroyedByPlayer += playerController.AddScore;
+            // The score is now handled globally by the GameManager subscribing to the static OnEnemyDestroyedByPlayerScore event.
+
+            Debug.Log($"Spawned {enemyProps.EnemyName} (Index {prefabIndex}) at {spawnPosition}. Score now tracked by GameManager.");
         }
         else
         {

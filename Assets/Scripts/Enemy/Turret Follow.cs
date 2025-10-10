@@ -16,7 +16,6 @@ public class TurretFollow : MonoBehaviour
 
         if (targetObject == null)
         {
-            Debug.LogError("No object found with tag '" + targetObject + "' in the scene!");
             return; // Exit early if no object with the tag is found.
         }
 

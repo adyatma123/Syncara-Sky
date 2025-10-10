@@ -8,6 +8,16 @@ using UnityEngine;
 /// </summary>
 public class EnemyProps : MonoBehaviour
 {
+    // --- STATIC EVENTS FOR GAME MANAGER AND STORY EVENT MANAGER ---
+
+    /// <summary>Fires when ANY enemy is destroyed (by player or out-of-bounds).</summary>
+    public static event Action OnEnemyDestroyed;
+
+    /// <summary>Fires when enemy is destroyed specifically by a player projectile (passes score value).</summary>
+    public static event Action<int> OnEnemyDestroyedByPlayerScore;
+
+    // ----------------------------------------------------------------------------------
+
     [Header("Data Source")]
     [Tooltip("Assign the EnemyData ScriptableObject asset that defines this enemy type's properties.")]
     public EnemyData enemyDataSource; // Reference to the EnemyData ScriptableObject
@@ -53,7 +63,6 @@ public class EnemyProps : MonoBehaviour
     public bool IsArmedMSL => _isArmedMSL;
 
     // Event triggered when this enemy is destroyed by the player, passing the score value.
-    public event Action<int> OnEnemyDestroyedByPlayer;
 
     /// <summary>
     /// Called when the script instance is being loaded.
@@ -64,7 +73,6 @@ public class EnemyProps : MonoBehaviour
         // Critical: Ensure an EnemyData asset is assigned.
         if (enemyDataSource == null)
         {
-            Debug.LogError($"EnemyDataSource is not assigned to EnemyProps on {gameObject.name}! Please assign an EnemyData asset. This enemy will not function correctly.", this);
             enabled = false; // Disable this component to prevent further errors
             return;
         }
@@ -89,46 +97,37 @@ public class EnemyProps : MonoBehaviour
 
         // Initialize the current health to the maximum health defined in EnemyData.
         currentHealth = _maxHealth;
-
-        Debug.Log($"[{_enemyName}] EnemyProps synchronized from '{enemyDataSource.name}'. Initial Health: {currentHealth}/{_maxHealth}. Speed: {_movSpeed}");
     }
 
     /// <summary>
     /// Reduces the enemy's current health by the given amount.
-    /// If health drops to zero or below, the enemy is destroyed, and the OnEnemyDestroyedByPlayer event
-    /// is triggered if the damage source was tagged as "Player".
+    /// If health drops to zero or below, the enemy is destroyed and reports the kill statistics.
     /// </summary>
     /// <param name="damageAmount">The amount of damage to apply to the enemy's health.</param>
-    /// <param name="damageSource">The GameObject that inflicted the damage (e.g., a player's bullet). Can be null.</param>
+    /// <param name="damageSource">The GameObject that inflicted the damage (e.g., a player's projectile). Can be null.</param>
     public void TakeDamage(int damageAmount, GameObject damageSource = null)
     {
         currentHealth -= damageAmount;
-        Debug.Log($"[{_enemyName}] took {damageAmount} damage. Current Health: {currentHealth}");
 
         if (currentHealth <= 0)
         {
-            // Check if the damage source was the player before invoking the score event.
+            // 1. Check for Player Kill and Report Score
+            // We use the "PlayerProjectile" tag (as established previously) for accurate scoring.
             if (damageSource != null && damageSource.CompareTag("PlayerProjectile"))
             {
-                OnEnemyDestroyedByPlayer?.Invoke(_scoreVal); // Award score
-                Debug.Log($"[{_enemyName}] destroyed by player projectile.");
-            }
-            else
-            {
-                Debug.Log($"[{_enemyName}] destroyed by non-player source or no source provided.");
+                OnEnemyDestroyedByPlayerScore?.Invoke(_scoreVal); // Fires event for Game Manager to add score and increment player kills
             }
 
-            // Destroy the GameObject this script is attached to.
+            // 2. Report Total Destruction (for total count, wave clearing, and StoryEventManager)
+            OnEnemyDestroyed?.Invoke();
+
+            // 3. Cleanup
             Destroy(gameObject);
 
-            //Example of playing an SFX, assuming an AudioManager.Instance exists:
+            // Example of playing an SFX:
             if (SoundManager.Instance != null)
             {
                 SoundManager.Instance.PlaySFX("Explode");
-            }
-            else
-            {
-                Debug.LogWarning("AudioManager.Instance not found. Cannot play 'Explode' SFX.");
             }
         }
     }

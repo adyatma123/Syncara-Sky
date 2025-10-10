@@ -36,9 +36,5 @@ public class GunNameDisplay : MonoBehaviour
             // Assuming 'guns' is a public struct in your Gun script
             gunNameText.text = gun.guns.name; // Access the 'name' property of the Guns struct.
         }
-        else
-        {
-            Debug.LogWarning("Gun script or Gun Name Text not assigned!");
-        }
     }
 }

@@ -277,6 +277,11 @@ public class Gun : MonoBehaviour
         bulletRotation *= Quaternion.Euler(0f, randomXRotation, 0f); // Add rotation around X-axis
 
         GameObject bulletInstance = Instantiate(guns.bulletPrefab, spawnPoint.position, spawnPoint.rotation);
+
+        // --- FIX: Explicitly set the tag for enemy damage logic ---
+        bulletInstance.tag = "PlayerProjectile";
+        // -----------------------------------------------------------
+
         Bullet bulletScript = bulletInstance.GetComponent<Bullet>();
         bulletScript.damage = guns.damage;
         bulletInstance.GetComponent<Rigidbody>().velocity = bulletRotation * Vector3.forward * guns.bulletSpeed; // Apply rotation to velocity

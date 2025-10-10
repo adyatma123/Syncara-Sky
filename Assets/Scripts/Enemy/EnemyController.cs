@@ -60,28 +60,13 @@ public class EnemyController : MonoBehaviour
         enemyProps = GetComponent<EnemyProps>();
         if (enemyProps == null)
         {
-            Debug.LogError("FATAL ERROR: EnemyProps script not found on " + gameObject.name + ". EnemyController requires EnemyProps to function.", this);
             enabled = false;
             return;
-        }
-
-        // Validate Renderer
-        if (modelRenderer == null)
-        {
-            Debug.LogError("CONFIG ERROR: modelRenderer is not assigned on " + gameObject.name + ". Off-screen and shooting logic will fail.", this);
-        }
-        else
-        {
-            Debug.Log($"CONFIG CHECK: Model Renderer assigned on {gameObject.name}.");
         }
 
         // FIX: Get references to the new split weapon components
         mgShoot = GetComponent<EnemyMG>();
         mslShoot = GetComponent<EnemyMSL>();
-
-        Debug.Log($"WEAPON CHECK: MG Component found: {mgShoot != null}.");
-        Debug.Log($"WEAPON CHECK: MSL Component found: {mslShoot != null}.");
-        Debug.Log($"WEAPON DATA CHECK: Is Armed MG: {enemyProps.IsArmedMG}. Is Armed MSL: {enemyProps.IsArmedMSL}.");
 
         lastXPosition = transform.position.x;
 
@@ -119,7 +104,6 @@ public class EnemyController : MonoBehaviour
         if (!hasBeenVisible)
         {
             hasBeenVisible = true;
-            Debug.Log($"[{gameObject.name}] entered the screen (OnBecameVisible fallback). Destruction eligibility enabled.");
         }
     }
 
@@ -156,7 +140,6 @@ public class EnemyController : MonoBehaviour
             if (transform.position.z <= initialMovementEndZ)
             {
                 isInitialMovementComplete = true;
-                Debug.Log($"Enemy {enemyProps.EnemyName} completed initial movement at Z={transform.position.z}.");
             }
         }
     }
@@ -199,14 +182,12 @@ public class EnemyController : MonoBehaviour
             if (!hasBeenVisible)
             {
                 hasBeenVisible = true; // Set eligibility for destruction
-                Debug.Log($"[{gameObject.name}] Visibility Check: Entered view (Visible: True). Destruction eligible.");
             }
         }
         else if (!nowVisible && isCurrentlyVisible)
         {
             // Just became invisible
             isCurrentlyVisible = false;
-            Debug.Log($"[{gameObject.name}] Visibility Check: Left view (Visible: False).");
 
             // --- CRITICAL FIX: Deactivate both weapon systems and reset flag ---
             if (mgShoot != null) mgShoot.Deactivate();
@@ -228,7 +209,6 @@ public class EnemyController : MonoBehaviour
             // Check if the enemy has moved beyond the lower viewpoint boundary on the Z-axis.
             if (transform.position.z < destroyBoundaryZ)
             {
-                Debug.Log($"[{gameObject.name}] passed Z boundary ({destroyBoundaryZ}). Destroying object.");
 
                 // Ensure ALL weapon scripts are explicitly stopped before destruction
                 if (mgShoot != null) mgShoot.Deactivate();

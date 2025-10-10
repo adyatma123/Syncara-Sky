@@ -33,30 +33,16 @@ public class EnemyMG : MonoBehaviour
     void Awake()
     {
         enemyProps = GetComponent<EnemyProps>();
-        if (enemyProps == null)
-        {
-            // FIX: Use EnemyMG in the log string for clarity
-            Debug.LogError("EnemyMG requires an EnemyProps component on the parent GameObject.", this);
-            // Removed enabled = false; to allow the component to remain active and potentially receive Activate() call
-        }
-
-        if (firePoint == null)
-        {
-            Debug.LogError("EnemyMG requires a Fire Point Transform assigned in the Inspector.", this);
-            // Removed enabled = false; to allow the component to remain active and potentially receive Activate() call
-        }
     }
 
     public void Activate()
     {
-        // Debug: Check if activation is even attempting to run
-        Debug.Log($"[{gameObject.name}] MG Activate called. IsArmedMG: {enemyProps?.IsArmedMG}, IsShooting: {isShooting}.");
+
 
         if (enemyProps == null || !enemyProps.IsArmedMG) return;
         if (isShooting) return;
 
         isShooting = true;
-        Debug.Log($"[{gameObject.name}] MG ACTIVATED shooting.");
 
         // Set the next fire time to the current time to fire immediately on the first Update() check.
         nextFireTimeMG = Time.time;
@@ -67,7 +53,6 @@ public class EnemyMG : MonoBehaviour
         if (!isShooting) return;
 
         isShooting = false;
-        Debug.Log($"[{gameObject.name}] MG DEACTIVATED shooting.");
 
         if (currentBurstCoroutine != null)
         {
@@ -97,7 +82,6 @@ public class EnemyMG : MonoBehaviour
         if (Time.time >= nextFireTimeMG)
         {
             // DEBUG CHECK 5: Final trigger confirmation
-            Debug.Log($"[MG FIRE TRIGGERED] Time Check Passed! Time: {Time.time}, Next Fire: {nextFireTimeMG}.");
 
             if (useBurstFire)
             {
@@ -105,14 +89,12 @@ public class EnemyMG : MonoBehaviour
                 if (currentBurstCoroutine == null)
                 {
                     currentBurstCoroutine = StartCoroutine(FireBurst(bulletPrefab, enemyProps.BulletSpeed));
-                    Debug.Log($"MG Burst fired. Next burst start time calculated.");
                 }
             }
             else
             {
                 // Fire a single shot
                 ShootBullet(bulletPrefab, enemyProps.BulletSpeed);
-                Debug.Log($"MG Single fired. Next shot time calculated.");
             }
 
             // CRITICAL: Ensure next fire time increments by the fixed interval
@@ -122,9 +104,6 @@ public class EnemyMG : MonoBehaviour
 
     private void ShootBullet(GameObject projectilePrefab, float projectileSpeed)
     {
-        // --- DEBUG LOG: Confirming Actual Shot ---
-        Debug.Log($"[{gameObject.name}] MG Projectile instantiation attempted!");
-        // ------------------------------------------
 
         // Instantiate the projectile at the firePoint's position and rotation
         GameObject instantiatedProjectile = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
@@ -137,10 +116,6 @@ public class EnemyMG : MonoBehaviour
             bulletScript.owner = this.gameObject;
             Vector3 shootDirection = firePoint.forward;
             bulletScript.SetDirectionAndSpeed(shootDirection, projectileSpeed);
-        }
-        else
-        {
-            Debug.LogWarning($"Instantiated MG prefab {projectilePrefab.name} is missing the EnemyBullet script.");
         }
 
         // Example of playing an SFX:

@@ -112,7 +112,6 @@ public class SplineFollower : MonoBehaviour
         {
             // Destroy the associated spline GameObject to keep the scene clean
             Destroy(currentRouteGameObject);
-            Debug.Log($"Spline Follower cleanup: Destroyed route {currentRouteGameObject.name}.");
         }
     }
 }

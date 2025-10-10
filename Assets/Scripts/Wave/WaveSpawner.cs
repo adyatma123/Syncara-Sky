@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI; // Required for legacy Text component (or TextMeshPro)
-using UnityEngine.SceneManagement; // Required for loading scenes
+using System; // Required for Action events
 
 /// <summary>
 /// Serializable class to define a single wave configuration.
@@ -18,21 +17,21 @@ public class Wave
 }
 
 /// <summary>
-/// Manages the sequential spawning of enemy waves and handles the Level Complete state.
+/// Manages the sequential spawning of enemy waves. It delegates Level Completion to the GameManager.
 /// </summary>
 public class WaveSpawner : MonoBehaviour
 {
+    // --- SINGLETON IMPLEMENTATION ---
+    public static WaveSpawner Instance { get; private set; }
+    // --------------------------------
+
+    // --- EVENT: Fires when a wave is cleared, passing the index of the CLEARED wave ---
+    public event Action<int> OnWaveCleared;
+    // --------------------------------------------------------------------------------------
+
     [Header("Wave Configuration")]
     [Tooltip("List of waves to spawn in order.")]
     public Wave[] waves;
-
-    [Header("Level Completion UI")]
-    [Tooltip("The UI Text or GameObject to display when all waves are complete.")]
-    public GameObject completionUIObject; // Use GameObject for flexibility (Text, TextMeshPro, Panel, etc.)
-
-    [Header("End Scene Settings")]
-    [Tooltip("The name of the scene to load when the player presses SPACE after completion. Leave empty to quit the application.")]
-    public string nextSceneName = "MainMenu";
 
     // The current wave instance being monitored
     private GameObject currentWaveInstance = null;
@@ -41,25 +40,32 @@ public class WaveSpawner : MonoBehaviour
     // Reference to the coroutine so we can stop it for a restart
     private Coroutine spawnWavesCoroutine;
 
-    private bool isLevelComplete = false;
-
     void Awake()
     {
-        // Ensure UI is disabled at the start of the scene
-        if (completionUIObject != null)
+        // --- SINGLETON SETUP ---
+        if (Instance != null && Instance != this)
         {
-            completionUIObject.SetActive(false);
+            Destroy(gameObject);
         }
+        else
+        {
+            Instance = this;
+        }
+        // -------------------------
+
+        // Removed completionUIObject setup as it is now in GameManager
     }
 
     void Start()
     {
-        // The spawner now uses its own Transform for instantiation, so we only check the waves list.
         if (waves.Length == 0)
         {
             Debug.LogWarning("No waves defined in the spawner.");
-            // Immediately flag completion if there are no waves
-            HandleAllWavesCompleted();
+            // Tell the GameManager that the level is technically complete
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.NotifyAllWavesCompleted();
+            }
             return;
         }
 
@@ -68,7 +74,7 @@ public class WaveSpawner : MonoBehaviour
     }
 
     /// <summary>
-    /// Checks for the debug key press to restart the wave sequence and the End Scene key press.
+    /// Checks for the debug key press to restart the wave sequence.
     /// </summary>
     void Update()
     {
@@ -78,11 +84,7 @@ public class WaveSpawner : MonoBehaviour
             RestartWaveSequence();
         }
 
-        // Check for Space key press to end the scene after completion
-        if (isLevelComplete && Input.GetKeyDown(KeyCode.Space))
-        {
-            EndScene();
-        }
+        // Removed EndScene check as it is now in GameManager
     }
 
     /// <summary>
@@ -110,15 +112,14 @@ public class WaveSpawner : MonoBehaviour
 
         // 3. Reset state variables
         waveIndex = 0;
-        isLevelComplete = false;
 
-        // 4. Disable completion text (as requested)
-        if (completionUIObject != null)
+        // Reset level completion state in GameManager
+        if (GameManager.Instance != null)
         {
-            completionUIObject.SetActive(false);
+            GameManager.Instance.ResetLevelState();
         }
 
-        // 5. Start the sequence again
+        // 4. Start the sequence again
         spawnWavesCoroutine = StartCoroutine(SpawnAllWaves());
     }
 
@@ -131,7 +132,6 @@ public class WaveSpawner : MonoBehaviour
 
         for (waveIndex = 0; waveIndex < waves.Length; waveIndex++)
         {
-            // ... (Wave spawning logic remains the same) ...
             Wave wave = waves[waveIndex];
 
             // 1. Log the start of the wave
@@ -148,12 +148,16 @@ public class WaveSpawner : MonoBehaviour
             currentWaveInstance.name = $"WAVE_CONTAINER_{waveIndex + 1}";
 
             // 3. Wait until the current wave instance has no children left (enemies defeated).
-            Debug.Log($"Monitoring Wave. Waiting for all {currentWaveInstance.transform.childCount} enemies to be cleared...");
+            Debug.Log($"Monitoring Wave. Waiting for all enemies to be cleared...");
             yield return new WaitUntil(() =>
             {
                 // Check if the instance is still valid and has no children.
                 return currentWaveInstance == null || currentWaveInstance.transform.childCount == 0;
             });
+
+            // --- FIRE EVENT AFTER WAVE IS CLEARED ---
+            OnWaveCleared?.Invoke(waveIndex + 1); // Pass the 1-based index of the cleared wave
+            // ----------------------------------------
 
             // 4. Clean up: Destroy the empty container.
             if (currentWaveInstance != null)
@@ -172,49 +176,11 @@ public class WaveSpawner : MonoBehaviour
         }
 
         // 6. All waves complete
-        HandleAllWavesCompleted();
-    }
-
-    /// <summary>
-    /// Executes the game logic when the final wave is cleared.
-    /// </summary>
-    private void HandleAllWavesCompleted()
-    {
-        Debug.Log("--- All Waves Complete! Press SPACE to continue. ---");
-        isLevelComplete = true;
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.NotifyAllWavesCompleted();
+        }
         spawnWavesCoroutine = null; // Clear the coroutine reference as it is finished
-
-        // Show the completion text/UI object
-        if (completionUIObject != null)
-        {
-            completionUIObject.SetActive(true);
-        }
-    }
-
-    /// <summary>
-    /// Loads the next scene in the sequence, or quits the application if no scene is defined.
-    /// </summary>
-    private void EndScene()
-    {
-        // Check if a next scene is specified
-        if (!string.IsNullOrEmpty(nextSceneName))
-        {
-            Debug.Log($"Ending scene: Loading {nextSceneName}...");
-            SceneManager.LoadScene(nextSceneName);
-        }
-        else
-        {
-            // If no scene name is set, quit the application (for standalone builds)
-            Debug.Log("Ending game: nextSceneName is empty. Application quitting.");
-
-#if UNITY_EDITOR
-            // Stop playing in the Unity Editor
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-                // Quit the application in a standalone build
-                Application.Quit();
-#endif
-        }
     }
 
     // Optional: Add a public method to check if spawning is finished
