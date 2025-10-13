@@ -113,7 +113,8 @@ public class PayloadManager : MonoBehaviour
 
     /// <summary>
     /// Fires the currently equipped payload, checking for reload time and ammo.
-    /// It cycles through all combined hardpoints for the selected payload type.
+    /// It cycles through all combined hardpoints for the selected payload type,
+    /// or fires from all hardpoints simultaneously if multiTargets is enabled.
     /// </summary>
     public void FireCurrentPayload()
     {
@@ -125,13 +126,6 @@ public class PayloadManager : MonoBehaviour
         // Check for nulls and if reloading is in progress or if the fire rate cooldown is active
         if (currentPayload == null || currentSlot.isReloading || Time.time < currentSlot.nextFireTime) return;
 
-        // Check if we have ammo
-        if (currentSlot.currentAmmo <= 0)
-        {
-            Debug.Log($"Out of ammo for {currentPayload.payloadName}. Cannot fire.");
-            return;
-        }
-
         // Check if a hardpoint is available
         if (currentSlot.hardpoints.Length == 0)
         {
@@ -139,34 +133,63 @@ public class PayloadManager : MonoBehaviour
             return;
         }
 
-        // Determine the next launch point based on the slot's index
-        Transform spawnPoint = currentSlot.hardpoints[currentSlot.currentHardpointIndex];
+        // --- Determine how to fire based on multiTargets property ---
+        List<Transform> launchPoints = new List<Transform>();
+        int ammoCost = 0;
+        int initialIndex = currentSlot.currentHardpointIndex;
 
-        // Instantiate the payload prefab
-        GameObject newPayload = Instantiate(currentPayload.payloadPrefab, spawnPoint.position, spawnPoint.rotation);
-
-        // --- CRITICAL FIX: INITIALIZE ROCKET PROPERTIES VIA METHOD ---
-        Rocket rocketScript = newPayload.GetComponent<Rocket>();
-        if (rocketScript != null)
+        if (currentPayload.isMissile && currentPayload.multiTargets)
         {
-            // Call a dedicated public method on Rocket.cs to set its private properties.
-            rocketScript.SetPayloadData(currentPayload.speed, currentPayload.damage, currentPayload.lifeTime);
+            // Multi-target missile: Fire from ALL available hardpoints.
+            launchPoints.AddRange(currentSlot.hardpoints);
+            ammoCost = currentSlot.hardpoints.Length;
+        }
+        else
+        {
+            // Standard payload (rocket or single-target missile): Fire from the next hardpoint in sequence.
+            launchPoints.Add(currentSlot.hardpoints[initialIndex]);
+            ammoCost = 1;
         }
 
-        // Adjust for rocket pods if applicable
-        if (currentPayload.podPrefab != null)
+        // Final check if we have enough ammo to cover the launch
+        if (currentSlot.currentAmmo < ammoCost)
         {
-            // This should only run if the Payload is NOT a missile, but assuming 'podPrefab' presence is the check:
-            if (!currentPayload.isMissile)
+            Debug.Log($"Out of ammo for {currentPayload.payloadName}. Cannot fire {ammoCost} rounds. Remaining: {currentSlot.currentAmmo}");
+            return;
+        }
+
+        // --- Execute Launches ---
+        int launchesCount = 0;
+        foreach (Transform spawnPoint in launchPoints)
+        {
+            // Only fire if the hardpoint is not empty (i.e., we are not cycling past the available ammo if multiTargets is false)
+            // Note: For multiTargets=true, the ammo check above ensures we have enough.
+            if (currentPayload.isMissile && currentPayload.multiTargets)
+            {
+                // Instantiate the payload prefab
+                GameObject newPayload = Instantiate(currentPayload.payloadPrefab, spawnPoint.position, spawnPoint.rotation);
+                InitializePayload(newPayload, currentPayload);
+                launchesCount++;
+            }
+            else if (spawnPoint == currentSlot.hardpoints[initialIndex]) // Only fire the single, designated hardpoint
+            {
+                // Instantiate the payload prefab
+                GameObject newPayload = Instantiate(currentPayload.payloadPrefab, spawnPoint.position, spawnPoint.rotation);
+                InitializePayload(newPayload, currentPayload);
+                launchesCount++;
+            }
+
+            // Adjust for rocket pods if applicable (only needs to be instantiated once per physical slot, but for simplicity here we keep the check)
+            if (currentPayload.podPrefab != null && !currentPayload.isMissile)
             {
                 Instantiate(currentPayload.podPrefab, spawnPoint.position, spawnPoint.rotation, transform);
             }
         }
 
         // Decrease ammo count
-        currentSlot.currentAmmo--;
+        currentSlot.currentAmmo -= launchesCount;
 
-        // Set the cooldown for the next shot
+        // Set the cooldown for the next shot (cooldown is only applied once, regardless of simultaneous launches)
         currentSlot.nextFireTime = Time.time + currentPayload.reloadTime;
 
         // --- SOUND LOGIC ADDITION ---
@@ -177,10 +200,13 @@ public class PayloadManager : MonoBehaviour
         }
         // ----------------------------
 
-        Debug.Log($"Fired {currentPayload.payloadName} from hardpoint {currentSlot.currentHardpointIndex}. Ammo remaining: {currentSlot.currentAmmo}");
+        Debug.Log($"Fired {currentPayload.payloadName}. Rounds launched: {launchesCount}. Ammo remaining: {currentSlot.currentAmmo}");
 
-        // Increment hardpoint index to cycle to the next physical mount point
-        currentSlot.currentHardpointIndex = (currentSlot.currentHardpointIndex + 1) % currentSlot.hardpoints.Length;
+        // Increment hardpoint index only if it was a single launch (multi-target launch resets or maintains its current state)
+        if (!currentPayload.multiTargets || !currentPayload.isMissile)
+        {
+            currentSlot.currentHardpointIndex = (currentSlot.currentHardpointIndex + 1) % currentSlot.hardpoints.Length;
+        }
 
         // Start reload coroutine if out of combined ammo
         if (currentSlot.currentAmmo <= 0)
@@ -188,6 +214,23 @@ public class PayloadManager : MonoBehaviour
             StartCoroutine(ReloadPayload(currentSlot));
         }
     }
+
+    /// <summary>
+    /// Helper method to instantiate and initialize the payload projectile.
+    /// </summary>
+    private void InitializePayload(GameObject newPayload, Payload currentPayload)
+    {
+        Rocket rocketScript = newPayload.GetComponent<Rocket>();
+        if (rocketScript != null)
+        {
+            // Call a dedicated public method on Rocket.cs to set its private properties.
+            rocketScript.SetPayloadData(currentPayload.speed, currentPayload.damage, currentPayload.lifeTime);
+
+            // Note: Additional missile-specific properties (lockRadius, etc.) might need to be passed here
+            // if the Rocket script handles homing logic.
+        }
+    }
+
 
     /// <summary>
     /// Coroutine to handle the reload process.
@@ -202,6 +245,7 @@ public class PayloadManager : MonoBehaviour
 
         // When reloading, we restore the ammo to the value of ONE Payload SO's maxAmmo, 
         // multiplied by the total number of hardpoints associated with this payload type.
+        // NOTE: The total ammo logic here assumes each original slot instance contributed 'maxAmmo' to the total.
         slotToReload.currentAmmo = slotToReload.payload.maxAmmo * slotToReload.hardpoints.Length;
 
         slotToReload.isReloading = false;

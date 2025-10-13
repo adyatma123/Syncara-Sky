@@ -1,14 +1,23 @@
 using UnityEngine;
 using System.Collections;
+using System.Linq; // Added for convenience, though not strictly required here
 
 /// <summary>
 /// Handles the Machine Gun (MG) firing logic for the enemy.
-/// This runs independently in the Update loop, supporting single and burst fire modes.
+/// This supports single and burst fire modes, with options for using multiple
+/// fire points simultaneously or sequentially.
 /// </summary>
 public class EnemyMG : MonoBehaviour
 {
     [Tooltip("The bullet prefab to instantiate.")]
     public GameObject bulletPrefab;
+
+    [Header("Weapon Setup")]
+    [Tooltip("The Transforms from where projectiles will be instantiated.")]
+    public Transform[] firePoints; // CHANGED to an Array
+
+    [Tooltip("If true, all fire points shoot at the same time. If false, they shoot in sequence.")]
+    public bool simultaneousFire = true; // NEW TOGGLE
 
     [Header("Burst Fire Settings")]
     [Tooltip("Check to enable burst fire instead of a single shot.")]
@@ -21,30 +30,29 @@ public class EnemyMG : MonoBehaviour
     [Tooltip("The time (in seconds) between each shot in a burst.")]
     public float timeBetweenBurstShots = 0.1f;
 
-    [Header("Weapon Setup")]
-    [Tooltip("The Transform from where projectiles will be instantiated.")]
-    public Transform firePoint;
-
     private EnemyProps enemyProps;
     private float nextFireTimeMG;
     private bool isShooting = false;
-    private Coroutine currentBurstCoroutine; // Reference for stopping burst mid-fire
+    private Coroutine currentBurstCoroutine;
+    private int sequentialFirePointIndex = 0; // NEW: To track the next fire point in sequential mode
 
     void Awake()
     {
         enemyProps = GetComponent<EnemyProps>();
+        if (firePoints == null || firePoints.Length == 0)
+        {
+            Debug.LogError("No Fire Points assigned to the EnemyMG component.", this);
+            enabled = false;
+        }
     }
 
     public void Activate()
     {
-
-
         if (enemyProps == null || !enemyProps.IsArmedMG) return;
         if (isShooting) return;
 
         isShooting = true;
-
-        // Set the next fire time to the current time to fire immediately on the first Update() check.
+        sequentialFirePointIndex = 0; // Reset index on activation
         nextFireTimeMG = Time.time;
     }
 
@@ -63,73 +71,84 @@ public class EnemyMG : MonoBehaviour
 
     void Update()
     {
-        // DEBUG CHECK 1: Is Update running?
-        if (Time.frameCount % 60 == 0)
-        {
-            // Log every 60 frames to prevent spam, confirming Update() execution
-            //Debug.Log($"[{gameObject.name}] MG Update running. isShooting: {isShooting}.");
-        }
-
-        // DEBUG CHECK 2: Should we exit early?
         if (!isShooting || enemyProps == null || !enemyProps.IsArmedMG) return;
 
-
-
-        // Calculate the required delay based on FireRate (RPM)
         float fireInterval = (60f / enemyProps.FireRate);
 
-        // DEBUG CHECK 4: Is it time to fire?
         if (Time.time >= nextFireTimeMG)
         {
-            // DEBUG CHECK 5: Final trigger confirmation
-
             if (useBurstFire)
             {
-                // Ensure only one burst coroutine runs at a time
                 if (currentBurstCoroutine == null)
                 {
+                    // Pass the fire point selection to the coroutine
                     currentBurstCoroutine = StartCoroutine(FireBurst(bulletPrefab, enemyProps.BulletSpeed));
                 }
             }
             else
             {
-                // Fire a single shot
-                ShootBullet(bulletPrefab, enemyProps.BulletSpeed);
+                // Handle single shot with multiple fire points
+                HandleSingleShot(bulletPrefab, enemyProps.BulletSpeed);
             }
 
-            // CRITICAL: Ensure next fire time increments by the fixed interval
             nextFireTimeMG = Time.time + fireInterval;
         }
     }
 
-    private void ShootBullet(GameObject projectilePrefab, float projectileSpeed)
+    // NEW METHOD: Handles the logic for firing a single shot (or one cycle of fire points)
+    private void HandleSingleShot(GameObject projectilePrefab, float projectileSpeed)
     {
+        if (simultaneousFire)
+        {
+            // Simultaneous: Shoot from ALL fire points
+            foreach (Transform fp in firePoints)
+            {
+                ShootBullet(fp, projectilePrefab, projectileSpeed);
+            }
+        }
+        else
+        {
+            // Sequential: Shoot from the current fire point only
+            Transform currentFirePoint = firePoints[sequentialFirePointIndex];
+            ShootBullet(currentFirePoint, projectilePrefab, projectileSpeed);
 
-        // Instantiate the projectile at the firePoint's position and rotation
-        GameObject instantiatedProjectile = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
+            // Advance the index for the next shot
+            sequentialFirePointIndex = (sequentialFirePointIndex + 1) % firePoints.Length;
+        }
+    }
 
-        // Assume it's a standard bullet
+
+    // MODIFIED METHOD: Accepts a specific fire point Transform
+    private void ShootBullet(Transform currentFirePoint, GameObject projectilePrefab, float projectileSpeed)
+    {
+        // Instantiate the projectile at the currentFirePoint's position and rotation
+        GameObject instantiatedProjectile = Instantiate(projectilePrefab, currentFirePoint.position, currentFirePoint.rotation);
+
         EnemyBullet bulletScript = instantiatedProjectile.GetComponent<EnemyBullet>();
         if (bulletScript != null && enemyProps != null)
         {
             bulletScript.damage = (int)enemyProps.EnemyDmg;
             bulletScript.owner = this.gameObject;
-            Vector3 shootDirection = firePoint.forward;
+            Vector3 shootDirection = currentFirePoint.forward;
             bulletScript.SetDirectionAndSpeed(shootDirection, projectileSpeed);
         }
 
-        // Example of playing an SFX:
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.PlaySFX("Player Shoot");
         }
     }
 
+    // MODIFIED COROUTINE: Now uses the HandleSingleShot method
     private IEnumerator FireBurst(GameObject projectilePrefab, float projectileSpeed)
     {
         for (int i = 0; i < burstShotCount; i++)
         {
-            ShootBullet(projectilePrefab, projectileSpeed);
+            // In burst mode, each 'shot' uses the HandleSingleShot logic:
+            // - If simultaneousFire is true, ALL fire points shoot.
+            // - If simultaneousFire is false, only the next sequential fire point shoots.
+            HandleSingleShot(projectilePrefab, projectileSpeed);
+
             yield return new WaitForSeconds(timeBetweenBurstShots);
         }
         // Burst finished, clear the coroutine reference

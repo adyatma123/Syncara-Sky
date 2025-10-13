@@ -6,32 +6,47 @@ using UnityEngine;
 
 public class Gun : MonoBehaviour
 {
+    // The currently active Scriptable Object containing all gun stats (Damage, RoF, Bullet Prefab, Heat Increase per shot)
     public Guns guns;
+
+    // Gun component references (kept for existing functionality)
     public Transform[] bulletSpawnPoint1;
     public Transform[] bulletSpawnPoint2;
     public Transform[] bulletSpawnPoint3;
     public ParticleSystem[] muzzleFlashes1;
     public ParticleSystem[] muzzleFlashes2;
     public ParticleSystem[] muzzleFlashes3;
-    public GameObject bulletPrefab;
-    public TextMeshProUGUI overheatText;
-    //public Image heatBar;
 
+    public TextMeshProUGUI overheatText;
     public Aimbot aimbot;
 
     private float nextFireTime;
-    public float heatRate; // Heat increase per shot
-    public float maxHeat;   // Maximum heat before gun disables
-    public float currentHeat = 0f;
-    private bool gunOverheated = false; // Track overheat state
-    public float blinkDuration = 1f; // Total duration of one blink (fade in + fade out)
-    private float blinkTimer = 0f;   // Timer to track the current blink phase
+
+    // --- LOCAL HEAT MANAGEMENT (Aircraft Specific) ---
+    [Header("Aircraft Heat Capacity")]
+    [Tooltip("Maximum heat before the gun disables (Specific to the vehicle's cooling system).")]
+    public float maxHeat = 100f;
+    [Tooltip("Minimum heat level required for cooldown to end and allow firing again (Specific to the vehicle's cooling system).")]
     public float overheatMinCD = 30f;
+
+    // Internal state variables
+    public float currentHeat = 0f;
+    private bool gunOverheated = false;
+
+    // UI Visuals
+    public float blinkDuration = 1f;
+    private float blinkTimer = 0f;
+
+    // Spread is still local, but could be moved to the Guns SO later
     public float gunSpread = 0.1f;
     public int gunStage = 1;
     public int totalGunActive;
 
-    private void Start()
+    // Default cooldown rate if not firing (can be adjusted in the Inspector)
+    [Header("Heat Cooldown Rate (Constant)")]
+    public float passiveCooldownRate = 20f;
+
+    void Awake()
     {
         // Automatically find the TextMeshProUGUI with the "OverheatText" tag
         GameObject overheatTextObject = GameObject.FindWithTag("OverheatText");
@@ -47,226 +62,168 @@ public class Gun : MonoBehaviour
                 Debug.LogError("The GameObject with tag 'OverheatText' does not have a TextMeshProUGUI component.");
             }
         }
-        else
+
+        if (GameSelectionManager.Instance != null && GameSelectionManager.Instance.ConfirmedGunSelection != null)
         {
-            Debug.LogError("No GameObject with tag 'OverheatText' found in the scene.");
+            Guns confirmedGunData = GameSelectionManager.Instance.ConfirmedGunSelection;
+
+            // Assuming your 'Gun' script has a method to apply properties:
+            ApplyGunProperties(confirmedGunData);
+
+            Debug.Log($"Gun Component Initialized: Applied confirmed gun '{confirmedGunData.name}' from Selection Manager.");
         }
+
+        if (VhcChgr.selectedGunData != null)
+        {
+            ApplyGunProperties(VhcChgr.selectedGunData);
+            // Clear the static reference if it's not needed after loading, 
+            // to prevent issues if you return to the menu and select a new vehicle.
+            VhcChgr.selectedGunData = null;
+        }
+    }
+
+    /// <summary>
+    /// PUBLIC: Called by the GunSelector to change the weapon's properties dynamically.
+    /// This function switches the active Guns Scriptable Object.
+    /// </summary>
+    /// <param name="newGuns">The Guns Scriptable Object to be selected and applied.</param>
+    public void ApplyGunProperties(Guns newGuns)
+    {
+        if (newGuns == null)
+        {
+            Debug.LogError("Cannot apply null Gun data!");
+            return;
+        }
+
+        // --- Core Modularity Step: Assign the new data container ---
+        this.guns = newGuns;
+
+        // Reset heat state. Note: maxHeat and overheatMinCD are NOT reset here as they are local.
+        currentHeat = 0f;
+        gunOverheated = false;
+        if (overheatText != null) overheatText.enabled = false;
+        Debug.Log($"Gun successfully switched to: {guns.name}");
     }
 
     void Update()
     {
-        UpdateActiveGunCount(); // Calculate active guns at start
+        if (guns == null) return; // Prevent errors if no gun is assigned
 
+        UpdateActiveGunCount();
+
+        // --- Weapon Stage Cycle Logic (Remains unchanged) ---
         if (Input.GetKeyDown(KeyCode.C))
         {
-            // Cycle through stages
             gunStage++;
             if (gunStage > 4)
             {
-                gunStage = 1; // Reset to stage 1 after stage 4
+                gunStage = 1;
             }
-
-            Debug.Log("Current Stage: " + gunStage); // Optional: Log the current stage
+            Debug.Log("Current Stage: " + gunStage);
         }
 
-        if (!gunOverheated) // Only allow shooting if not overheated
+        // --- Firing Logic (Uses SO heatRate, but local maxHeat) ---
+        if (!gunOverheated)
         {
             if (Input.GetButton("Gun") && Time.time >= nextFireTime)
             {
                 Shoot();
+                // Use RateOfFire from the SO
                 nextFireTime = Time.time + (60f / guns.rateOfFire);
-                SoundManager.Instance.PlaySFX("Player Shoot");
+                // Assuming SoundManager.Instance exists
+                SoundManager.Instance.PlaySFX("Player Shoot"); 
 
-                // Increase heat
+                // Increase heat (using heatRate from SO and totalGunActive, compared against local maxHeat)
                 currentHeat += guns.heatRate * totalGunActive;
 
-                // Check for overheat
-                if (currentHeat >= maxHeat)
+                if (currentHeat >= this.maxHeat) // Use local maxHeat
                 {
                     gunOverheated = true;
-                    overheatText.enabled = true;
-                    blinkTimer = 0f; // Reset the blink timer when overheat starts
-                    Debug.Log("Gun Overheated!"); // Or display a visual warning
-                    // You might want to add a cooldown period here before the gun can fire again
+                    if (overheatText != null) overheatText.enabled = true;
+                    blinkTimer = 0f;
+                    Debug.Log($"{guns.name} Overheated on this aircraft!");
                 }
             }
         }
 
+        // --- Overheat Blink Logic (Remains unchanged) ---
         if (gunOverheated && overheatText != null)
         {
-            blinkTimer += Time.deltaTime; // Increment the timer
+            blinkTimer += Time.deltaTime;
 
-            // Calculate alpha based on sine wave within the blink duration
             float alpha;
-            if (blinkTimer <= blinkDuration / 2f) // Fade In
-            {
-                alpha = Mathf.Sin((blinkTimer / (blinkDuration / 2f)) * Mathf.PI / 2f); // 0 to 1
-            }
-            else // Fade Out
-            {
-                alpha = Mathf.Cos(((blinkTimer - blinkDuration / 2f) / (blinkDuration / 2f)) * Mathf.PI / 2f); // 1 to 0
-            }
+            if (blinkTimer <= blinkDuration / 2f) alpha = Mathf.Sin((blinkTimer / (blinkDuration / 2f)) * Mathf.PI / 2f);
+            else alpha = Mathf.Cos(((blinkTimer - blinkDuration / 2f) / (blinkDuration / 2f)) * Mathf.PI / 2f);
 
             Color textColor = overheatText.color;
-            textColor.a = alpha; // Set alpha (transparency)
+            textColor.a = alpha;
             overheatText.color = textColor;
 
-            // Reset the timer when one blink cycle is complete
-            if (blinkTimer >= blinkDuration)
-            {
-                blinkTimer -= blinkDuration; // or blinkTimer = 0;
-            }
+            if (blinkTimer >= blinkDuration) blinkTimer -= blinkDuration;
         }
 
         if (Input.GetKeyDown(KeyCode.Z))
         {
-            aimbot.enabled = !aimbot.enabled; // Enable the Aimbot
+            if (aimbot != null) aimbot.enabled = !aimbot.enabled;
         }
 
-        // Cool down the gun (even when overheated).
+        // --- Cooldown Logic (Uses local passiveCooldownRate) ---
         if (currentHeat > 0)
         {
-            currentHeat -= Time.deltaTime * 20f; // Adjust cooldown rate
-            currentHeat = Mathf.Max(0, currentHeat); // Prevent heat from going negative.
+            // Use local passiveCooldownRate for heat reduction
+            currentHeat -= Time.deltaTime * passiveCooldownRate;
+            currentHeat = Mathf.Max(0, currentHeat);
         }
 
-        if (gunOverheated && currentHeat <= overheatMinCD) // Gun can shoot again.
+        // Check for cooldown completion (using local overheatMinCD)
+        if (gunOverheated && currentHeat <= this.overheatMinCD) // Use local overheatMinCD
         {
             gunOverheated = false;
-            overheatText.enabled = false;
-            // Reset alpha to fully visible when hiding
-            Color textColor = overheatText.color;
-            textColor.a = 1f;
-            overheatText.color = textColor;
-
-            overheatText.enabled = false; // Hide the text
+            if (overheatText != null)
+            {
+                Color textColor = overheatText.color;
+                textColor.a = 1f;
+                overheatText.color = textColor;
+                overheatText.enabled = false;
+            }
         }
 
         void Shoot()
         {
-            UpdateActiveGunCount(); // Update active gun count *before* shooting
+            UpdateActiveGunCount();
 
-            // Stage 1: bulletSpawnPoint1 only
+            // ... (Stage 1 to 4 logic remains, calling FireBullet(spawnPoint)) ...
+
             if (gunStage == 1)
             {
-                foreach (Transform spawnPoint in bulletSpawnPoint1)
-                {
-                    if (spawnPoint.gameObject.activeInHierarchy)
-                    {
-                        FireBullet(spawnPoint);
-                        totalGunActive++;
-                    }
-
-                    // Play all muzzle flashes at once (outside the bullet instantiation loop)
-                    foreach (ParticleSystem muzzleFlash in muzzleFlashes1)
-                    {
-                        muzzleFlash.Play();
-                    }
-                }
+                foreach (Transform spawnPoint in bulletSpawnPoint1) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
+                foreach (ParticleSystem muzzleFlash in muzzleFlashes1) muzzleFlash.Play();
             }
-            // Stage 2: bulletSpawnPoint2 only
             else if (gunStage == 2)
             {
-                foreach (Transform spawnPoint in bulletSpawnPoint2)
-                {
-                    if (spawnPoint.gameObject.activeInHierarchy)
-                    {
-                        FireBullet(spawnPoint);
-                        totalGunActive++;
-                    }
-                }
-
-                // Play all muzzle flashes at once (outside the bullet instantiation loop)
-                foreach (ParticleSystem muzzleFlash in muzzleFlashes2)
-                {
-                    muzzleFlash.Play();
-                }
+                foreach (Transform spawnPoint in bulletSpawnPoint2) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
+                foreach (ParticleSystem muzzleFlash in muzzleFlashes2) muzzleFlash.Play();
             }
-            // Stage 3: bulletSpawnPoint1 and bulletSpawnPoint2
             else if (gunStage == 3)
             {
-                foreach (Transform spawnPoint in bulletSpawnPoint1)
-                {
-                    if (spawnPoint.gameObject.activeInHierarchy)
-                    {
-                        FireBullet(spawnPoint);
-                        totalGunActive++;
-                    }
-                }
-
-                // Play all muzzle flashes at once (outside the bullet instantiation loop)
-                foreach (ParticleSystem muzzleFlash in muzzleFlashes1)
-                {
-                    muzzleFlash.Play();
-                }
-
-                foreach (Transform spawnPoint in bulletSpawnPoint2)
-                {
-                    if (spawnPoint.gameObject.activeInHierarchy)
-                    {
-                        FireBullet(spawnPoint);
-                        totalGunActive++;
-                    }
-                }
-
-                // Play all muzzle flashes at once (outside the bullet instantiation loop)
-                foreach (ParticleSystem muzzleFlash in muzzleFlashes2)
-                {
-                    muzzleFlash.Play();
-                }
+                foreach (Transform spawnPoint in bulletSpawnPoint1) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
+                foreach (ParticleSystem muzzleFlash in muzzleFlashes1) muzzleFlash.Play();
+                foreach (Transform spawnPoint in bulletSpawnPoint2) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
+                foreach (ParticleSystem muzzleFlash in muzzleFlashes2) muzzleFlash.Play();
             }
-            // Stage 4: bulletSpawnPoint1, bulletSpawnPoint2, and bulletSpawnPoint3
             else if (gunStage == 4)
             {
-                foreach (Transform spawnPoint in bulletSpawnPoint1)
-                {
-                    if (spawnPoint.gameObject.activeInHierarchy)
-                    {
-                        FireBullet(spawnPoint);
-                        totalGunActive++;
-                    }
-                }
-
-                // Play all muzzle flashes at once (outside the bullet instantiation loop)
-                foreach (ParticleSystem muzzleFlash in muzzleFlashes1)
-                {
-                    muzzleFlash.Play();
-                }
-
-                foreach (Transform spawnPoint in bulletSpawnPoint2)
-                {
-                    if (spawnPoint.gameObject.activeInHierarchy)
-                    {
-                        FireBullet(spawnPoint);
-                        totalGunActive++;
-                    }
-                }
-
-                // Play all muzzle flashes at once (outside the bullet instantiation loop)
-                foreach (ParticleSystem muzzleFlash in muzzleFlashes2)
-                {
-                    muzzleFlash.Play();
-                }
-
-                foreach (Transform spawnPoint in bulletSpawnPoint3)
-                {
-                    if (spawnPoint.gameObject.activeInHierarchy)
-                    {
-                        FireBullet(spawnPoint);
-                        totalGunActive++;
-                    }
-                }
-
-                // Play all muzzle flashes at once (outside the bullet instantiation loop)
-                foreach (ParticleSystem muzzleFlash in muzzleFlashes3)
-                {
-                    muzzleFlash.Play();
-                }
+                foreach (Transform spawnPoint in bulletSpawnPoint1) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
+                foreach (ParticleSystem muzzleFlash in muzzleFlashes1) muzzleFlash.Play();
+                foreach (Transform spawnPoint in bulletSpawnPoint2) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
+                foreach (ParticleSystem muzzleFlash in muzzleFlashes2) muzzleFlash.Play();
+                foreach (Transform spawnPoint in bulletSpawnPoint3) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
+                foreach (ParticleSystem muzzleFlash in muzzleFlashes3) muzzleFlash.Play();
             }
         }
     }
 
-    // Helper function to fire a bullet (reduces code duplication)
+    // Helper function to fire a bullet (Uses SO properties)
     private void FireBullet(Transform spawnPoint)
     {
         // Calculate random X rotation offset
@@ -274,30 +231,45 @@ public class Gun : MonoBehaviour
 
         // Create a new rotation by adding the random offset to the existing X rotation
         Quaternion bulletRotation = spawnPoint.rotation;
-        bulletRotation *= Quaternion.Euler(0f, randomXRotation, 0f); // Add rotation around X-axis
+        bulletRotation *= Quaternion.Euler(0f, randomXRotation, 0f);
 
+        // Use the bullet prefab from the *active* Guns SO
         GameObject bulletInstance = Instantiate(guns.bulletPrefab, spawnPoint.position, spawnPoint.rotation);
 
-        // --- FIX: Explicitly set the tag for enemy damage logic ---
         bulletInstance.tag = "PlayerProjectile";
-        // -----------------------------------------------------------
 
+        // Pass damage from the SO
         Bullet bulletScript = bulletInstance.GetComponent<Bullet>();
-        bulletScript.damage = guns.damage;
-        bulletInstance.GetComponent<Rigidbody>().velocity = bulletRotation * Vector3.forward * guns.bulletSpeed; // Apply rotation to velocity
+        if (bulletScript != null)
+        {
+            bulletScript.damage = guns.damage;
+        }
+
+        // Use the bullet speed from the *active* Guns SO
+        Rigidbody rb = bulletInstance.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.velocity = bulletRotation * Vector3.forward * guns.bulletSpeed;
+        }
     }
 
     private void UpdateActiveGunCount()
     {
         totalGunActive = 0; // Reset count
-        /*foreach (Transform spawnPoint in bulletSpawnPoint2)
+
+        // Count active spawn points across all stages
+        if (gunStage == 1) { foreach (Transform sp in bulletSpawnPoint1) if (sp.gameObject.activeInHierarchy) totalGunActive++; }
+        if (gunStage == 2) { foreach (Transform sp in bulletSpawnPoint2) if (sp.gameObject.activeInHierarchy) totalGunActive++; }
+        if (gunStage == 3)
         {
-            if (spawnPoint.gameObject.activeInHierarchy)
-            {
-                totalGunActive++;
-            }
-        }*/
+            foreach (Transform sp in bulletSpawnPoint1) if (sp.gameObject.activeInHierarchy) totalGunActive++;
+            foreach (Transform sp in bulletSpawnPoint2) if (sp.gameObject.activeInHierarchy) totalGunActive++;
+        }
+        if (gunStage == 4)
+        {
+            foreach (Transform sp in bulletSpawnPoint1) if (sp.gameObject.activeInHierarchy) totalGunActive++;
+            foreach (Transform sp in bulletSpawnPoint2) if (sp.gameObject.activeInHierarchy) totalGunActive++;
+            foreach (Transform sp in bulletSpawnPoint3) if (sp.gameObject.activeInHierarchy) totalGunActive++;
+        }
     }
-
-
 }

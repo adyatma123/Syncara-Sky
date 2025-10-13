@@ -29,6 +29,19 @@ public class MenuCameraController : MonoBehaviour
     [Tooltip("The Transform of the rotating vehicle object.")]
     [SerializeField] private Transform vehicleToRotate;
 
+    // NEW: Transform untuk Camera Pivot/Target (tempat rotasi kamera akan berpusat)
+    [Tooltip("The new Transform that the camera will follow and rotate around.")]
+    [SerializeField] private Transform rotationTargetTransform;
+
+    // NEW: Fields untuk mengontrol offset kamera
+    [Tooltip("The horizontal offset (X-axis) for the camera from the Rotation Target (Local Right).")]
+    [SerializeField] private float cameraXOffset = 0f;
+    [Tooltip("The vertical offset (Y-axis) for the camera from the Rotation Target (Local Up).")]
+    [SerializeField] private float cameraYOffset = 0f;
+    [Tooltip("The Z-axis distance (depth) for the camera from the Rotation Target (Local Forward).")]
+    [SerializeField] private float cameraZDistance = 5f; // New distance field
+
+
     // Camera PoV Transforms
     [Tooltip("The Transform for the Initial PoV (Vehicle Selection).")]
     [SerializeField] private Transform initialCameraPositionTransform;
@@ -42,17 +55,17 @@ public class MenuCameraController : MonoBehaviour
     [Tooltip("The speed at which the camera moves to the new position.")]
     [SerializeField] private float cameraMoveSpeed = 5f;
     [Tooltip("The continuous rotation speed (used in VehicleSelection state).")]
-    [SerializeField] private float vehicleRotationSpeed = 10f;
+    [SerializeField] private float cameraRotationSpeed = 10f; // Renamed for clarity
 
-
-    private Quaternion initialVehicleRotation;
+    // Diubah: Sekarang menyimpan rotasi awal RotationTargetTransform
+    private Quaternion initialRotationTargetRotation;
 
     private void Awake()
     {
-        // Store initial vehicle rotation (usually Quaternion.identity if placed straight)
-        if (vehicleToRotate != null)
+        // Store initial rotation of the target (where the camera rotates around)
+        if (rotationTargetTransform != null)
         {
-            initialVehicleRotation = vehicleToRotate.rotation;
+            initialRotationTargetRotation = rotationTargetTransform.rotation;
         }
 
         // --- SNAP CAMERA TO INITIAL POSITION AND SET INITIAL UI STATE ---
@@ -70,36 +83,63 @@ public class MenuCameraController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // 1. Determine the Camera Target (Position and Rotation)
-        Vector3 targetPos;
+        // 1. Determine the Camera Target Rotation
         Quaternion targetRot;
 
         // Ensure we have the initial position transform to prevent errors
         if (initialCameraPositionTransform == null) return;
 
+        // Tentukan Transform PoV target berdasarkan state
+        Transform targetTransform;
         switch (currentMenuState)
         {
             case MenuState.VehicleSelection:
-                targetPos = initialCameraPositionTransform.position;
-                targetRot = initialCameraPositionTransform.rotation;
+                targetTransform = initialCameraPositionTransform;
                 break;
             case MenuState.LoadoutMenu:
-                targetPos = loadoutCameraPosition.position;
-                targetRot = loadoutCameraPosition.rotation;
+                targetTransform = loadoutCameraPosition;
                 break;
             case MenuState.GunLoadout:
-                targetPos = gunCameraPosition.position;
-                targetRot = gunCameraPosition.rotation;
+                targetTransform = gunCameraPosition;
                 break;
             case MenuState.PayloadLoadout:
-                targetPos = payloadCameraPosition.position;
-                targetRot = payloadCameraPosition.rotation;
+                targetTransform = payloadCameraPosition;
                 break;
             default:
-                targetPos = initialCameraPositionTransform.position;
-                targetRot = initialCameraPositionTransform.rotation;
+                targetTransform = initialCameraPositionTransform;
                 break;
         }
+
+        // Rotasi target awal sama dengan PoV Transform
+        targetRot = targetTransform.rotation;
+
+        Vector3 targetPos;
+
+        // JIKA rotationTargetTransform disetel, periksa state untuk menentukan logika posisi
+        if (rotationTargetTransform != null && currentMenuState == MenuState.VehicleSelection)
+        {
+            // LOGIKA ORBIT & OFFSET (HANYA BERLAKU UNTUK VehicleSelection)
+
+            // Dapatkan rotasi PIVOT saat ini
+            Quaternion currentPivotRotation = rotationTargetTransform.rotation;
+
+            // Tentukan offset kamera lokal relatif terhadap pivot
+            Vector3 localOffset = new Vector3(cameraXOffset, cameraYOffset, -cameraZDistance);
+
+            // Konversi offset lokal ke posisi dunia relatif terhadap pivot yang berputar
+            targetPos = rotationTargetTransform.position + (currentPivotRotation * localOffset);
+
+            // Kamera harus selalu menghadap pivot saat mengorbit
+            Vector3 lookDirection = rotationTargetTransform.position - menuCamera.transform.position;
+            targetRot = Quaternion.LookRotation(lookDirection);
+        }
+        else
+        {
+            // LOGIKA POIN PoV TETAP (UNTUK LoadoutMenu, GunLoadout, PayloadLoadout, ATAU JIKA rotationTargetTransform NULL)
+            targetPos = targetTransform.position;
+            // targetRot sudah diatur ke targetTransform.rotation di awal FixedUpdate()
+        }
+
 
         // 2. Smoothly move the camera to the target position
         if (menuCamera != null)
@@ -117,21 +157,50 @@ public class MenuCameraController : MonoBehaviour
             );
         }
 
-        // 3. Handle Vehicle Rotation
-        if (vehicleToRotate != null)
+        // 3. Handle Rotation
+        if (rotationTargetTransform != null)
         {
             if (currentMenuState == MenuState.VehicleSelection)
             {
-                // Rotate continuously only in the initial selection menu
-                vehicleToRotate.Rotate(Vector3.up * vehicleRotationSpeed * Time.deltaTime);
+                // BARU: Putar continuous rotationTargetTransform (pivot kamera)
+                rotationTargetTransform.Rotate(Vector3.up * cameraRotationSpeed * Time.deltaTime);
+
+                // JIKA ada vehicleToRotate, pastikan ia diam pada rotasi awal
+                if (vehicleToRotate != null)
+                {
+                    vehicleToRotate.rotation = initialRotationTargetRotation;
+                }
             }
             else
             {
-                // Smoothly rotate the vehicle back to its initial rotation (0, 0, 0) in all other menus
+                // BARU: Kembalikan rotasi target secara mulus ke rotasi awal
+                rotationTargetTransform.rotation = Quaternion.Slerp(
+                    rotationTargetTransform.rotation,
+                    initialRotationTargetRotation,
+                    Time.deltaTime * cameraRotationSpeed
+                );
+            }
+        }
+
+        // PASTIKAN VehicleToRotate diam pada rotasi awalnya (jika RotationTargetTransform diatur)
+        if (vehicleToRotate != null && rotationTargetTransform != null)
+        {
+            // Pastikan vehicleToRotate tidak berputar sendiri (karena rotationTargetTransform yang berputar)
+            vehicleToRotate.rotation = initialRotationTargetRotation;
+        }
+        else if (vehicleToRotate != null && rotationTargetTransform == null)
+        {
+            // Fallback lama: Jika RotationTargetTransform tidak diatur, pertahankan logika rotasi kendaraan lama
+            if (currentMenuState == MenuState.VehicleSelection)
+            {
+                vehicleToRotate.Rotate(Vector3.up * cameraRotationSpeed * Time.deltaTime);
+            }
+            else
+            {
                 vehicleToRotate.rotation = Quaternion.Slerp(
                     vehicleToRotate.rotation,
-                    initialVehicleRotation,
-                    Time.deltaTime * vehicleRotationSpeed
+                    initialRotationTargetRotation,
+                    Time.deltaTime * cameraRotationSpeed
                 );
             }
         }
@@ -170,7 +239,7 @@ public class MenuCameraController : MonoBehaviour
 
     public void TransitionToLoadout()
     {
-        currentMenuState = MenuState.LoadoutMenu; // Transition state: Vehicle rotation stops/resets
+        currentMenuState = MenuState.LoadoutMenu; // Transition state: Rotation stops/resets
         // UI Logic: Hide Selection, Show Loadout Main
         if (vehicleSelection != null) vehicleSelection.SetActive(false);
         if (loadoutMenu != null) loadoutMenu.SetActive(true);

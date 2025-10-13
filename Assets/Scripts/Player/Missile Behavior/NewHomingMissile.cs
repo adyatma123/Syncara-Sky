@@ -97,17 +97,26 @@ public class HomingMissile : MonoBehaviour
     {
         Collider[] colliders = Physics.OverlapSphere(transform.position, lockRadius);
         Transform nearest = null;
-        float nearestDistance = Mathf.Infinity;
+        float nearestScore = Mathf.Infinity; // Use a 'score' instead of just distance
 
         foreach (Collider collider in colliders)
         {
-            // Use CompareTag for performance and safety
             if (collider.CompareTag("Enemy"))
             {
                 float distance = Vector3.Distance(transform.position, collider.transform.position);
-                if (distance < nearestDistance)
+                float score = distance;
+
+                // Penalty: If the enemy is already targeted, penalize its 'score' by multiplying
+                // its distance by a factor (e.g., 2.0x). This makes the missile prefer
+                // an untargeted enemy even if it's slightly farther away.
+                if (collider.GetComponent<TargetedByMissile>() != null)
                 {
-                    nearestDistance = distance;
+                    score *= 2.0f; // Adjust this multiplier as needed
+                }
+
+                if (score < nearestScore)
+                {
+                    nearestScore = score;
                     nearest = collider.transform;
                 }
             }
@@ -118,6 +127,12 @@ public class HomingMissile : MonoBehaviour
             // Set the target and activate homing
             target = nearest;
             isHoming = true;
+
+            // RESERVE THE TARGET: Add the marker component
+            if (target.GetComponent<TargetedByMissile>() == null)
+            {
+                target.gameObject.AddComponent<TargetedByMissile>();
+            }
         }
     }
 
@@ -130,6 +145,16 @@ public class HomingMissile : MonoBehaviour
 
         if (distanceToTarget > lockRadius || angleToTarget > maxHomingAngle)
         {
+            // RELEASE THE TARGET: If we lose lock, remove the component
+            if (target != null)
+            {
+                var marker = target.GetComponent<TargetedByMissile>();
+                if (marker != null)
+                {
+                    Destroy(marker);
+                }
+            }
+
             isHoming = false;
             target = null;
             return;
@@ -165,6 +190,14 @@ public class HomingMissile : MonoBehaviour
             {
                 enemy.TakeDamage(mDamage, this.gameObject); // Assuming TakeDamage needs the source
             }
+
+            // RELEASE THE TARGET: Remove the component when the target is destroyed or hit
+            var marker = collision.gameObject.GetComponent<TargetedByMissile>();
+            if (marker != null)
+            {
+                Destroy(marker);
+            }
+
             // Destroy the missile after hitting the enemy
             Destroy(gameObject);
         }

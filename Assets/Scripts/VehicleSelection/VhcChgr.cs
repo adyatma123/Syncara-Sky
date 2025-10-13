@@ -15,6 +15,7 @@ public class VhcChgr : MonoBehaviour
     private int currentIndex;
     public static GameObject vehicleToLoad;
     private GameObject selectedVehiclePrefab;
+    public static Guns selectedGunData;
 
     private void Start()
     {
