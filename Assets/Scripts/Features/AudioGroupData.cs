@@ -16,4 +16,15 @@ public class AudioGroupData
 
     [Tooltip("All specific sound events within this group (e.g., 'HitSound', 'MissileLaunch').")]
     public SoundClipData[] soundClips;
+
+    [Header("Fade Settings (Best used for Music)")]
+    [Tooltip("If true, the volume will smoothly increase when playing a clip in this group.")]
+    public bool useFadeIn = false;
+
+    [Tooltip("If true, the volume will smoothly decrease before stopping a clip in this group.")]
+    public bool useFadeOut = false;
+
+    [Tooltip("The duration, in seconds, for the fade effect.")]
+    [Range(0.1f, 5f)]
+    public float fadeDuration = 1.0f;
 }

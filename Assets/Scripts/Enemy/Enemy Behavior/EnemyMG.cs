@@ -135,7 +135,7 @@ public class EnemyMG : MonoBehaviour
 
         if (SoundManager.Instance != null)
         {
-            SoundManager.Instance.PlaySFX("Player Shoot");
+            SoundManager.Instance.PlaySFX("Enemy Shoot");
         }
     }
 

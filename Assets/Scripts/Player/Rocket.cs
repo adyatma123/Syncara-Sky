@@ -113,6 +113,11 @@ public class Rocket : MonoBehaviour
             EnemyProps enemy = collision.gameObject.GetComponent<EnemyProps>();
             if (enemy != null)
             {
+                if (VisualEffectManager.Instance != null && !string.IsNullOrEmpty("Payload Impact"))
+                {
+                    // Spawn the effect at the enemy's position and current rotation
+                    VisualEffectManager.Instance.PlayEffect("Payload Impact", transform.position, transform.rotation);
+                }
                 // Pass synchronized damage and the missile itself as the source
                 enemy.TakeDamage(_damage, this.gameObject);
                 Destroy(gameObject);
@@ -124,6 +129,12 @@ public class Rocket : MonoBehaviour
         }
         else if (collision.gameObject.CompareTag("Maps"))
         {
+            if (VisualEffectManager.Instance != null && !string.IsNullOrEmpty("Payload Impact"))
+            {
+                // Spawn the effect at the enemy's position and current rotation
+                VisualEffectManager.Instance.PlayEffect("Payload Impact", transform.position, transform.rotation);
+            }
+
             Destroy(gameObject);
         }
     }

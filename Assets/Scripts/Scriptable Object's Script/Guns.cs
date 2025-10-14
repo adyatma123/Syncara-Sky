@@ -11,7 +11,7 @@ public class Guns : ScriptableObject
     public Sprite artwork;
     public Transform bulletSpawnPoint;
     public GameObject bulletPrefab;
-    AudioSource Shootsound;
+    public string ShootSoundKey;
 
     public int damage;
     public float rateOfFire;

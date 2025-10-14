@@ -111,8 +111,19 @@ public class EnemyProps : MonoBehaviour
 
         if (currentHealth <= 0)
         {
-            // 1. Check for Player Kill and Report Score
-            // We use the "PlayerProjectile" tag (as established previously) for accurate scoring.
+            // --- NEW: Play the destruction effect ---
+            if (VisualEffectManager.Instance != null && !string.IsNullOrEmpty("Aircraft Explode"))
+            {
+                // Spawn the effect at the enemy's position and current rotation
+                VisualEffectManager.Instance.PlayEffect("Aircraft Explode", transform.position, transform.rotation);
+            }
+
+            CameraManager camManager = FindObjectOfType<CameraManager>();
+
+            camManager.StartShake();
+
+                // 1. Check for Player Kill and Report Score
+                // We use the "PlayerProjectile" tag (as established previously) for accurate scoring.
             if (damageSource != null && damageSource.CompareTag("PlayerProjectile"))
             {
                 OnEnemyDestroyedByPlayerScore?.Invoke(_scoreVal); // Fires event for Game Manager to add score and increment player kills

@@ -23,10 +23,10 @@ RenderSettings:
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
-  m_AmbientIntensity: 1
+  m_AmbientIntensity: 0
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: c312d5ddda60faa4eaf1787066d059a3, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -361,6 +361,7 @@ RectTransform:
   - {fileID: 80844466}
   - {fileID: 2055973710}
   - {fileID: 718855827}
+  - {fileID: 1319914022}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -397,7 +398,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d070d596b2c41b44685b0047c0c5f3e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cursorTexture: {fileID: 2800000, guid: fd279475b7340da459d3fc24151dded3, type: 3}
+  baseCursorTexture: {fileID: 2800000, guid: fe3cb75be76de0a42918d1c5dc783ec3, type: 3}
+  cursorSize: 54
+  hotspotMode: 1
 --- !u!4 &233836775
 Transform:
   m_ObjectHideFlags: 0
@@ -5458,8 +5461,10 @@ GameObject:
   m_Component:
   - component: {fileID: 671067297}
   - component: {fileID: 671067296}
+  - component: {fileID: 671067299}
   - component: {fileID: 671067295}
   - component: {fileID: 671067298}
+  - component: {fileID: 671067300}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -5553,8 +5558,82 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9527d89ade591be4d8857f8bd2ce4497, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player: {fileID: 0}
-  speed: 10
+--- !u!114 &671067299
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 671067294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5207c379e6e64a540aa398f0287af27b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  shakeIntensity: 1
+  maxXShake: 1
+  maxYShake: 1
+  shakeDuration: 0.25
+--- !u!114 &671067300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 671067294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 948f4100a11a5c24981795d21301da5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  volumeTrigger: {fileID: 671067297}
+  volumeLayer:
+    serializedVersion: 2
+    m_Bits: 512
+  stopNaNPropagation: 1
+  finalBlitToCameraTarget: 0
+  antialiasingMode: 0
+  temporalAntialiasing:
+    jitterSpread: 0.75
+    sharpness: 0.25
+    stationaryBlending: 0.95
+    motionBlending: 0.85
+  subpixelMorphologicalAntialiasing:
+    quality: 2
+  fastApproximateAntialiasing:
+    fastMode: 0
+    keepAlpha: 0
+  fog:
+    enabled: 1
+    excludeSkybox: 1
+  debugLayer:
+    lightMeter:
+      width: 512
+      height: 256
+      showCurves: 1
+    histogram:
+      width: 512
+      height: 256
+      channel: 3
+    waveform:
+      exposure: 0.12
+      height: 256
+    vectorscope:
+      size: 256
+      exposure: 0.12
+    overlaySettings:
+      linearDepth: 0
+      motionColorIntensity: 4
+      motionGridSize: 64
+      colorBlindnessType: 0
+      colorBlindnessStrength: 1
+  m_Resources: {fileID: 11400000, guid: d82512f9c8e5d4a4d938b575d47f88d4, type: 2}
+  m_ShowToolkit: 0
+  m_ShowCustomSorter: 0
+  breakBeforeColorGrading: 0
+  m_BeforeTransparentBundles: []
+  m_BeforeStackBundles: []
+  m_AfterStackBundles: []
 --- !u!1 &707037558
 GameObject:
   m_ObjectHideFlags: 0
@@ -6323,6 +6402,81 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1306453988}
   m_CullTransparentMesh: 1
+--- !u!1 &1319914021
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1319914022}
+  - component: {fileID: 1319914024}
+  - component: {fileID: 1319914023}
+  m_Layer: 5
+  m_Name: Image
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1319914022
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1319914021}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 107372150}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 1501, y: 851}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1319914023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1319914021}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.1254902}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 89b5e618513cf6c4bbaeeecddb2f11fb, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1319914024
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1319914021}
+  m_CullTransparentMesh: 1
 --- !u!1 &1394191195
 GameObject:
   m_ObjectHideFlags: 0
@@ -6564,6 +6718,81 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lockRadius: 113
   spawnPoint: {fileID: 1661524635}
+--- !u!1 &1586039528
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1586039529}
+  - component: {fileID: 1586039530}
+  - component: {fileID: 1586039531}
+  m_Layer: 9
+  m_Name: Visual Effects Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1586039529
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1586039528}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.334353, y: -4.607998, z: 3.198265}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1586039530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1586039528}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30722ad3adc3e1843ab3f4006b87cf4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  availableEffects:
+  - effectName: Bullet Impact
+    prefab: {fileID: 5162910912013668194, guid: cf82839c411151342a7b2337bda9fb34, type: 3}
+  - effectName: Bullet Impact Big
+    prefab: {fileID: 5162910912013668194, guid: 095e411e1801fb340919b5fc9c48f00b, type: 3}
+  - effectName: Payload Impact
+    prefab: {fileID: 5162910912013668194, guid: e9c3d5b71a5da4c4cab56fea44b5a23b, type: 3}
+  - effectName: Missile Explode
+    prefab: {fileID: 5162910912013668194, guid: cf82839c411151342a7b2337bda9fb34, type: 3}
+  - effectName: Muzzle Flash
+    prefab: {fileID: 6980259576133684760, guid: 1f58a1dea6bbd9347843e4935585e6a2, type: 3}
+  - effectName: Aircraft Explode
+    prefab: {fileID: 8464950693656172981, guid: 83ad694f134ab954580473212156b35a, type: 3}
+--- !u!114 &1586039531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1586039528}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b9a305e18de0c04dbd257a21cd47087, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sharedProfile: {fileID: 11400000, guid: 81fd8cbf90603f54c8bca19f4ab62646, type: 2}
+  isGlobal: 1
+  blendDistance: 0
+  weight: 1
+  priority: 0
 --- !u!1 &1661524634
 GameObject:
   m_ObjectHideFlags: 0
@@ -6778,6 +7007,9 @@ MonoBehaviour:
       volume: 1
       clips:
       - {fileID: 8300000, guid: e88f53fe400146240b811bfde25b3d66, type: 3}
+    useFadeIn: 0
+    useFadeOut: 0
+    fadeDuration: 1
   - groupName: SFX
     mixerGroup: {fileID: -5335768885569913699, guid: 6f84129c93fb0db4e88481b2ac36245f, type: 2}
     soundClips:
@@ -6797,6 +7029,9 @@ MonoBehaviour:
       volume: 1
       clips:
       - {fileID: 8300000, guid: bb48cea4b8055634ab67fe0006e2ac1d, type: 3}
+    useFadeIn: 0
+    useFadeOut: 0
+    fadeDuration: 1
   - groupName: Enemy
     mixerGroup: {fileID: -3198709200151570932, guid: 6f84129c93fb0db4e88481b2ac36245f, type: 2}
     soundClips:
@@ -6804,6 +7039,9 @@ MonoBehaviour:
       volume: 0.8
       clips:
       - {fileID: 8300000, guid: 19bb6c8ec236ea447bef8c6ef04d0e2c, type: 3}
+    useFadeIn: 0
+    useFadeOut: 0
+    fadeDuration: 1
 --- !u!4 &2040496391
 Transform:
   m_ObjectHideFlags: 0
@@ -7018,3 +7256,4 @@ SceneRoots:
   - {fileID: 1693997838}
   - {fileID: 272693582}
   - {fileID: 707037559}
+  - {fileID: 1586039529}

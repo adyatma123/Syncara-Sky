@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Audio;
 using System.Collections.Generic;
+using System.Collections; // Required for Coroutines
 using System.Linq;
 
 /// <summary>
@@ -19,12 +20,15 @@ public class SoundManager : MonoBehaviour
     [Tooltip("Define your main audio groups (Music, SFX, Voice) here.")]
     public AudioGroupData[] audioGroups;
 
-    private Dictionary<string, (AudioClip[], AudioMixerGroup, float)> soundMap;
+    // The tuple now stores group data to easily access fade settings
+    private Dictionary<string, (AudioClip[], AudioMixerGroup, float, AudioGroupData)> soundMap;
+    private Dictionary<string, AudioGroupData> groupMap; // New map for quick group lookup
     private AudioSource sfxSource;
     private AudioSource musicSource;
-    // --- NEW: Dedicated source for voice lines ---
     private AudioSource voiceSource;
-    // ---------------------------------------------
+
+    // Stores the current music fade coroutine to prevent starting multiple fades
+    private Coroutine musicFadeCoroutine;
 
     private void Awake()
     {
@@ -57,19 +61,21 @@ public class SoundManager : MonoBehaviour
         sfxSource.loop = false;
         sfxSource.playOnAwake = false;
 
-        // --- NEW: Source dedicated to VOICE (allows voice to queue/interrupt without affecting SFX) ---
+        // Source dedicated to VOICE (allows voice to queue/interrupt without affecting SFX)
         voiceSource = gameObject.AddComponent<AudioSource>();
         voiceSource.loop = false;
         voiceSource.playOnAwake = false;
-        // -----------------------------------------------------------------------------------------------
     }
 
     /// <summary>
     /// Builds a fast-lookup dictionary for all sound clips based on their keyName.
+    /// Also builds a map for quick AudioGroupData lookup.
     /// </summary>
     private void BuildSoundMap()
     {
-        soundMap = new Dictionary<string, (AudioClip[], AudioMixerGroup, float)>();
+        // Tuple format: (Clips, MixerGroup, Volume, ParentGroupData)
+        soundMap = new Dictionary<string, (AudioClip[], AudioMixerGroup, float, AudioGroupData)>();
+        groupMap = new Dictionary<string, AudioGroupData>();
 
         foreach (var group in audioGroups)
         {
@@ -79,6 +85,9 @@ public class SoundManager : MonoBehaviour
                 continue;
             }
 
+            // Store the group data for quick access
+            groupMap[group.groupName] = group;
+
             foreach (var clipData in group.soundClips)
             {
                 if (soundMap.ContainsKey(clipData.keyName))
@@ -87,7 +96,7 @@ public class SoundManager : MonoBehaviour
                     continue;
                 }
 
-                soundMap[clipData.keyName] = (clipData.clips, group.mixerGroup, clipData.volume);
+                soundMap[clipData.keyName] = (clipData.clips, group.mixerGroup, clipData.volume, group);
             }
         }
     }
@@ -100,6 +109,7 @@ public class SoundManager : MonoBehaviour
     /// <param name="key">The keyName of the sound (e.g., 'Explosion').</param>
     public void PlaySFX(string key)
     {
+        // Item4 is the full AudioGroupData, but we don't use it for standard SFX one-shots
         if (soundMap.TryGetValue(key, out var data))
         {
             AudioClip[] clips = data.Item1;
@@ -122,10 +132,8 @@ public class SoundManager : MonoBehaviour
         }
     }
 
-    // --- NEW: Plays a voice clip using the dedicated voice source ---
     /// <summary>
-    /// Plays a voice clip by its unique key. It uses a dedicated source 
-    /// allowing multiple voice clips to queue or interrupt independently of SFX.
+    /// Plays a voice clip using the dedicated voice source.
     /// </summary>
     /// <param name="key">The keyName of the voice clip (e.g., 'Warning').</param>
     public void PlayVoice(string key)
@@ -154,10 +162,10 @@ public class SoundManager : MonoBehaviour
             Debug.LogWarning($"Attempted to play unknown voice key: {key}");
         }
     }
-    // ---------------------------------------------------------------
 
     /// <summary>
-    /// Plays a looping music track by its unique key. Stops any current music first.
+    /// Plays a looping music track by its unique key, with optional fade-in.
+    /// Stops any current music first, potentially with a fade-out.
     /// </summary>
     /// <param name="key">The keyName of the music track (e.g., 'Hangar BGM').</param>
     public void PlayMusic(string key)
@@ -167,19 +175,33 @@ public class SoundManager : MonoBehaviour
             AudioClip[] clips = data.Item1;
             AudioMixerGroup group = data.Item2;
             float volume = data.Item3;
+            AudioGroupData groupData = data.Item4;
 
             if (clips.Length > 0)
             {
-                // Stop any current music
-                musicSource.Stop();
+                // 1. Stop any existing music transition
+                if (musicFadeCoroutine != null)
+                {
+                    StopCoroutine(musicFadeCoroutine);
+                }
 
-                // Select the first clip (or random if intended)
+                // 2. Configure the AudioSource
                 musicSource.clip = clips[0];
                 musicSource.outputAudioMixerGroup = group;
-                musicSource.volume = volume;
                 musicSource.loop = true;
 
-                musicSource.Play();
+                // 3. Handle Fade-In or instant play
+                if (groupData.useFadeIn)
+                {
+                    musicSource.volume = 0f; // Start at 0 volume
+                    musicSource.Play();
+                    musicFadeCoroutine = StartCoroutine(FadeVolume(musicSource, groupData.fadeDuration, volume, null));
+                }
+                else
+                {
+                    musicSource.volume = volume; // Instant max volume
+                    musicSource.Play();
+                }
             }
         }
         else
@@ -188,9 +210,71 @@ public class SoundManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Stops the music track, with optional fade-out.
+    /// </summary>
     public void StopMusic()
     {
+        if (musicSource.isPlaying && musicSource.clip != null)
+        {
+            // Find the AudioGroupData for the currently playing music
+            AudioGroupData currentGroup = audioGroups.FirstOrDefault(g =>
+                g.mixerGroup == musicSource.outputAudioMixerGroup &&
+                g.soundClips.Any(sc => sc.clips.Contains(musicSource.clip)));
+
+            if (currentGroup != null && currentGroup.useFadeOut)
+            {
+                // Stop any existing transition and start the fade-out
+                if (musicFadeCoroutine != null)
+                {
+                    StopCoroutine(musicFadeCoroutine);
+                }
+                // Fade to 0, and stop the musicSource when done
+                musicFadeCoroutine = StartCoroutine(FadeVolume(musicSource, currentGroup.fadeDuration, 0f, StopMusicSource));
+            }
+            else
+            {
+                // Instant stop
+                musicSource.Stop();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Callback function to physically stop the AudioSource after a fade-out is complete.
+    /// </summary>
+    private void StopMusicSource()
+    {
         musicSource.Stop();
+    }
+
+    // --- COROUTINE FOR FADING ---
+
+    /// <summary>
+    /// Coroutine to smoothly fade an AudioSource's volume over time.
+    /// </summary>
+    /// <param name="source">The AudioSource to fade.</param>
+    /// <param name="duration">The duration of the fade in seconds.</param>
+    /// <param name="targetVolume">The target volume (0.0 to 1.0).</param>
+    /// <param name="onComplete">Action to execute once the fade is complete (optional).</param>
+    private IEnumerator FadeVolume(AudioSource source, float duration, float targetVolume, System.Action onComplete)
+    {
+        float startVolume = source.volume;
+        float startTime = Time.time;
+
+        while (Time.time < startTime + duration)
+        {
+            float elapsed = Time.time - startTime;
+            float t = elapsed / duration;
+            source.volume = Mathf.Lerp(startVolume, targetVolume, t);
+            yield return null;
+        }
+
+        // Ensure volume is exactly the target at the end
+        source.volume = targetVolume;
+
+        // Execute callback if provided
+        onComplete?.Invoke();
     }
 
     // --- PUBLIC VOLUME CONTROL METHOD ---

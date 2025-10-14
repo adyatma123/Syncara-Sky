@@ -52,6 +52,14 @@ public class EnemyBullet : MonoBehaviour
         {
             if (player != null)
             {
+                if (VisualEffectManager.Instance != null && !string.IsNullOrEmpty("Bullet Impact"))
+                {
+                    // Spawn the effect at the enemy's position and current rotation
+                    VisualEffectManager.Instance.PlayEffect("Bullet Impact", transform.position, transform.rotation);
+                }
+
+                SoundManager.Instance.PlaySFX("Player Hit");
+
                 player.TakeDamage(damage);
                 Destroy(gameObject);
             }

@@ -9,13 +9,21 @@ public class Gun : MonoBehaviour
     // The currently active Scriptable Object containing all gun stats (Damage, RoF, Bullet Prefab, Heat Increase per shot)
     public Guns guns;
 
-    // Gun component references (kept for existing functionality)
+    // --- Gun component references (REVISED) ---
+    [Header("Spawn Points")]
+    [Tooltip("Spawn points for Gun Stage 1")]
     public Transform[] bulletSpawnPoint1;
+    [Tooltip("Spawn points for Gun Stage 2")]
     public Transform[] bulletSpawnPoint2;
+    [Tooltip("Spawn points for Gun Stage 3")]
     public Transform[] bulletSpawnPoint3;
-    public ParticleSystem[] muzzleFlashes1;
-    public ParticleSystem[] muzzleFlashes2;
-    public ParticleSystem[] muzzleFlashes3;
+
+    // REMOVED: ParticleSystem[] muzzleFlashes1, 2, 3 arrays are removed since the VFX Manager handles them.
+
+    [Header("Visual Effects")]
+    [Tooltip("The unique name of the VFX to play for the gun shot (e.g., 'TracerEffect'). This replaces the muzzle flash arrays.")]
+    public string shotVFXName = "Muzzle Flash";
+    // --- END REVISED REFERENCES ---
 
     public TextMeshProUGUI overheatText;
     public Aimbot aimbot;
@@ -131,7 +139,8 @@ public class Gun : MonoBehaviour
                 // Use RateOfFire from the SO
                 nextFireTime = Time.time + (60f / guns.rateOfFire);
                 // Assuming SoundManager.Instance exists
-                SoundManager.Instance.PlaySFX("Player Shoot"); 
+                // Note: SFX is called here once per fire interval, which is good.
+                SoundManager.Instance.PlaySFX(guns.ShootSoundKey);
 
                 // Increase heat (using heatRate from SO and totalGunActive, compared against local maxHeat)
                 currentHeat += guns.heatRate * totalGunActive;
@@ -192,34 +201,62 @@ public class Gun : MonoBehaviour
         {
             UpdateActiveGunCount();
 
-            // ... (Stage 1 to 4 logic remains, calling FireBullet(spawnPoint)) ...
-
+            // --- STAGE 1: Iterate through all active spawn points and fire/play VFX ---
             if (gunStage == 1)
             {
-                foreach (Transform spawnPoint in bulletSpawnPoint1) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
-                foreach (ParticleSystem muzzleFlash in muzzleFlashes1) muzzleFlash.Play();
+                foreach (Transform spawnPoint in bulletSpawnPoint1)
+                {
+                    if (spawnPoint.gameObject.activeInHierarchy)
+                    {
+                        FireBullet(spawnPoint);
+                        PlayShotVFX(spawnPoint);
+                    }
+                }
+                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes1) muzzleFlash.Play();
             }
+            // --- STAGE 2: Iterate through all active spawn points and fire/play VFX ---
             else if (gunStage == 2)
             {
-                foreach (Transform spawnPoint in bulletSpawnPoint2) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
-                foreach (ParticleSystem muzzleFlash in muzzleFlashes2) muzzleFlash.Play();
+                foreach (Transform spawnPoint in bulletSpawnPoint2)
+                {
+                    if (spawnPoint.gameObject.activeInHierarchy)
+                    {
+                        FireBullet(spawnPoint);
+                        PlayShotVFX(spawnPoint);
+                    }
+                }
+                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes2) muzzleFlash.Play();
             }
+            // --- STAGE 3: Use SP1 and SP2 ---
             else if (gunStage == 3)
             {
-                foreach (Transform spawnPoint in bulletSpawnPoint1) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
-                foreach (ParticleSystem muzzleFlash in muzzleFlashes1) muzzleFlash.Play();
-                foreach (Transform spawnPoint in bulletSpawnPoint2) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
-                foreach (ParticleSystem muzzleFlash in muzzleFlashes2) muzzleFlash.Play();
+                foreach (Transform spawnPoint in bulletSpawnPoint1) { if (spawnPoint.gameObject.activeInHierarchy) { FireBullet(spawnPoint); PlayShotVFX(spawnPoint); } }
+                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes1) muzzleFlash.Play();
+                foreach (Transform spawnPoint in bulletSpawnPoint2) { if (spawnPoint.gameObject.activeInHierarchy) { FireBullet(spawnPoint); PlayShotVFX(spawnPoint); } }
+                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes2) muzzleFlash.Play();
             }
+            // --- STAGE 4: Use SP1, SP2, and SP3 ---
             else if (gunStage == 4)
             {
-                foreach (Transform spawnPoint in bulletSpawnPoint1) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
-                foreach (ParticleSystem muzzleFlash in muzzleFlashes1) muzzleFlash.Play();
-                foreach (Transform spawnPoint in bulletSpawnPoint2) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
-                foreach (ParticleSystem muzzleFlash in muzzleFlashes2) muzzleFlash.Play();
-                foreach (Transform spawnPoint in bulletSpawnPoint3) { if (spawnPoint.gameObject.activeInHierarchy) FireBullet(spawnPoint); }
-                foreach (ParticleSystem muzzleFlash in muzzleFlashes3) muzzleFlash.Play();
+                foreach (Transform spawnPoint in bulletSpawnPoint1) { if (spawnPoint.gameObject.activeInHierarchy) { FireBullet(spawnPoint); PlayShotVFX(spawnPoint); } }
+                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes1) muzzleFlash.Play();
+                foreach (Transform spawnPoint in bulletSpawnPoint2) { if (spawnPoint.gameObject.activeInHierarchy) { FireBullet(spawnPoint); PlayShotVFX(spawnPoint); } }
+                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes2) muzzleFlash.Play();
+                foreach (Transform spawnPoint in bulletSpawnPoint3) { if (spawnPoint.gameObject.activeInHierarchy) { FireBullet(spawnPoint); PlayShotVFX(spawnPoint); } }
+                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes3) muzzleFlash.Play();
             }
+        }
+    }
+
+    /// <summary>
+    /// Helper method to call the VisualEffectManager for the gun shot effect.
+    /// </summary>
+    private void PlayShotVFX(Transform spawnPoint)
+    {
+        if (VisualEffectManager.Instance != null && !string.IsNullOrEmpty(shotVFXName))
+        {
+            // Call the visual effect at the spawn point's position and rotation
+            VisualEffectManager.Instance.PlayEffect(shotVFXName, spawnPoint.position, spawnPoint.rotation);
         }
     }
 

@@ -65,6 +65,12 @@ public class FuzeBullet : MonoBehaviour
             Instantiate(explosionEffect, transform.position, transform.rotation);
         }
 
+        if (VisualEffectManager.Instance != null && !string.IsNullOrEmpty("Bullet Impact Big"))
+        {
+            // Spawn the effect at the enemy's position and current rotation
+            VisualEffectManager.Instance.PlayEffect("Bullet Impact Big", transform.position, transform.rotation);
+        }
+
         Destroy(gameObject); // Destroy the bullet
     }
 
@@ -74,6 +80,8 @@ public class FuzeBullet : MonoBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, proximityRadius);
     }
+
+
 
    /* void OnCollisionEnter(Collision collision)
     {

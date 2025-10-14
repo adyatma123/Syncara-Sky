@@ -61,8 +61,6 @@ public class HomingMissile : MonoBehaviour
     {
         // Give the missile an initial forward push
         rb.velocity = transform.forward * speed;
-
-        Debug.Log($"Missile '{missileName}' launched. Seeking target...");
     }
 
     void Update()
@@ -73,7 +71,6 @@ public class HomingMissile : MonoBehaviour
         // Destroy the missile when the guidance time runs out
         if (currentGuidanceTime <= 0)
         {
-            Debug.Log($"{missileName}: Guidance time expired. Self-destructing.");
             Destroy(gameObject);
         }
 
@@ -196,6 +193,12 @@ public class HomingMissile : MonoBehaviour
             if (marker != null)
             {
                 Destroy(marker);
+            }
+
+            if (VisualEffectManager.Instance != null && !string.IsNullOrEmpty("Payload Impact"))
+            {
+                // Spawn the effect at the enemy's position and current rotation
+                VisualEffectManager.Instance.PlayEffect("Payload Impact", transform.position, transform.rotation);
             }
 
             // Destroy the missile after hitting the enemy

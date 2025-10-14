@@ -143,6 +143,13 @@ public class ManualGuidedMissile : MonoBehaviour
             {
                 enemy.TakeDamage(mDamage);
             }
+
+            if (VisualEffectManager.Instance != null && !string.IsNullOrEmpty("Payload Impact"))
+            {
+                // Spawn the effect at the enemy's position and current rotation
+                VisualEffectManager.Instance.PlayEffect("Payload Impact", transform.position, transform.rotation);
+            }
+
             Destroy(gameObject);
         }
     }
