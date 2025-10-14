@@ -30,6 +30,9 @@ public class GameManager : MonoBehaviour
     [Tooltip("The UI Text or GameObject to display when all waves are complete.")]
     public GameObject completionUIObject;
 
+    [Tooltip("The UI Text or GameObject to display when all waves are complete.")]
+    public string levelMusic;
+
     [Tooltip("The name of the scene to load when the player presses SPACE after completion. Leave empty to quit the application.")]
     public string nextSceneName = "MainMenu";
 
@@ -113,6 +116,8 @@ public class GameManager : MonoBehaviour
         {
             completionUIObject.SetActive(false);
         }
+
+        SoundManager.Instance.PlayMusic(levelMusic);
     }
 
     /// <summary>

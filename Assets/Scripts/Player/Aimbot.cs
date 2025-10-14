@@ -4,39 +4,84 @@ using UnityEngine;
 
 public class Aimbot : MonoBehaviour
 {
-    public PlayerController playerCon;
+    [Header("Aim Settings")]
     public float rotationSpeed = 5f;
-    public float lockRadius = 113f;
+
+    [Tooltip("Controls the strength of predictive aiming (0 = off, 1 = full prediction).")]
+    [Range(0f, 1f)]
+    public float predictiveAimSensitivity = 1f;
+
+    [Tooltip("Adds or subtracts distance along the direction of the prediction vector. Positive values aim further ahead.")]
+    public float predictiveDistanceOffset = 0f; // <<< CHANGED: Now a float for distance offset
+
+    // Public field for the Gun script to set the actual bullet speed
+    [HideInInspector] // Hide in Inspector since it is set programmatically
+    public float CurrentBulletSpeed = 0f; // This is set by the Gun component
+
+    [Header("Targeting Settings")]
+    public float lockRadius = 120f;
 
     private Transform nearestEnemy;
+    private Rigidbody nearestEnemyRb; // Cache Rigidbody for velocity access
     public bool showTargetFollowRadiusGizmo = true;
 
     void Update()
     {
-        PlayerController playerController = GetComponent<PlayerController>();
-        // Find the nearest enemy within the search radius
-        Collider[] colliders = Physics.OverlapSphere(transform.position, playerCon.lockRadius);
-        float nearestDistance = Mathf.Infinity;
-
-        foreach (Collider collider in colliders)
-        {
-            if (collider.tag == "Enemy")
-            {
-                float distance = Vector3.Distance(transform.position, collider.transform.position);
-                if (distance < nearestDistance)
-                {
-                    nearestDistance = distance;
-                    nearestEnemy = collider.transform;
-                }
-            }
-        }
+        FindNearestEnemy();
 
         // Rotate towards the nearest enemy or reset rotation
         if (nearestEnemy != null)
         {
-            Vector3 direction = (nearestEnemy.position - transform.position).normalized;
-            Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
-            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            Vector3 targetPosition = nearestEnemy.position;
+            Vector3 finalAimPosition;
+
+            // Check if predictive aiming is enabled and the enemy has a Rigidbody
+            // Use CurrentBulletSpeed > 0 check as a safety for the division
+            if (predictiveAimSensitivity > 0f && nearestEnemyRb != null && CurrentBulletSpeed > 0f)
+            {
+                // Get the target's velocity
+                Vector3 targetVelocity = nearestEnemyRb.velocity;
+
+                // 1. Calculate the full predicted position
+                Vector3 predictedPosition = AimPrediction.GetPredictedLeadPosition(
+                    targetPosition,
+                    targetVelocity,
+                    transform.position,
+                    CurrentBulletSpeed
+                );
+
+                // 2. Interpolate based on sensitivity
+                Vector3 interpolatedPosition = Vector3.Lerp(targetPosition, predictedPosition, predictiveAimSensitivity);
+
+                // --- Apply the Predictive Distance Offset ---
+                if (predictiveDistanceOffset != 0f)
+                {
+                    // The 'lead direction' is from the shooter to the interpolated target
+                    Vector3 leadDirection = (interpolatedPosition - transform.position).normalized;
+
+                    // Apply the offset along that direction vector
+                    finalAimPosition = interpolatedPosition + (leadDirection * predictiveDistanceOffset);
+                }
+                else
+                {
+                    finalAimPosition = interpolatedPosition;
+                }
+            }
+            else
+            {
+                // Prediction off, or target/speed invalid, aim directly at the current position
+                finalAimPosition = targetPosition;
+            }
+
+            // Calculate the direction vector using the final determined aim position
+            Vector3 direction = (finalAimPosition - transform.position).normalized;
+
+            // Rotate the Aimbot
+            if (direction != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
+                transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            }
         }
         else
         {
@@ -45,12 +90,62 @@ public class Aimbot : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Searches for the nearest enemy within the lock radius and stores its Transform and Rigidbody.
+    /// </summary>
+    void FindNearestEnemy()
+    {
+        nearestEnemy = null;
+        nearestEnemyRb = null; // Clear the Rigidbody reference
+
+        Collider[] colliders = Physics.OverlapSphere(transform.position, lockRadius);
+        float nearestDistance = Mathf.Infinity;
+
+        foreach (Collider collider in colliders)
+        {
+            if (collider.CompareTag("Enemy"))
+            {
+                float distance = Vector3.Distance(transform.position, collider.transform.position);
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearestEnemy = collider.transform;
+                    // Attempt to get the Rigidbody here
+                    nearestEnemyRb = collider.GetComponent<Rigidbody>();
+                }
+            }
+        }
+    }
+
     private void OnDrawGizmos()
     {
         if (showTargetFollowRadiusGizmo)
         {
-            Gizmos.color = Color.green; // Use a clear green color for better visibility
-            Gizmos.DrawWireSphere(transform.position, playerCon.lockRadius);
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(transform.position, lockRadius);
+        }
+
+        // Optional: Draw a line to the predicted target position for debugging
+        if (nearestEnemy != null && nearestEnemyRb != null && predictiveAimSensitivity > 0f)
+        {
+            // Calculate predicted position for drawing
+            Vector3 predictedPosition = AimPrediction.GetPredictedLeadPosition(
+               nearestEnemy.position,
+               nearestEnemyRb.velocity,
+               transform.position,
+               CurrentBulletSpeed
+           );
+
+            // Calculate the final interpolated position
+            Vector3 interpolatedPosition = Vector3.Lerp(nearestEnemy.position, predictedPosition, predictiveAimSensitivity);
+
+            // Apply offset for gizmo drawing consistency
+            Vector3 leadDirection = (interpolatedPosition - transform.position).normalized;
+            Vector3 finalAimPosition = interpolatedPosition + (leadDirection * predictiveDistanceOffset); // <<< Applying offset to Gizmo drawing
+
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(finalAimPosition, 1f); // Red sphere at the final aim spot
+            Gizmos.DrawLine(transform.position, finalAimPosition);
         }
     }
 }

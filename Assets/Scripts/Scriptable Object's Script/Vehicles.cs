@@ -19,4 +19,8 @@ public class Vehicles : ScriptableObject
     public float maxRot = 45f;
     public int Tier;
     public int Price;
+
+    [Header("Vehicle Type")]
+    [Tooltip("Check this box if the vehicle is a helicopter (affects cursor and potential movement logic).")]
+    public bool isHelicopter = false;
 }

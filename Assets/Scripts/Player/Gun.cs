@@ -4,21 +4,29 @@ using System.Reflection;
 using TMPro;
 using UnityEngine;
 
+// 1. NEW SERIALIZABLE CLASS FOR GUN LAYOUT
+[System.Serializable]
+public class GunStageLayout
+{
+    [Tooltip("The name of this firing stage (e.g., 'Single', 'Dual', 'Full Salvo').")]
+    public string stageName = "Stage";
+    [Tooltip("The transforms that fire when this stage is active. This array must contain the cumulative transforms for stages where that is intended.")]
+    public Transform[] spawnPoints;
+}
+// ------------------------------------------
+
 public class Gun : MonoBehaviour
 {
     // The currently active Scriptable Object containing all gun stats (Damage, RoF, Bullet Prefab, Heat Increase per shot)
     public Guns guns;
 
     // --- Gun component references (REVISED) ---
-    [Header("Spawn Points")]
-    [Tooltip("Spawn points for Gun Stage 1")]
-    public Transform[] bulletSpawnPoint1;
-    [Tooltip("Spawn points for Gun Stage 2")]
-    public Transform[] bulletSpawnPoint2;
-    [Tooltip("Spawn points for Gun Stage 3")]
-    public Transform[] bulletSpawnPoint3;
+    [Header("Gun Layouts")]
+    [Tooltip("Defines the arrangement of spawn points for each gun stage (Stage 1 is index 0, Stage 2 is index 1, etc.).")]
+    // 2. REPLACED old Transform[] arrays with a flexible List of stages
+    public List<GunStageLayout> gunStages = new List<GunStageLayout>();
 
-    // REMOVED: ParticleSystem[] muzzleFlashes1, 2, 3 arrays are removed since the VFX Manager handles them.
+    // REMOVED: Old bulletSpawnPoint1, 2, 3 arrays.
 
     [Header("Visual Effects")]
     [Tooltip("The unique name of the VFX to play for the gun shot (e.g., 'TracerEffect'). This replaces the muzzle flash arrays.")]
@@ -34,8 +42,9 @@ public class Gun : MonoBehaviour
     [Header("Aircraft Heat Capacity")]
     [Tooltip("Maximum heat before the gun disables (Specific to the vehicle's cooling system).")]
     public float maxHeat = 100f;
-    [Tooltip("Minimum heat level required for cooldown to end and allow firing again (Specific to the vehicle's cooling system).")]
-    public float overheatMinCD = 30f;
+
+    [Header("Cooldown Threshold (20% of Max Heat)")]
+    private float overheatMinCD;
 
     // Internal state variables
     public float currentHeat = 0f;
@@ -47,15 +56,19 @@ public class Gun : MonoBehaviour
 
     // Spread is still local, but could be moved to the Guns SO later
     public float gunSpread = 0.1f;
+    // gunStage is now a 1-based index (1 to Count) into the gunStages list
     public int gunStage = 1;
     public int totalGunActive;
 
     // Default cooldown rate if not firing (can be adjusted in the Inspector)
     [Header("Heat Cooldown Rate (Constant)")]
-    public float passiveCooldownRate = 20f;
+    public float passiveCooldownRate = 20f; // This variable is now unused in the new calculation, but kept for inspector visibility.
 
     void Awake()
     {
+        // Calculate the minimum cooldown threshold
+        overheatMinCD = maxHeat * 0.20f;
+
         // Automatically find the TextMeshProUGUI with the "OverheatText" tag
         GameObject overheatTextObject = GameObject.FindWithTag("OverheatText");
         if (overheatTextObject != null)
@@ -74,19 +87,30 @@ public class Gun : MonoBehaviour
         if (GameSelectionManager.Instance != null && GameSelectionManager.Instance.ConfirmedGunSelection != null)
         {
             Guns confirmedGunData = GameSelectionManager.Instance.ConfirmedGunSelection;
-
-            // Assuming your 'Gun' script has a method to apply properties:
             ApplyGunProperties(confirmedGunData);
-
             Debug.Log($"Gun Component Initialized: Applied confirmed gun '{confirmedGunData.name}' from Selection Manager.");
         }
 
         if (VhcChgr.selectedGunData != null)
         {
             ApplyGunProperties(VhcChgr.selectedGunData);
-            // Clear the static reference if it's not needed after loading, 
-            // to prevent issues if you return to the menu and select a new vehicle.
             VhcChgr.selectedGunData = null;
+        }
+
+        // NEW: Initial Aimbot speed update if an Aimbot is linked
+        if (aimbot != null && guns != null)
+        {
+            aimbot.CurrentBulletSpeed = guns.bulletSpeed;
+        }
+
+        // Ensure the initial stage is valid
+        if (gunStages.Count > 0)
+        {
+            gunStage = Mathf.Clamp(gunStage, 1, gunStages.Count);
+        }
+        else
+        {
+            gunStage = 0; // Invalid stage if no layouts are defined
         }
     }
 
@@ -106,10 +130,18 @@ public class Gun : MonoBehaviour
         // --- Core Modularity Step: Assign the new data container ---
         this.guns = newGuns;
 
-        // Reset heat state. Note: maxHeat and overheatMinCD are NOT reset here as they are local.
+        // Recalculate based on vehicle's max heat
+        overheatMinCD = maxHeat * 0.20f;
+
         currentHeat = 0f;
         gunOverheated = false;
         if (overheatText != null) overheatText.enabled = false;
+
+        if (aimbot != null)
+        {
+            aimbot.CurrentBulletSpeed = guns.bulletSpeed;
+        }
+
         Debug.Log($"Gun successfully switched to: {guns.name}");
     }
 
@@ -119,27 +151,36 @@ public class Gun : MonoBehaviour
 
         UpdateActiveGunCount();
 
-        // --- Weapon Stage Cycle Logic (Remains unchanged) ---
+        // --- Weapon Stage Cycle Logic (Updated to use the new List count) ---
         if (Input.GetKeyDown(KeyCode.C))
         {
-            gunStage++;
-            if (gunStage > 4)
+            if (gunStages.Count > 0)
             {
-                gunStage = 1;
+                gunStage++;
+                // If it exceeds the number of defined stages, loop back to Stage 1
+                if (gunStage > gunStages.Count)
+                {
+                    gunStage = 1;
+                }
+                Debug.Log($"Current Stage: Stage {gunStage} - {gunStages[gunStage - 1].stageName}");
             }
-            Debug.Log("Current Stage: " + gunStage);
+            else
+            {
+                Debug.LogWarning("No gun stages are defined in the 'Gun Layouts' list!");
+                gunStage = 0; // Indicate no active stage
+            }
         }
 
         // --- Firing Logic (Uses SO heatRate, but local maxHeat) ---
-        if (!gunOverheated)
+        // Only allow firing if a stage is active (gunStage > 0)
+        if (!gunOverheated && gunStage > 0)
         {
             if (Input.GetButton("Gun") && Time.time >= nextFireTime)
             {
                 Shoot();
                 // Use RateOfFire from the SO
                 nextFireTime = Time.time + (60f / guns.rateOfFire);
-                // Assuming SoundManager.Instance exists
-                // Note: SFX is called here once per fire interval, which is good.
+
                 SoundManager.Instance.PlaySFX(guns.ShootSoundKey);
 
                 // Increase heat (using heatRate from SO and totalGunActive, compared against local maxHeat)
@@ -176,15 +217,18 @@ public class Gun : MonoBehaviour
             if (aimbot != null) aimbot.enabled = !aimbot.enabled;
         }
 
-        // --- Cooldown Logic (Uses local passiveCooldownRate) ---
+        // --- Cooldown Logic (REVISED to 1% of maxHeat per second) ---
         if (currentHeat > 0)
         {
-            // Use local passiveCooldownRate for heat reduction
-            currentHeat -= Time.deltaTime * passiveCooldownRate;
+            // Calculate 20% of maxHeat (the cooldown amount per second)
+            float cooldownPerSecond = maxHeat * 0.2f;
+
+            // Reduce heat
+            currentHeat -= Time.deltaTime * cooldownPerSecond;
             currentHeat = Mathf.Max(0, currentHeat);
         }
 
-        // Check for cooldown completion (using local overheatMinCD)
+        // Check for cooldown completion (using calculated overheatMinCD)
         if (gunOverheated && currentHeat <= this.overheatMinCD) // Use local overheatMinCD
         {
             gunOverheated = false;
@@ -199,51 +243,31 @@ public class Gun : MonoBehaviour
 
         void Shoot()
         {
+            // 3. SIMPLIFIED SHOOT LOGIC
             UpdateActiveGunCount();
 
-            // --- STAGE 1: Iterate through all active spawn points and fire/play VFX ---
-            if (gunStage == 1)
+            // Convert 1-based gunStage to 0-based index
+            int index = gunStage - 1;
+
+            if (index >= 0 && index < gunStages.Count)
             {
-                foreach (Transform spawnPoint in bulletSpawnPoint1)
+                // Get the spawn points for the current, fully defined stage
+                Transform[] currentSpawnPoints = gunStages[index].spawnPoints;
+
+                // Iterate through all active spawn points in the selected layout and fire/play VFX
+                foreach (Transform spawnPoint in currentSpawnPoints)
                 {
-                    if (spawnPoint.gameObject.activeInHierarchy)
+                    // Always check for null since transforms can be deleted in the editor
+                    if (spawnPoint != null && spawnPoint.gameObject.activeInHierarchy)
                     {
                         FireBullet(spawnPoint);
                         PlayShotVFX(spawnPoint);
                     }
                 }
-                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes1) muzzleFlash.Play();
             }
-            // --- STAGE 2: Iterate through all active spawn points and fire/play VFX ---
-            else if (gunStage == 2)
+            else
             {
-                foreach (Transform spawnPoint in bulletSpawnPoint2)
-                {
-                    if (spawnPoint.gameObject.activeInHierarchy)
-                    {
-                        FireBullet(spawnPoint);
-                        PlayShotVFX(spawnPoint);
-                    }
-                }
-                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes2) muzzleFlash.Play();
-            }
-            // --- STAGE 3: Use SP1 and SP2 ---
-            else if (gunStage == 3)
-            {
-                foreach (Transform spawnPoint in bulletSpawnPoint1) { if (spawnPoint.gameObject.activeInHierarchy) { FireBullet(spawnPoint); PlayShotVFX(spawnPoint); } }
-                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes1) muzzleFlash.Play();
-                foreach (Transform spawnPoint in bulletSpawnPoint2) { if (spawnPoint.gameObject.activeInHierarchy) { FireBullet(spawnPoint); PlayShotVFX(spawnPoint); } }
-                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes2) muzzleFlash.Play();
-            }
-            // --- STAGE 4: Use SP1, SP2, and SP3 ---
-            else if (gunStage == 4)
-            {
-                foreach (Transform spawnPoint in bulletSpawnPoint1) { if (spawnPoint.gameObject.activeInHierarchy) { FireBullet(spawnPoint); PlayShotVFX(spawnPoint); } }
-                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes1) muzzleFlash.Play();
-                foreach (Transform spawnPoint in bulletSpawnPoint2) { if (spawnPoint.gameObject.activeInHierarchy) { FireBullet(spawnPoint); PlayShotVFX(spawnPoint); } }
-                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes2) muzzleFlash.Play();
-                foreach (Transform spawnPoint in bulletSpawnPoint3) { if (spawnPoint.gameObject.activeInHierarchy) { FireBullet(spawnPoint); PlayShotVFX(spawnPoint); } }
-                // REMOVED: foreach (ParticleSystem muzzleFlash in muzzleFlashes3) muzzleFlash.Play();
+                Debug.LogWarning($"Cannot fire. Invalid stage index: {gunStage}. Check 'Gun Layouts' configuration.");
             }
         }
     }
@@ -290,23 +314,29 @@ public class Gun : MonoBehaviour
         }
     }
 
+    // 4. SIMPLIFIED ACTIVE GUN COUNT LOGIC
     private void UpdateActiveGunCount()
     {
         totalGunActive = 0; // Reset count
 
-        // Count active spawn points across all stages
-        if (gunStage == 1) { foreach (Transform sp in bulletSpawnPoint1) if (sp.gameObject.activeInHierarchy) totalGunActive++; }
-        if (gunStage == 2) { foreach (Transform sp in bulletSpawnPoint2) if (sp.gameObject.activeInHierarchy) totalGunActive++; }
-        if (gunStage == 3)
+        // Convert 1-based gunStage to 0-based index
+        int index = gunStage - 1;
+
+        // Check if the current stage index is valid
+        if (index >= 0 && index < gunStages.Count)
         {
-            foreach (Transform sp in bulletSpawnPoint1) if (sp.gameObject.activeInHierarchy) totalGunActive++;
-            foreach (Transform sp in bulletSpawnPoint2) if (sp.gameObject.activeInHierarchy) totalGunActive++;
-        }
-        if (gunStage == 4)
-        {
-            foreach (Transform sp in bulletSpawnPoint1) if (sp.gameObject.activeInHierarchy) totalGunActive++;
-            foreach (Transform sp in bulletSpawnPoint2) if (sp.gameObject.activeInHierarchy) totalGunActive++;
-            foreach (Transform sp in bulletSpawnPoint3) if (sp.gameObject.activeInHierarchy) totalGunActive++;
+            // Get the spawn points for the current stage
+            Transform[] currentSpawnPoints = gunStages[index].spawnPoints;
+
+            // Count active spawn points
+            foreach (Transform sp in currentSpawnPoints)
+            {
+                // Check if the transform reference is valid and active in the hierarchy
+                if (sp != null && sp.gameObject.activeInHierarchy)
+                {
+                    totalGunActive++;
+                }
+            }
         }
     }
 }

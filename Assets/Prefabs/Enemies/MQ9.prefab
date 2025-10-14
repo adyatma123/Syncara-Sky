@@ -586,6 +586,7 @@ GameObject:
   - component: {fileID: 4314327144370043170}
   - component: {fileID: -1875937190792584157}
   - component: {fileID: 2460075201421318723}
+  - component: {fileID: -7240779990866992749}
   m_Layer: 0
   m_Name: MQ9
   m_TagString: Enemy
@@ -696,3 +697,30 @@ MonoBehaviour:
   missilePrefab: {fileID: 1198153631106594642, guid: 2cd99ef7de6c46b40aa84517e6160229, type: 3}
   initialMissileLaunchDelay: 1
   firePoint: {fileID: 695050785046986577}
+--- !u!54 &-7240779990866992749
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9022126433288800318}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 2
