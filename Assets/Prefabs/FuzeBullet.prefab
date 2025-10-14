@@ -62,7 +62,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 3da2e15ec6268aa4191d67dc6fc698d1, type: 2}
+  - {fileID: 2100000, guid: 103b13d8234edf64bbe76bff98c7c1eb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -177,6 +177,8 @@ MonoBehaviour:
   gun: {fileID: 0}
   damage: 10
   bulletSpeed: 50
+  bounceChance: 0.5
+  bounceAngleMaxRange: 15
 --- !u!136 &8567008481727034137
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -269,7 +271,7 @@ TrailRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Time: 0.1
+  m_Time: 0.2
   m_PreviewTimeScale: 1
   m_Parameters:
     serializedVersion: 3
@@ -309,7 +311,7 @@ TrailRenderer:
       key6: {r: 0, g: 0, b: 0, a: 0}
       key7: {r: 0, g: 0, b: 0, a: 0}
       ctime0: 0
-      ctime1: 15227
+      ctime1: 33346
       ctime2: 65535
       ctime3: 0
       ctime4: 0
