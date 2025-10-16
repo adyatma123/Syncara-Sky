@@ -4,7 +4,7 @@ using UnityEngine;
 /// This behavior script makes the enemy move forward while also traversing 
 /// horizontally in a sinusoidal (zigzag) pattern after the initial movement is complete.
 /// </summary>
-public class ZigZagBehavior : MonoBehaviour
+public class ZigZagBehavior : MonoBehaviour, IEnemyBehavior // <-- IMPLEMENT IEnemyBehavior
 {
     private EnemyController enemyController;
 

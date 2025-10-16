@@ -4,7 +4,7 @@ using UnityEngine;
 /// This behavior script makes the enemy patrol back and forth horizontally within the screen bounds.
 /// It works in conjunction with the EnemyController to get movement speed and other properties.
 /// </summary>
-public class PatrolBehavior : MonoBehaviour
+public class PatrolBehavior : MonoBehaviour, IEnemyBehavior // <-- IMPLEMENT IEnemyBehavior
 {
     private EnemyController enemyController;
     private bool movingRight = false;

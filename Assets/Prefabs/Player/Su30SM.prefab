@@ -4993,7 +4993,6 @@ GameObject:
   - component: {fileID: 5127676812520409347}
   - component: {fileID: 5256994963960343308}
   - component: {fileID: 4272150595347900857}
-  - component: {fileID: 1183040165861744137}
   - component: {fileID: 7383958742644371523}
   - component: {fileID: 7020433292948004266}
   m_Layer: 3
@@ -5057,25 +5056,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edc6ad1a277d87e43ab5a321ecb6e3ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  vehicleData: {fileID: 11400000, guid: b7fde1c1fb5d6df46a9e845cf0b9fe82, type: 2}
   maxHealth: 1000
   currentHealth: 0
   movSpeed: 80
   rotSpeed: 1
   maxRotAngle: 90
   payloadManager: {fileID: 7020433292948004266}
---- !u!114 &1183040165861744137
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2960888944991467842}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 291cea61a7c64db4485d2323bf654525, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  screenPosition: {x: 0, y: 0, z: 0}
+  controlledGun: {fileID: 0}
 --- !u!114 &7383958742644371523
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5089,7 +5077,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   guns: {fileID: 11400000, guid: eeb492f3ad893dd458bb4cb43381f589, type: 2}
-  gunStages: []
+  gunStages:
+  - stageName: Single
+    spawnPoints:
+    - {fileID: 6928330022906346436}
   shotVFXName: Muzzle Flash
   overheatText: {fileID: 0}
   aimbot: {fileID: 0}

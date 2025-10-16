@@ -56,7 +56,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2540696150854785264}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
@@ -67,7 +67,7 @@ Transform:
   - {fileID: 7670828132541567945}
   - {fileID: 7904543565218519222}
   m_Father: {fileID: 2261267545997876862}
-  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &5687218609074175812
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -587,6 +587,7 @@ GameObject:
   - component: {fileID: -1875937190792584157}
   - component: {fileID: 2460075201421318723}
   - component: {fileID: -7240779990866992749}
+  - component: {fileID: 5873174705123874946}
   m_Layer: 0
   m_Name: MQ9
   m_TagString: Enemy
@@ -658,9 +659,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70877cbaf1f45a647a87ab4b35d6c532, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  availableRoutes:
-  - {fileID: 0}
-  splineSpeedMultiplier: 2
+  availableRoutes: []
+  splineSpeedMultiplier: 0
+  alignmentMode: 1
+  objectForwardAxis: 5
+  objectUpAxis: 1
 --- !u!65 &-1875937190792584157
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -724,3 +727,19 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 2
+--- !u!114 &5873174705123874946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9022126433288800318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dfe2ef4611fbcf4d8d2469ec5120815, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDestroyImmediately: 1
+  enableFallStraight: 1
+  enableFallAndRotate: 1
+  tumbleSpeed: 180

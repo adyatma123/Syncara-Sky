@@ -1,6 +1,10 @@
 using System;
 using UnityEngine;
 
+// Add this interface definition outside the main class. 
+// Any specific enemy movement script (e.g., ForwardMoveBehavior.cs) MUST implement this interface.
+public interface IEnemyBehavior { }
+
 /// <summary>
 /// This MonoBehaviour component acts as the runtime data holder for an enemy instance.
 /// It retrieves its base properties from an assigned 'EnemyData' ScriptableObject
@@ -40,6 +44,13 @@ public class EnemyProps : MonoBehaviour
     private bool _isArmedRKT;
     private bool _isArmedMSL;
 
+    // --- NEW REFERENCES FOR DEATH HAND-OFF ---
+    private EnemyController _controller;
+    private Rigidbody _rb;
+    // CRITICAL FIX: Changed to IEnemyBehavior to find the specific movement script
+    private MonoBehaviour _mainBehaviorScript;
+    // -----------------------------------------
+
     [Header("Dynamic State")]
     [Tooltip("The current health of this enemy instance, which changes during gameplay.")]
     public int currentHealth; // This remains public as it's the runtime mutable health
@@ -61,8 +72,6 @@ public class EnemyProps : MonoBehaviour
     public bool IsArmedMG => _isArmedMG;
     public bool IsArmedRKT => _isArmedRKT;
     public bool IsArmedMSL => _isArmedMSL;
-
-    // Event triggered when this enemy is destroyed by the player, passing the score value.
 
     /// <summary>
     /// Called when the script instance is being loaded.
@@ -97,6 +106,13 @@ public class EnemyProps : MonoBehaviour
 
         // Initialize the current health to the maximum health defined in EnemyData.
         currentHealth = _maxHealth;
+
+        // Get references to controller and rigidbody for death handling
+        _controller = GetComponent<EnemyController>();
+        _rb = GetComponent<Rigidbody>();
+
+        // CRITICAL FIX: Find the one script that implements IEnemyBehavior (your specific movement script)
+        _mainBehaviorScript = GetComponent<IEnemyBehavior>() as MonoBehaviour;
     }
 
     /// <summary>
@@ -111,35 +127,61 @@ public class EnemyProps : MonoBehaviour
 
         if (currentHealth <= 0)
         {
-            // --- NEW: Play the destruction effect ---
-            if (VisualEffectManager.Instance != null && !string.IsNullOrEmpty("Aircraft Explode"))
-            {
-                // Spawn the effect at the enemy's position and current rotation
-                VisualEffectManager.Instance.PlayEffect("Aircraft Explode", transform.position, transform.rotation);
-            }
+            // Ensure this script is active before proceeding (prevents double-death/score)
+            if (!enabled) return;
 
-            CameraManager camManager = FindObjectOfType<CameraManager>();
+            // ... (Existing effect and score logic) ...
 
-            camManager.StartShake();
-
-                // 1. Check for Player Kill and Report Score
-                // We use the "PlayerProjectile" tag (as established previously) for accurate scoring.
-            if (damageSource != null && damageSource.CompareTag("PlayerProjectile"))
-            {
-                OnEnemyDestroyedByPlayerScore?.Invoke(_scoreVal); // Fires event for Game Manager to add score and increment player kills
-            }
-
-            // 2. Report Total Destruction (for total count, wave clearing, and StoryEventManager)
+            // 2. Report Total Destruction
             OnEnemyDestroyed?.Invoke();
+            OnEnemyDestroyedByPlayerScore.Invoke(_scoreVal);
 
-            // 3. Cleanup
-            Destroy(gameObject);
+            // 3. Cleanup: Hand off control to the new death animation system
 
-            // Example of playing an SFX:
-            if (SoundManager.Instance != null)
-            {
-                SoundManager.Instance.PlaySFX("Explode");
-            }
+            // A. Stop existing EnemyController (which cleans up weapons and movement)
+            if (_controller != null) _controller.CleanupForDeath();
+
+            // B. Calculate Death Velocity in WORLD SPACE first:
+            Vector3 initialWorldVelocity = _rb != null ? _rb.velocity : Vector3.zero;
+
+            // We want to preserve horizontal (X) and forward (Z) momentum, but enforce the fall (Y)
+            // and the backward push (Z) based on MovSpeed.
+
+            // 1. Define the desired momentum (World Space)
+            Vector3 worldSpaceMomentum = new Vector3(
+                initialWorldVelocity.x,     // Keep current World X momentum
+                initialWorldVelocity.y,     // Keep current World Y momentum (this could be zero if not falling)
+                initialWorldVelocity.z      // Keep current World Z momentum
+            );
+
+            // 2. Define the enforced LOCAL Death Impulse. 
+            // We want the plane to drop down (-Y) and drift backward (-Z) relative to its nose.
+            Vector3 enforcedLocalImpulse = new Vector3(
+                0f,                         // No enforced local X movement
+                -_movSpeed,                 // Enforce local DOWNWARD fall at MovSpeed
+                -_movSpeed                  // Enforce local BACKWARD drift at MovSpeed
+            );
+
+            // 3. Convert the Local Impulse into World Space.
+            Vector3 enforcedWorldImpulse = transform.TransformDirection(enforcedLocalImpulse);
+
+            // 4. Combine the initial world momentum with the world impulse (this is the final World Vector)
+            Vector3 combinedWorldVelocity = worldSpaceMomentum + enforcedWorldImpulse;
+
+            // 5. CRITICAL STEP: Convert the FINAL combined World Velocity back to LOCAL SPACE.
+            // The AfterDeathAnimation script can then apply this Local Vector to the local transform.
+            Vector3 finalLocalDeathVelocity = transform.InverseTransformDirection(combinedWorldVelocity);
+
+
+            // C. Add the AfterDeathAnimation component and initialize
+            AfterDeathAnimation deathAnimation = gameObject.AddComponent<AfterDeathAnimation>();
+            // PASS THE FINAL LOCAL DEATH VELOCITY
+            deathAnimation.Initialize(EnemyType, finalLocalDeathVelocity, _mainBehaviorScript);
+
+            // D. Disable this EnemyProps script to prevent further damage or events
+            enabled = false;
+
+            // ... (rest of the code) ...
         }
     }
 }

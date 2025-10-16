@@ -30,6 +30,12 @@ public class SoundManager : MonoBehaviour
     // Stores the current music fade coroutine to prevent starting multiple fades
     private Coroutine musicFadeCoroutine;
 
+    // NEW: Public properties for debug overlay
+    // If the source is playing, it returns the clip name; otherwise, it returns "None".
+    public string CurrentMusicName => musicSource.isPlaying ? musicSource.clip?.name ?? "Playing (Name N/A)" : "None";
+    public string CurrentVoiceName => voiceSource.isPlaying ? voiceSource.clip?.name ?? "Playing (Name N/A)" : "None";
+
+
     private void Awake()
     {
         // --- Singleton Setup ---
@@ -154,6 +160,7 @@ public class SoundManager : MonoBehaviour
 
                 // Stop any currently playing voice line and play the new one
                 voiceSource.Stop();
+                voiceSource.clip = clipToPlay; // Store the clip for the debug accessor
                 voiceSource.PlayOneShot(clipToPlay, volume);
             }
         }
@@ -186,7 +193,7 @@ public class SoundManager : MonoBehaviour
                 }
 
                 // 2. Configure the AudioSource
-                musicSource.clip = clips[0];
+                musicSource.clip = clips[0]; // Store the clip for the debug accessor
                 musicSource.outputAudioMixerGroup = group;
                 musicSource.loop = true;
 
@@ -246,6 +253,7 @@ public class SoundManager : MonoBehaviour
     private void StopMusicSource()
     {
         musicSource.Stop();
+        musicSource.clip = null; // Clear clip name for debug accessor
     }
 
     // --- COROUTINE FOR FADING ---

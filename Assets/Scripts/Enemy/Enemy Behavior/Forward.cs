@@ -4,7 +4,7 @@ using UnityEngine;
 /// This behavior makes the enemy move straight forward until it goes off-screen.
 /// It works in conjunction with the EnemyController to get movement speed and other properties.
 /// </summary>
-public class ForwardMoveBehavior : MonoBehaviour
+public class ForwardMoveBehavior : MonoBehaviour, IEnemyBehavior // <-- IMPLEMENT IEnemyBehavior HERE
 {
     private EnemyController enemyController;
 

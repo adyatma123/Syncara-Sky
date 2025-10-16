@@ -52,6 +52,9 @@ public class EnemyController : MonoBehaviour
 
     private Plane[] cameraPlanes; // Cache for frustum planes
 
+    /// <summary>Public accessor for the Rigidbody component.</summary>
+    public Rigidbody Rb => rb; // NEW PROPERTY
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -115,6 +118,9 @@ public class EnemyController : MonoBehaviour
 
     void Update()
     {
+        // Check if the script is running. If it's disabled during death, stop execution.
+        if (!enabled) return;
+
         // 1. Visibility State Management (Manual Check)
         CheckVisibilityAndToggleState();
 
@@ -209,15 +215,26 @@ public class EnemyController : MonoBehaviour
             // Check if the enemy has moved beyond the lower viewpoint boundary on the Z-axis.
             if (transform.position.z < destroyBoundaryZ)
             {
-
-                // Ensure ALL weapon scripts are explicitly stopped before destruction
-                if (mgShoot != null) mgShoot.Deactivate();
-                if (mslShoot != null) mslShoot.Deactivate();
-
-                // Perform the destruction
+                // Use the new cleanup method
+                CleanupForDeath();
+                // Perform the destruction immediately after cleanup
                 Destroy(gameObject);
             }
         }
+    }
+
+    /// <summary>
+    /// Handles the pre-destruction cleanup: stopping weapons and disabling control.
+    /// This method is called from EnemyProps when damage kills the enemy.
+    /// </summary>
+    public void CleanupForDeath()
+    {
+        // Ensure ALL weapon scripts are explicitly stopped
+        if (mgShoot != null) mgShoot.Deactivate();
+        if (mslShoot != null) mslShoot.Deactivate();
+
+        // Disable this controller to stop movement/rotation logic
+        enabled = false;
     }
 
     /// <summary>

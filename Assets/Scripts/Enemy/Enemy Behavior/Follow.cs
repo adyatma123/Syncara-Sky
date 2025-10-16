@@ -4,7 +4,7 @@ using UnityEngine;
 /// This behavior makes the enemy follow the player's horizontal position after the initial move.
 /// It works in conjunction with the EnemyController to get movement speed and other properties.
 /// </summary>
-public class FollowPlayerBehavior : MonoBehaviour
+public class FollowPlayerBehavior : MonoBehaviour, IEnemyBehavior // <-- IMPLEMENT IEnemyBehavior
 {
     private EnemyController enemyController;
     private GameObject player;

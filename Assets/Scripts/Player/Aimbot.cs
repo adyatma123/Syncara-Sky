@@ -12,11 +12,11 @@ public class Aimbot : MonoBehaviour
     public float predictiveAimSensitivity = 1f;
 
     [Tooltip("Adds or subtracts distance along the direction of the prediction vector. Positive values aim further ahead.")]
-    public float predictiveDistanceOffset = 0f; // <<< CHANGED: Now a float for distance offset
+    public float predictiveDistanceOffset = 0f;
 
     // Public field for the Gun script to set the actual bullet speed
     [HideInInspector] // Hide in Inspector since it is set programmatically
-    public float CurrentBulletSpeed = 0f; // This is set by the Gun component
+    public float CurrentBulletSpeed = 0f;
 
     [Header("Targeting Settings")]
     public float lockRadius = 120f;
@@ -91,7 +91,7 @@ public class Aimbot : MonoBehaviour
     }
 
     /// <summary>
-    /// Searches for the nearest enemy within the lock radius and stores its Transform and Rigidbody.
+    /// Searches for the nearest *alive* enemy within the lock radius and stores its Transform and Rigidbody.
     /// </summary>
     void FindNearestEnemy()
     {
@@ -105,6 +105,9 @@ public class Aimbot : MonoBehaviour
         {
             if (collider.CompareTag("Enemy"))
             {
+                AfterDeathAnimation deathAnim = collider.GetComponent<AfterDeathAnimation>();
+
+
                 float distance = Vector3.Distance(transform.position, collider.transform.position);
                 if (distance < nearestDistance)
                 {
@@ -112,6 +115,13 @@ public class Aimbot : MonoBehaviour
                     nearestEnemy = collider.transform;
                     // Attempt to get the Rigidbody here
                     nearestEnemyRb = collider.GetComponent<Rigidbody>();
+
+
+                    // NEW CHECK: Check if the AfterDeathAnimation component exists AND if its IsDead property is true.
+                    if (deathAnim != null && deathAnim.IsDead)
+                    {
+                        continue; // Skip this enemy, it is already dead.
+                    }
                 }
             }
         }
@@ -141,7 +151,7 @@ public class Aimbot : MonoBehaviour
 
             // Apply offset for gizmo drawing consistency
             Vector3 leadDirection = (interpolatedPosition - transform.position).normalized;
-            Vector3 finalAimPosition = interpolatedPosition + (leadDirection * predictiveDistanceOffset); // <<< Applying offset to Gizmo drawing
+            Vector3 finalAimPosition = interpolatedPosition + (leadDirection * predictiveDistanceOffset); // Applying offset to Gizmo drawing
 
             Gizmos.color = Color.red;
             Gizmos.DrawSphere(finalAimPosition, 1f); // Red sphere at the final aim spot

@@ -35,7 +35,9 @@ public class WaveSpawner : MonoBehaviour
 
     // The current wave instance being monitored
     private GameObject currentWaveInstance = null;
-    private int waveIndex = 0;
+
+    // FIX: Changed from private to public so the Debug Overlay can access the current wave index.
+    public int waveIndex = 0;
 
     // Reference to the coroutine so we can stop it for a restart
     private Coroutine spawnWavesCoroutine;

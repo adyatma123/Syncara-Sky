@@ -35,9 +35,36 @@ public class PayloadManager : MonoBehaviour
     public PayloadSlot[] payloadSlots;
 
     // The list of slots after processing (only unique payload types remain here)
+    // FIX: Changed to public property for debug access.
+    public List<PayloadSlot> ProcessedPayloadSlots => processedPayloadSlots;
     private List<PayloadSlot> processedPayloadSlots = new List<PayloadSlot>();
 
+    // FIX: Changed to public property for debug access.
+    public int CurrentPayloadIndex => currentPayloadIndex;
     private int currentPayloadIndex = 0;
+
+    /// <summary>
+    /// Debug Accessor: Returns the number of unique payload types equipped.
+    /// </summary>
+    public int GetTotalUniquePayloads() => processedPayloadSlots.Count;
+
+    /// <summary>
+    /// Debug Accessor: Returns the remaining ammo for the currently selected unique payload type.
+    /// </summary>
+    public int GetCurrentPayloadAmmoLeft()
+    {
+        if (processedPayloadSlots.Count == 0) return 0;
+        return processedPayloadSlots[currentPayloadIndex].currentAmmo;
+    }
+
+    /// <summary>
+    /// Debug Accessor: Returns a list of all unique payload names.
+    /// </summary>
+    public List<string> GetPayloadNames()
+    {
+        return processedPayloadSlots.Select(s => s.payload?.payloadName ?? "N/A").ToList();
+    }
+
 
     /// <summary>
     /// Initializes the payload manager by merging identical payloads and populating ammo counts.

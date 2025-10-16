@@ -7,6 +7,19 @@ using System.Collections.Generic;
 /// </summary>
 public class BackgroundManager : MonoBehaviour
 {
+    // Inner class to track segments waiting for recycling
+    private class RecycleDelaySegment
+    {
+        public GameObject segment;
+        public float remainingTime;
+
+        public RecycleDelaySegment(GameObject seg, float time)
+        {
+            segment = seg;
+            remainingTime = time;
+        }
+    }
+
     [Header("Configuration")]
     [Tooltip("The prefab for one segment of the background.")]
     public GameObject backgroundPrefab;
@@ -14,9 +27,12 @@ public class BackgroundManager : MonoBehaviour
     public float scrollSpeed = 5f;
     [Tooltip("The number of segments needed to seamlessly fill the view (usually 2 or 3).")]
     public int segmentCount = 3;
+    [Tooltip("The time (in seconds) to wait after a segment moves off-screen before recycling it to the far end.")]
+    public float recycleDelayTime = 2f; // NEW: Public variable for the delay
 
     private float segmentLength;
     private List<GameObject> activeSegments = new List<GameObject>();
+    private List<RecycleDelaySegment> delayedSegments = new List<RecycleDelaySegment>(); // NEW: List for segments in the delay queue
     private Transform cameraTransform;
 
     void Start()
@@ -58,41 +74,87 @@ public class BackgroundManager : MonoBehaviour
 
     void Update()
     {
-        if (activeSegments.Count == 0) return;
-
         // Calculate movement distance for this frame
         float moveDistance = scrollSpeed * Time.deltaTime;
 
-        // The segment at index 0 is always the oldest (closest to the camera)
-        GameObject frontSegment = activeSegments[0];
-
-        // 1. Check if the front segment has moved off-screen
-        // Reset threshold is when the segment's back edge (center Z - half length) passes the camera Z position.
-        float resetThreshold = cameraTransform.position.z - (segmentLength / 2f);
-
-        if (frontSegment.transform.position.z < resetThreshold)
+        // 1. Check for segments that have moved off-screen and add them to the delay queue
+        if (activeSegments.Count > 0)
         {
-            // --- RECYCLE ---
+            // The segment at index 0 is always the oldest (closest to the camera)
+            GameObject frontSegment = activeSegments[0];
 
-            // a. Find the furthest Z position (end of the loop)
-            GameObject lastSegment = activeSegments[activeSegments.Count - 1];
-            float newSpawnZ = lastSegment.transform.position.z + segmentLength;
+            // Reset threshold is when the segment's back edge (center Z - half length) passes the camera Z position.
+            float resetThreshold = cameraTransform.position.z - (segmentLength / 2f);
 
-            // b. Reposition the oldest segment to the far end
-            frontSegment.transform.position = new Vector3(transform.position.x, transform.position.y, newSpawnZ);
+            if (frontSegment.transform.position.z < resetThreshold)
+            {
+                // --- QUEUE FOR DELAYED RECYCLE ---
 
-            // c. Update the list order: remove from front, add to back
-            activeSegments.RemoveAt(0);
-            activeSegments.Add(frontSegment);
+                // Add the segment to the delay list
+                delayedSegments.Add(new RecycleDelaySegment(frontSegment, recycleDelayTime));
+
+                // Remove it from the active list
+                activeSegments.RemoveAt(0);
+            }
         }
 
-        // 2. Apply continuous movement to all segments
+        // 2. Apply continuous movement to all ACTIVE segments
         foreach (GameObject bg in activeSegments)
         {
             if (bg != null)
             {
                 // Move in World space to ignore manager's rotation
                 bg.transform.Translate(Vector3.back * moveDistance, Space.World);
+            }
+        }
+
+        // 3. Update the delay queue, apply movement, and recycle timed-out segments
+        // We use a reverse loop to safely remove items from the list.
+        for (int i = delayedSegments.Count - 1; i >= 0; i--)
+        {
+            RecycleDelaySegment delayItem = delayedSegments[i];
+            GameObject delayedSegment = delayItem.segment;
+
+            if (delayedSegment != null)
+            {
+                // Apply continuous movement to delayed segments as well
+                delayedSegment.transform.Translate(Vector3.back * moveDistance, Space.World);
+
+                // Decrease the remaining delay time
+                delayItem.remainingTime -= Time.deltaTime;
+
+                if (delayItem.remainingTime <= 0f)
+                {
+                    // --- RECYCLE (Delay is finished) ---
+
+                    // a. Find the furthest Z position (end of the loop)
+                    float newSpawnZ;
+
+                    // If there are active segments, spawn after the last one
+                    if (activeSegments.Count > 0)
+                    {
+                        GameObject lastActiveSegment = activeSegments[activeSegments.Count - 1];
+                        newSpawnZ = lastActiveSegment.transform.position.z + segmentLength;
+                    }
+                    // Otherwise, spawn after the last segment that *was* active (which is the one being recycled)
+                    // This scenario is unlikely with segmentCount > 1, but handles edge cases.
+                    else
+                    {
+                        newSpawnZ = delayedSegment.transform.position.z + segmentLength;
+                    }
+
+                    // b. Reposition the segment to the far end
+                    delayedSegment.transform.position = new Vector3(transform.position.x, transform.position.y, newSpawnZ);
+
+                    // c. Move from delay queue back to the active list (at the end)
+                    activeSegments.Add(delayedSegment);
+                    delayedSegments.RemoveAt(i);
+                }
+            }
+            else
+            {
+                // Segment was destroyed externally (error case), remove from list
+                delayedSegments.RemoveAt(i);
             }
         }
     }
