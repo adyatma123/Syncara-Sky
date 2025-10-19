@@ -60,7 +60,6 @@
     <Analyzer Include="E:\Program Files\Unity Editor\2022.3.43f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\VehicleSelection\VhcChgr.cs" />
     <Compile Include="Assets\Scripts\Bullet Behavior\EnemyBullet.cs" />
     <Compile Include="Assets\Scripts\Features\HitboxSynchronizer.cs" />
     <Compile Include="Assets\Scripts\Scriptable Object&apos;s Script\DialogueProfileSO.cs" />
@@ -82,12 +81,12 @@
     <Compile Include="Assets\Scripts\Player\PlayerController.cs" />
     <Compile Include="Assets\Scripts\Player\Missile Behavior\NewHomingMissile.cs" />
     <Compile Include="Assets\Scripts\Bullet Behavior\Bullet.cs" />
+    <Compile Include="Assets\Scripts\SelectionMenu\VhcChgr.cs" />
     <Compile Include="Assets\Scripts\Menu\GunItemIdentifier.cs" />
     <Compile Include="Assets\Scripts\Enemy\Enemy Behavior\EnemyHomingMissile.cs" />
     <Compile Include="Assets\Scripts\Features\AudioGroupData.cs" />
     <Compile Include="Assets\Scripts\Wave\WaveData.cs" />
     <Compile Include="Assets\Scripts\Enemy\Enemy Behavior\SplineFollower.cs" />
-    <Compile Include="Assets\Scripts\VehicleSelection\VhcDis.cs" />
     <Compile Include="Assets\Scripts\Wave\WaveSpawner.cs" />
     <Compile Include="Assets\Scripts\Player\AirPressureFXController.cs" />
     <Compile Include="Assets\Scripts\Enemy\EnemyProps.cs" />
@@ -101,6 +100,7 @@
     <Compile Include="Assets\External Package\SkyboxFog\Plugins\MouseLookSimple.cs" />
     <Compile Include="Assets\Scripts\Player\Healthbar.cs" />
     <Compile Include="Assets\Scripts\Managers\GameSelectionManager.cs" />
+    <Compile Include="Assets\Scripts\SelectionMenu\VhcDis.cs" />
     <Compile Include="Assets\Scripts\Managers\GameManager.cs" />
     <Compile Include="Assets\Scripts\Scriptable Object&apos;s Script\Payload.cs" />
     <Compile Include="Assets\Scripts\Managers\PayloadManager.cs" />
@@ -111,8 +111,11 @@
     <Compile Include="Assets\Scripts\Features\SoundClipData.cs" />
     <Compile Include="Assets\Scripts\HeliBladeRot.cs" />
     <Compile Include="Assets\Scripts\Managers\SoundManager.cs" />
+    <Compile Include="Assets\Scripts\SelectionMenu\LoadingSceneScript.cs" />
     <Compile Include="Assets\Scripts\Enemy\Enemy Behavior\EnemyMG.cs" />
+    <Compile Include="Assets\Scripts\Debug\InGameConsole.cs" />
     <Compile Include="Assets\Scripts\Enemy\Enemy Behavior\Follow.cs" />
+    <Compile Include="Assets\Scripts\SelectionMenu\SceneLoader.cs" />
     <Compile Include="Assets\Scripts\Managers\CursorManager.cs" />
     <Compile Include="Assets\Scripts\GunSelection\GunSelector.cs" />
     <Compile Include="Assets\Scripts\Scriptable Object&apos;s Script\Rockets.cs" />
@@ -123,6 +126,7 @@
     <Compile Include="Assets\Scripts\Player\Aimbot.cs" />
     <Compile Include="Assets\Scripts\Enemy\Enemy Behavior\EnemyMSL.cs" />
     <Compile Include="Assets\Scripts\Enemy\Enemy Behavior\AI Shoot.cs" />
+    <Compile Include="Assets\Scripts\SelectionMenu\LoadingUIHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

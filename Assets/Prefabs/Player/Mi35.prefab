@@ -92,7 +92,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6038441097234981957}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Payload Point (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -125,7 +125,7 @@ GameObject:
   - component: {fileID: 1791141734756017354}
   - component: {fileID: 5756677992323306468}
   - component: {fileID: 2507509463843458824}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: moving_rotor2_static_rotor.0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -241,7 +241,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1200095532907196216}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Payload Point (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -355,7 +355,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4171881730741639503}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Payload Point (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -816,7 +816,7 @@ GameObject:
   - component: {fileID: -1969379614364988948}
   - component: {fileID: 454353335940469690}
   - component: {fileID: 4316318813580896205}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Mi35
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -858,7 +858,7 @@ MonoBehaviour:
   rotSpeed: 1
   maxRotAngle: 45
   payloadManager: {fileID: 454353335940469690}
-  controlledGun: {fileID: 0}
+  controlledGun: {fileID: -1969379614364988948}
 --- !u!114 &-1969379614364988948
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -949,7 +949,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1459836138443030781}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Payload Point
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1065,7 +1065,7 @@ GameObject:
   - component: {fileID: 3648346279780474520}
   - component: {fileID: 7765513162956832206}
   - component: {fileID: 695866858497539101}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: gsh_chassis.0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1313,7 +1313,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7851580939858458625}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Gunpoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1527,7 +1527,7 @@ GameObject:
   - component: {fileID: 3595000303230887133}
   - component: {fileID: 2223095646548853411}
   - component: {fileID: 1490879771091688078}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: moving_rotor_static_rotor.0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1659,6 +1659,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Lamps (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 9207227281419626064, guid: e366ab69d12b1d546b9344541189b0b7, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1724,6 +1728,10 @@ PrefabInstance:
     - target: {fileID: 9207227281419626064, guid: e366ab69d12b1d546b9344541189b0b7, type: 3}
       propertyPath: m_Name
       value: Lamps
+      objectReference: {fileID: 0}
+    - target: {fileID: 9207227281419626064, guid: e366ab69d12b1d546b9344541189b0b7, type: 3}
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

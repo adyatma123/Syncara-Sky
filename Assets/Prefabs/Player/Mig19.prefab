@@ -41,8 +41,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6872174867642703494}
-  - component: {fileID: 9202706668280589942}
   - component: {fileID: -313581862598493664}
+  - component: {fileID: 9202706668280589942}
   - component: {fileID: 5674631015361205512}
   - component: {fileID: -6674216256769623370}
   m_Layer: 3
@@ -70,6 +70,26 @@ Transform:
   - {fileID: 4541730061723364293}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-313581862598493664
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1262895913344656796}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edc6ad1a277d87e43ab5a321ecb6e3ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  vehicleData: {fileID: 11400000, guid: c6511171cf18aae4d94a0f693c85ab93, type: 2}
+  maxHealth: 1000
+  currentHealth: 0
+  movSpeed: 10
+  rotSpeed: 5
+  maxRotAngle: 45
+  payloadManager: {fileID: -6674216256769623370}
+  controlledGun: {fileID: 5674631015361205512}
 --- !u!65 &9202706668280589942
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -91,26 +111,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.85, y: 3.44, z: 13.42}
   m_Center: {x: 0.09, y: 0.8, z: 0}
---- !u!114 &-313581862598493664
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1262895913344656796}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: edc6ad1a277d87e43ab5a321ecb6e3ad, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  vehicleData: {fileID: 11400000, guid: c6511171cf18aae4d94a0f693c85ab93, type: 2}
-  maxHealth: 1000
-  currentHealth: 0
-  movSpeed: 10
-  rotSpeed: 5
-  maxRotAngle: 45
-  payloadManager: {fileID: -6674216256769623370}
-  controlledGun: {fileID: 5674631015361205512}
 --- !u!114 &5674631015361205512
 MonoBehaviour:
   m_ObjectHideFlags: 0

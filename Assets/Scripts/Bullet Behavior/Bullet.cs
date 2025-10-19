@@ -71,7 +71,15 @@ public class Bullet : MonoBehaviour
         }
         else
         {
-            // 3. If it hits an environment object (like a wall), also try to bounce.
+            // === PENAMBAHAN KODE UNTUK MENGABAIKAN OBJEK YANG TIDAK BER-TAG ===
+            if (collision.gameObject.CompareTag("Untagged"))
+            {
+                return; // Abaikan objek yang tidak memiliki tag (secara default "Untagged")
+            }
+            // ==================================================================
+
+            // Jika memiliki tag selain "Player" dan "Enemy" (misalnya "Wall", "Ground")
+            // dan BUKAN "Untagged", maka coba memantul
             TryBounce(collision, applyDamage: false);
         }
     }

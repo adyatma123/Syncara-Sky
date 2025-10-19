@@ -1,10 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro; // Added for TextMeshProUGUI
-using System.Text; // Added for StringBuilder
-using UnityEngine.SceneManagement; // Added for Level Name
-using System.Linq; // Required for List operations
+using TMPro;
+using System.Text;
+using UnityEngine.SceneManagement;
+using System.Linq;
 
 /// <summary>
 /// Tracks the current mouse position in screen coordinates and manages a toggleable debug overlay 
@@ -31,7 +31,7 @@ public class MousePos : MonoBehaviour
     private BackgroundManager backgroundManager;
     private StoryEventManager storyEventManager;
     private SoundManager soundManager;
-    private PayloadManager payloadManager; // Explicitly declared for clarity in debugging
+    private PayloadManager payloadManager;
 
     // NEW: Internal State
     private float startTime;
@@ -41,6 +41,7 @@ public class MousePos : MonoBehaviour
     {
         // NEW: Debug overlay initialization
         // 1. Find all necessary manager references (assumes singletons/FindObjectOfType pattern)
+        // Note: As Singletons are persistent, they should be safe to find in Start().
         gameManager = GameManager.Instance;
         soundManager = SoundManager.Instance;
         waveSpawner = WaveSpawner.Instance;
@@ -51,7 +52,6 @@ public class MousePos : MonoBehaviour
         if (debugText == null)
         {
             Debug.LogError("MousePos component (acting as Debug Overlay) requires a TextMeshProUGUI component assigned to debugText!");
-            // Continue running mouse tracking, but debug output will fail.
         }
 
         // 3. Initial state
@@ -64,21 +64,10 @@ public class MousePos : MonoBehaviour
 
     void Update()
     {
-        // 1. DYNAMIC PLAYER AIRCRAFT FINDER
-        // If the aircraft hasn't been found yet, keep looking for the one with the "Player" tag.
+        // 1. DYNAMIC PLAYER AIRCRAFT FINDER (Hanya mencari jika belum ditemukan)
         if (playerAircraft == null)
         {
-            GameObject playerObj = GameObject.FindWithTag("Player");
-            if (playerObj != null)
-            {
-                playerAircraft = playerObj.GetComponent<AircraftController>();
-                // Also get the PayloadManager here once the aircraft is found
-                if (playerAircraft != null)
-                {
-                    payloadManager = playerAircraft.payloadManager;
-                    Debug.Log("[Debug Overlay] Successfully found and tracked spawned player aircraft and PayloadManager.");
-                }
-            }
+            FindPlayerAircraft();
         }
 
         // EXISTING: Mouse tracking
@@ -101,6 +90,29 @@ public class MousePos : MonoBehaviour
     }
 
     /// <summary>
+    /// Mencari objek pesawat pemain dan komponennya.
+    /// </summary>
+    private void FindPlayerAircraft()
+    {
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+        {
+            playerAircraft = playerObj.GetComponent<AircraftController>();
+
+            if (playerAircraft != null)
+            {
+                // Setelah AircraftController ditemukan, ambil PayloadManager
+                payloadManager = playerAircraft.payloadManager;
+                Debug.Log("[Debug Overlay] Successfully found and tracked spawned player aircraft and PayloadManager.");
+            }
+            else
+            {
+                Debug.LogWarning("[Debug Overlay] Player object found, but missing AircraftController. Retrying next frame.");
+            }
+        }
+    }
+
+    /// <summary>
     /// Compiles all current game state information into a formatted string.
     /// </summary>
     private string BuildDebugString()
@@ -109,15 +121,15 @@ public class MousePos : MonoBehaviour
 
         // --- GAME MANAGER & GLOBAL STATE ---
         sb.AppendLine("<b><color=#00FF00>--- GLOBAL STATE ---</color></b>");
+        // Gunakan operator null-conditional (?.) agar kode tidak crash jika manager null
         sb.AppendLine($"Current Score: {gameManager?.GetCurrentScore() ?? 0}");
         sb.AppendLine($"Level Name: {SceneManager.GetActiveScene().name}");
         sb.AppendLine($"Total Score: {gameManager?.GetCurrentScore() ?? 0}");
         sb.AppendLine($"Enemy Killed: {gameManager?.GetTotalEnemiesDestroyed() ?? 0}");
 
-        // Current Wave
+        // Current Wave (Logika WaveSpawner tetap sama)
         if (waveSpawner != null && waveSpawner.waves != null && waveSpawner.waves.Length > 0)
         {
-            // The waveIndex is 0-based, so add 1 for display.
             string waveName = (waveSpawner.waveIndex < waveSpawner.waves.Length && waveSpawner.waves[waveSpawner.waveIndex].waveContainerPrefab != null) ?
                               waveSpawner.waves[waveSpawner.waveIndex].waveContainerPrefab.name :
                               "COMPLETED";
@@ -136,7 +148,6 @@ public class MousePos : MonoBehaviour
         sb.AppendLine("Story checkpoints:");
         if (storyEventManager != null && storyEventManager.storyCheckpoints != null)
         {
-            // Show all checkpoints
             foreach (var cp in storyEventManager.storyCheckpoints)
             {
                 string status = cp.hasTriggered ? "<color=red>TRIGGERED</color>" : "Pending";

@@ -1,14 +1,19 @@
 using UnityEngine;
-using UnityEngine.UI; // Required for Image
+using UnityEngine.UI;
+using System.Collections; // PENTING: Diperlukan untuk Coroutine
 
 public class HeatBar : MonoBehaviour
 {
     public RectTransform heatBarRect;
     public Image heatImage; // Assign your Image in the Inspector
-    public Gun gun; // Assign the script that has the heat variable
+    private Gun gun; // Variabel ini sekarang diisi setelah pesawat ditemukan
 
-    private bool gunFound = false; // Added a flag to track if the gun is found
     private float initialHeight;
+    private bool gunFound = false;
+
+    [Range(0, 1)]
+    public float heatImageAlpha = 1f;
+    private Color heatColor;
 
     private void Start()
     {
@@ -20,58 +25,88 @@ public class HeatBar : MonoBehaviour
         {
             Debug.LogError("Heat bar Rect Transform not assigned!");
         }
+
+        // Memulai pencarian dengan sedikit penundaan (lebih andal daripada langsung di Start)
+        StartCoroutine(FindGunAfterDelay());
+    }
+
+    // Coroutine untuk menunggu satu frame sebelum mencari objek
+    IEnumerator FindGunAfterDelay()
+    {
+        // Tunggu satu frame. Ini memberikan waktu pada PlayerController.Start() 
+        // untuk meng-instansiasi dan memberi tag "Player" pada pesawat.
+        yield return null;
+
+        // Ulangi pencarian sampai komponen ditemukan
+        int maxAttempts = 5; // Batasi upaya pencarian untuk menghindari loop tak terbatas
+        int currentAttempt = 0;
+
+        while (!gunFound && currentAttempt < maxAttempts)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+
+            if (player != null)
+            {
+                // Menganggap komponen Gun berada langsung di GameObject "Player"
+                gun = player.GetComponent<Gun>();
+
+                if (gun != null)
+                {
+                    gunFound = true; // Berhenti mencari
+                    Debug.Log("[HeatBar] Gun component successfully linked.");
+                }
+                else
+                {
+                    Debug.LogError("[HeatBar] Gun script not found on Player!");
+                }
+            }
+            // Jika objek Player belum ditemukan, tunggu frame berikutnya
+            yield return null;
+            currentAttempt++;
+        }
+
+        if (!gunFound)
+        {
+            Debug.LogError("[HeatBar] Failed to find Gun component after multiple attempts!");
+            enabled = false; // Nonaktifkan skrip jika gagal
+        }
     }
 
     private void Update()
     {
-        if (!gunFound) // Only search for the gun if it hasn't been found yet
-        {
-            // Find the Gun script.
-            GameObject player = GameObject.FindGameObjectWithTag("Player");
-            if (player != null)
-            {
-                gun = player.GetComponent<Gun>();
-                if (gun != null)
-                {
-                    gunFound = true; // Stop searching once found
-                }
-                else
-                {
-                    Debug.LogError("Gun script not found on Player!");
-                }
-            }
-            else
-            {
-                //Debug.LogError("No object with 'Player' tag found!"); // Removed this error message because the player might not exist at the very beginning of the scene.  This prevents a spam of errors.
-            }
-        }
+        // Hanya jalankan update jika sudah ditemukan
+        if (!gunFound) return;
 
         if (heatBarRect != null && gun != null)
         {
             float heat = gun.currentHeat;
             float maxHeat = gun.maxHeat;
 
-            float newHeight = initialHeight * (1f - (heat / maxHeat));
+            // Update bar height
+            float heatRatio = heat / maxHeat;
+            float newHeight = initialHeight * (1f - heatRatio);
             newHeight = Mathf.Clamp(newHeight, 0f, initialHeight);
 
             heatBarRect.sizeDelta = new Vector2(heatBarRect.sizeDelta.x, newHeight);
 
-            // *** COLOR CHANGE (Green to Halfway, then to Red) ***
+            // Update color logic
             float lerpFactor;
-            if (heat <= maxHeat / 2f) // First half: Green to halfway
+            if (heat <= maxHeat / 2f)
             {
-                lerpFactor = heat / (maxHeat / 2f); // 0 to 1
-                heatColor = Color.Lerp(Color.green, new Color(1f, 0.5f, 0f), lerpFactor); // Green to orange/yellow
+                // White/Green to Orange/Yellow
+                lerpFactor = heat / (maxHeat / 2f);
+                // Ubah Color.white menjadi Color.green jika Anda ingin tampilan defaultnya hijau
+                heatColor = Color.Lerp(Color.white, new Color(1f, 0.5f, 0f), lerpFactor);
             }
-            else // Second half: Halfway to Red
+            else
             {
-                lerpFactor = (heat - (maxHeat / 2f)) / (maxHeat / 2f); // 0 to 1
-                heatColor = Color.Lerp(new Color(1f, 0.5f, 0f), Color.red, lerpFactor); // Orange/yellow to red
+                // Orange/Yellow to Red
+                lerpFactor = (heat - (maxHeat / 2f)) / (maxHeat / 2f);
+                heatColor = Color.Lerp(new Color(1f, 0.5f, 0f), Color.red, lerpFactor);
             }
 
+            heatColor.a = heatImageAlpha;
             heatImage.color = heatColor;
         }
     }
-
-    private Color heatColor; // Store the intermediate color to avoid recalculation
 }

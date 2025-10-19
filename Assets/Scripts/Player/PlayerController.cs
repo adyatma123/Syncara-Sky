@@ -3,7 +3,7 @@ using UnityEngine.SocialPlatforms.Impl;
 
 public class PlayerController : MonoBehaviour
 {
-    public float lockRadius = 113f; // Potentially player-related?
+    public float lockRadius = 113f;
 
     public Transform spawnPoint;
     private Camera cam;
@@ -17,94 +17,82 @@ public class PlayerController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // -----------------------------------------------------------
+        // BAGIAN 1: INSTANSIASI DAN AKTIVASI SKRIP PESAWAT
+        // -----------------------------------------------------------
         if (VhcChgr.vehicleToLoad != null)
         {
             // Instantiate the vehicle at the spawn point.
-            // NOTE: The instantiated vehicle MUST have the "Player" tag for the search logic below to work.
-            Instantiate(VhcChgr.vehicleToLoad, spawnPoint.position, spawnPoint.rotation);
-            // Optionally, you can set VhcChgr.vehicleToLoad to null after instantiating
-            // so that it doesn't get instantiated again if the scene is reloaded.
-            VhcChgr.vehicleToLoad = null;
+            GameObject newAircraftInstance = Instantiate(
+                VhcChgr.vehicleToLoad,
+                spawnPoint.position,
+                spawnPoint.rotation
+            );
+
+            // PENTING: Jamin objek memiliki tag "Player"
+            if (!newAircraftInstance.CompareTag("Player"))
+            {
+                newAircraftInstance.tag = "Player";
+                Debug.Log("[PlayerController] Tag 'Player' added to instantiated aircraft.");
+            }
+
+            // 1. Dapatkan referensi AircraftController
+            controlledAircraft = newAircraftInstance.GetComponent<AircraftController>();
+            if (controlledAircraft == null)
+            {
+                Debug.LogError("The instantiated vehicle is missing the AircraftController component!");
+            }
+            else
+            {
+                Debug.Log("[PlayerController] Successfully linked to spawned AircraftController.");
+            }
+
+            // 2. JAMINAN AKTIVASI SKRIP: Ulangi dan aktifkan SEMUA skrip pada instance ini.
+            MonoBehaviour[] scripts = newAircraftInstance.GetComponents<MonoBehaviour>();
+            foreach (MonoBehaviour script in scripts)
+            {
+                script.enabled = true;
+            }
+
+            VhcChgr.vehicleToLoad = null; // Clear static reference
         }
         else
         {
-            Debug.LogError("No vehicle to load!");
+            // Fallback jika tidak ada kendaraan yang dipilih
+            Debug.LogError("No vehicle to load! Check VhcChgr setup or if a vehicle was selected.");
         }
 
-        // The following block of code disables all scripts on all "Player" objects found at start.
-        // If your new aircraft is being spawned, this block should either be removed or moved to the
-        // moment the aircraft is spawned. For safety, I'm leaving it as-is but noting its potential conflict.
-        GameObject[] playerObjects = GameObject.FindGameObjectsWithTag("Player");
-
-        // Iterate through each GameObject found.
-        foreach (GameObject playerObject in playerObjects)
+        // -----------------------------------------------------------
+        // BAGIAN 2: PENGATURAN REFERENSI LAIN
+        // -----------------------------------------------------------
+        cam = Camera.main;
+        // Mencari Plane di Start() lebih aman daripada di Update()
+        GameObject planeObj = GameObject.Find("Plane");
+        if (planeObj != null)
         {
-            // Get all MonoBehaviour components (which includes scripts) on the current GameObject.
-            MonoBehaviour[] scripts = playerObject.GetComponents<MonoBehaviour>();
-
-            // Iterate through each script component.
-            foreach (MonoBehaviour script in scripts)
-            {
-                // Disable the script. (Scripts were originally set to enabled = true)
-                script.enabled = true;
-            }
+            planeCollider = planeObj.GetComponent<Collider>();
         }
 
-        // REMOVED: cam = Camera.main;
-        // REMOVED: planeCollider = GameObject.Find("Plane").GetComponent<Collider>(); 
-
-        // REMOVED: controlledAircraft = FindObjectOfType<AircraftController>();
-        // The aircraft hasn't finished spawning here, so we will find it in Update().
+        if (cam == null) Debug.LogError("Main Camera not found!");
+        if (planeCollider == null) Debug.LogError("'Plane' object or its Collider not found!");
 
         totalScore = 0;
+
+        // CATATAN: Blok kode yang lama untuk menonaktifkan/mengaktifkan semua objek "Player" 
+        // secara global telah DIHAPUS karena rentan terhadap masalah waktu.
     }
 
     // Update is called once per frame
     void Update()
     {
-        // NEW: DYNAMIC ESSENTIAL REFERENCES FINDER (Aircraft, Camera, Plane)
-        bool ready = true;
-
-        if (controlledAircraft == null)
+        // Hanya jalankan logika kontrol jika sudah siap
+        if (controlledAircraft == null || cam == null || planeCollider == null)
         {
-            GameObject playerObj = GameObject.FindWithTag("Player");
-            if (playerObj != null)
-            {
-                controlledAircraft = playerObj.GetComponent<AircraftController>();
-                if (controlledAircraft != null)
-                {
-                    Debug.Log("[PlayerController] Successfully linked to spawned AircraftController.");
-                }
-            }
-            if (controlledAircraft == null) ready = false;
+            return;
         }
-
-        if (cam == null)
-        {
-            cam = Camera.main;
-            if (cam == null) ready = false;
-        }
-
-        if (planeCollider == null)
-        {
-            GameObject planeObj = GameObject.Find("Plane");
-            if (planeObj != null)
-            {
-                planeCollider = planeObj.GetComponent<Collider>();
-            }
-            if (planeCollider == null) ready = false;
-        }
-
-        // If any essential component is missing, return early.
-        if (!ready) return;
-
-        // Old comment removed: // If controlledAircraft is still null, we cannot proceed with control logic yet.
-        // Old redundant check removed: // if (controlledAircraft == null) return;
-
 
         HandleMovementInput();
         HandleWeaponInput();
-        // HandleLocking(); // If locking logic is more player-centric
     }
 
     public void AddScore(int score)
@@ -117,12 +105,8 @@ public class PlayerController : MonoBehaviour
 
     void HandleMovementInput()
     {
-        // This check is now mostly redundant as the start of Update() handles it, 
-        // but checking controlledAircraft just for safety.
-        // Removed unnecessary cam and planeCollider null checks since they are checked in Update()
-        if (controlledAircraft == null) return;
-
         ray = cam.ScreenPointToRay(Input.mousePosition);
+
         if (Physics.Raycast(ray, out hit))
         {
             if (hit.collider == planeCollider)
@@ -131,24 +115,20 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
+                // Jika raycast mengenai objek lain, reset rotasi atau abaikan input
                 controlledAircraft.ResetRotation();
             }
         }
         else
         {
+            // Jika raycast tidak mengenai apa-apa, reset rotasi
             controlledAircraft.ResetRotation();
         }
     }
 
     void HandleWeaponInput()
     {
-        // controlledAircraft is guaranteed not to be null if the rest of Update() runs.
-        if (controlledAircraft == null)
-        {
-            // This error should no longer happen once the aircraft is found.
-            Debug.LogError("Couldn't found controlledAircraft in HandleWeaponInput");
-            return;
-        }
+        // controlledAircraft dijamin tidak null karena ada pengecekan di Update()
 
         if (Input.GetButtonDown("Payload")) // Right Mouse Button for missiles
         {
@@ -159,15 +139,4 @@ public class PlayerController : MonoBehaviour
             controlledAircraft.SwitchPayload();
         }
     }
-
-    // Example of potential player-centric locking logic
-    /*
-    void HandleLocking()
-    {
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, lockRadius);
-        // Implement logic to find and target enemies
-        // ... and then communicate the target to the AircraftController if needed
-        Debug.DrawWireSphere(transform.position, lockRadius, Color.yellow);
-    }
-    */
 }
