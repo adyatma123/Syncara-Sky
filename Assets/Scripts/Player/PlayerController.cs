@@ -54,7 +54,7 @@ public class PlayerController : MonoBehaviour
                 script.enabled = true;
             }
 
-            VhcChgr.vehicleToLoad = null; // Clear static reference
+            // VhcChgr.vehicleToLoad = null; // Clear static reference
         }
         else
         {

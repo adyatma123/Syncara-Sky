@@ -107,6 +107,7 @@ ScriptsOnlyBuild:
     - UnityEngine.UI.ScrollRect
     - UnityEngine.UI.Slider
     - UnityEngine.UI.Text
+    - UnityEngine.UI.VerticalLayoutGroup
   serializedClasses:
     Assembly-CSharp:
     - AudioGroupData
@@ -230,11 +231,59 @@ ScriptsOnlyBuild:
     fullTypeName: GunSelector
     methodName: ConfirmGunSelectionAndGoBack
   - assembly: Assembly-CSharp
+    fullTypeName: SnapToItem
+    methodName: OnItemClick
+  - assembly: Assembly-CSharp
+    fullTypeName: GunSelector
+    methodName: ConfirmGunSelectionAndGoBack
+  - assembly: Assembly-CSharp
+    fullTypeName: SnapToItem
+    methodName: OnItemClick
+  - assembly: Assembly-CSharp
+    fullTypeName: GunSelector
+    methodName: ConfirmGunSelectionAndGoBack
+  - assembly: Assembly-CSharp
+    fullTypeName: SnapToItem
+    methodName: OnItemClick
+  - assembly: Assembly-CSharp
+    fullTypeName: GunSelector
+    methodName: ConfirmGunSelectionAndGoBack
+  - assembly: Assembly-CSharp
+    fullTypeName: SnapToItem
+    methodName: OnItemClick
+  - assembly: Assembly-CSharp
+    fullTypeName: GunSelector
+    methodName: ConfirmGunSelectionAndGoBack
+  - assembly: Assembly-CSharp
+    fullTypeName: SnapToItem
+    methodName: OnItemClick
+  - assembly: Assembly-CSharp
+    fullTypeName: GunSelector
+    methodName: ConfirmGunSelectionAndGoBack
+  - assembly: Assembly-CSharp
+    fullTypeName: SnapToItem
+    methodName: OnItemClick
+  - assembly: Assembly-CSharp
+    fullTypeName: GunSelector
+    methodName: ConfirmGunSelectionAndGoBack
+  - assembly: Assembly-CSharp
+    fullTypeName: SnapToItem
+    methodName: OnItemClick
+  - assembly: Assembly-CSharp
+    fullTypeName: GunSelector
+    methodName: ConfirmGunSelectionAndGoBack
+  - assembly: Assembly-CSharp
+    fullTypeName: VhcChgr
+    methodName: GunMenu
+  - assembly: Assembly-CSharp
     fullTypeName: VhcChgr
     methodName: BackToVhcSlct
   - assembly: Assembly-CSharp
     fullTypeName: VhcChgr
     methodName: SelectVehicle
+  - assembly: Assembly-CSharp
+    fullTypeName: VhcChgr
+    methodName: BackToVhcSlct
   - assembly: Assembly-CSharp
     fullTypeName: VhcChgr
     methodName: PayloadMenu
@@ -250,6 +299,36 @@ ScriptsOnlyBuild:
   - assembly: Assembly-CSharp
     fullTypeName: VhcChgr
     methodName: LoadScene
+  - assembly: Assembly-CSharp
+    fullTypeName: GameManager
+    methodName: LoadHangar
+  - assembly: Assembly-CSharp
+    fullTypeName: GameManager
+    methodName: ResumeGame
+  - assembly: Assembly-CSharp
+    fullTypeName: GameManager
+    methodName: ResetScene
+  - assembly: Assembly-CSharp
+    fullTypeName: GameManager
+    methodName: ResumeGame
+  - assembly: Assembly-CSharp
+    fullTypeName: GameManager
+    methodName: ResetScene
+  - assembly: Assembly-CSharp
+    fullTypeName: GameManager
+    methodName: ExitToDesktop
+  - assembly: Assembly-CSharp
+    fullTypeName: GameManager
+    methodName: OpenOptions
+  - assembly: Assembly-CSharp
+    fullTypeName: GameManager
+    methodName: LoadHangar
+  - assembly: Assembly-CSharp
+    fullTypeName: GameManager
+    methodName: OpenOptions
+  - assembly: Assembly-CSharp
+    fullTypeName: GameManager
+    methodName: ExitToDesktop
   sceneClasses:
     Assets/Scenes/LoadingScene.unity:
     - Class: 1
@@ -372,6 +451,8 @@ ScriptsOnlyBuild:
     - Class: 108
       Script: {instanceID: 0}
     - Class: 114
+      Script: {instanceID: 1638}
+    - Class: 114
       Script: {instanceID: 1654}
     - Class: 114
       Script: {instanceID: 1684}
@@ -446,6 +527,8 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 6720}
     - Class: 114
+      Script: {instanceID: 7176}
+    - Class: 114
       Script: {instanceID: 7180}
     - Class: 114
       Script: {instanceID: 7190}
@@ -470,7 +553,7 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 8662}
     - Class: 114
-      Script: {instanceID: 28230}
+      Script: {instanceID: 28154}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -632,6 +715,8 @@ ScriptsOnlyBuild:
       Script: {instanceID: 6722}
     - Class: 114
       Script: {instanceID: 7064}
+    - Class: 114
+      Script: {instanceID: 7176}
     - Class: 114
       Script: {instanceID: 7304}
     - Class: 114
@@ -863,7 +948,7 @@ ScriptsOnlyBuild:
     className: EventSystem
   - hash:
       serializedVersion: 2
-      Hash: 2ae786622ffc4687f1d957b3cb6e9f69
+      Hash: 3fac6e3e1938c248babcacd0919c0a08
     assemblyName: Assembly-CSharp
     namespaceName: 
     className: GameManager

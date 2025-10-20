@@ -17,9 +17,9 @@ public class AfterDeathAnimation : MonoBehaviour
     [Tooltip("If true, the enemy can be destroyed immediately without animation.")]
     public bool enableDestroyImmediately = true;
     [Tooltip("If true, the enemy can fall straight down with initial velocity.")]
-    public bool enableFallStraight = true;
+    public bool enableFallStraight = false;
     [Tooltip("If true, the enemy can fall while rotating (only for Helicopter).")]
-    public bool enableFallAndRotate = true;
+    public bool enableFallAndRotate = false;
 
 
     [Header("Fall Configuration")]
@@ -81,14 +81,19 @@ public class AfterDeathAnimation : MonoBehaviour
             availableChoices.Add(FALL_AND_ROTATE);
         }
 
-        // If no options are enabled, force immediate destruction
+        // 1. Force immediate destruction if NO options are enabled
         if (availableChoices.Count == 0)
         {
             _deathAnimationChoice = DESTROY_IMMEDIATELY;
         }
-        else
+        // 2. Select the ONLY available option (FORCE IT)
+        else if (availableChoices.Count == 1) // <-- NEW: Pengecekan eksplisit
         {
-            // Randomly select from available choices
+            _deathAnimationChoice = availableChoices[0];
+        }
+        // 3. Randomly select if MORE THAN ONE option is enabled
+        else // availableChoices.Count > 1
+        {
             int randomIndex = Random.Range(0, availableChoices.Count);
             _deathAnimationChoice = availableChoices[randomIndex];
         }

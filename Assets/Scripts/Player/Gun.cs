@@ -141,8 +141,6 @@ public class Gun : MonoBehaviour
         {
             aimbot.CurrentBulletSpeed = guns.bulletSpeed;
         }
-
-        Debug.Log($"Gun successfully switched to: {guns.name}");
     }
 
     void Update()

@@ -104,6 +104,7 @@ public class MousePos : MonoBehaviour
                 // Setelah AircraftController ditemukan, ambil PayloadManager
                 payloadManager = playerAircraft.payloadManager;
                 Debug.Log("[Debug Overlay] Successfully found and tracked spawned player aircraft and PayloadManager.");
+                SoundManager.Instance.PlaySFX("Click");
             }
             else
             {

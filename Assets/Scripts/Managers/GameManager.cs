@@ -40,6 +40,21 @@ public class GameManager : MonoBehaviour
     // -------------------------------------------------------------
 
 
+    // --- PAUSE MENU PROPERTIES (NEW SECTION) ---
+    [Header("Pause Management")]
+    [Tooltip("The root GameObject for the Pause Menu UI.")]
+    public GameObject pauseMenuUI;
+
+    [Tooltip("The name of the scene to load when the player press hangar button")]
+    public string HangarScene;
+
+    [Tooltip("The name of the scene to load when the player press exit button")]
+    public string ExitScene;
+
+    private bool isPaused = false;
+    // -------------------------------------------
+
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -56,6 +71,11 @@ public class GameManager : MonoBehaviour
         if (completionUIObject != null)
         {
             completionUIObject.SetActive(false);
+        }
+        // NEW: Ensure Pause UI is disabled at the start
+        if (pauseMenuUI != null)
+        {
+            pauseMenuUI.SetActive(false);
         }
     }
 
@@ -77,6 +97,19 @@ public class GameManager : MonoBehaviour
         {
             EndScene();
         }
+
+        // NEW: Check for Pause/Resume input (Escape key)
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (isPaused)
+            {
+                ResumeGame();
+            }
+            else
+            {
+                PauseGame();
+            }
+        }
     }
 
     void OnDestroy()
@@ -84,6 +117,88 @@ public class GameManager : MonoBehaviour
         // Unsubscribe to prevent memory leaks
         EnemyProps.OnEnemyDestroyed -= IncrementTotalEnemiesDestroyed;
         EnemyProps.OnEnemyDestroyedByPlayerScore -= IncrementEnemiesKilledByPlayer;
+    }
+
+
+    // --- PAUSE MENU FUNCTIONS (NEW SECTION) ---
+
+    /// <summary>
+    /// Jeda permainan, menghentikan waktu dan menampilkan menu jeda.
+    /// </summary>
+    public void PauseGame()
+    {
+        if (isLevelComplete) return; // Jangan jeda jika level sudah selesai
+
+        isPaused = true;
+        Time.timeScale = 0f; // Menghentikan semua game logic (termasuk fisika)
+
+        if (pauseMenuUI != null)
+        {
+            pauseMenuUI.SetActive(true);
+        }
+
+        // Opsional: Play SFX atau ubah musik
+        // SoundManager.Instance.PlaySFX("Pause"); 
+    }
+
+    /// <summary>
+    /// Melanjutkan permainan dari jeda. Dipanggil oleh tombol "Resume" atau Escape.
+    /// </summary>
+    public void ResumeGame()
+    {
+        isPaused = false;
+        Time.timeScale = 1f; // Mengembalikan kecepatan waktu normal
+
+        if (pauseMenuUI != null)
+        {
+            pauseMenuUI.SetActive(false);
+        }
+
+        // Opsional: Play SFX atau ubah musik
+        // SoundManager.Instance.PlaySFX("Resume");
+    }
+
+    /// <summary>
+    /// Membuka menu Opsi (sementara hanya logging).
+    /// </summary>
+    public void OpenOptions()
+    {
+        Debug.Log("Options button pressed. Opening Options UI...");
+        // Di sini Anda akan menambahkan logika untuk menampilkan UI Opsi dan menyembunyikan Pause Menu.
+    }
+
+    /// <summary>
+    /// Memuat ulang scene saat ini.
+    /// </summary>
+    public void ResetScene()
+    {
+        ResumeGame(); // Pastikan TimeScale diatur ulang
+        Debug.Log("Resetting current scene...");
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    /// <summary>
+    /// Kembali ke scene Hangar (SelectionTesting).
+    /// </summary>
+    public void LoadHangar()
+    {
+        ResumeGame(); // Pastikan TimeScale diatur ulang
+        string hangarSceneName = "SelectionTesting"; // Sesuaikan dengan nama scene Hangar Anda
+        Debug.Log($"Loading Hangar scene: {hangarSceneName}...");
+        SceneManager.LoadScene(hangarSceneName);
+    }
+
+    /// <summary>
+    /// Keluar dari aplikasi.
+    /// </summary>
+    public void ExitToDesktop()
+    {
+        Debug.Log("Exiting application...");
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
 
@@ -97,7 +212,14 @@ public class GameManager : MonoBehaviour
         Debug.Log("--- All Waves Complete! (GameManager notified) ---");
         isLevelComplete = true;
 
-        SoundManager.Instance.PlayMusic("Mission Complete");
+        // Pastikan game tidak dalam kondisi jeda saat menyelesaikan level
+        if (isPaused) ResumeGame();
+
+        // Music must be played after ResumeGame if it was paused
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayMusic("Mission Complete");
+        }
 
         // Show the completion text/UI object
         if (completionUIObject != null)
@@ -117,7 +239,10 @@ public class GameManager : MonoBehaviour
             completionUIObject.SetActive(false);
         }
 
-        SoundManager.Instance.PlayMusic(levelMusic);
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayMusic(levelMusic);
+        }
     }
 
     /// <summary>

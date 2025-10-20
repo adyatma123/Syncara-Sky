@@ -76,6 +76,7 @@ public class VhcChgr : MonoBehaviour
         {
             vehicleToLoad = selectedVehiclePrefab;
             menuController.TransitionToLoadout(); // Delegate UI/Camera transition
+            SoundManager.Instance.PlaySFX("Click");
         }
         else
         {
@@ -96,16 +97,22 @@ public class VhcChgr : MonoBehaviour
     public void BackToVhcSlct()
     {
         GoBackInMenu();
+
+        SoundManager.Instance.PlaySFX("Click");
     }
 
     public void GunMenu()
     {
         menuController.TransitionToGunMenu();
+
+        SoundManager.Instance.PlaySFX("Click");
     }
 
     public void PayloadMenu()
     {
         menuController.TransitionToPayloadMenu();
+
+        SoundManager.Instance.PlaySFX("Click");
     }
 
     public void LoadScene()

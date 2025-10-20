@@ -155,6 +155,7 @@ public class GunSelector : MonoBehaviour
 
         // Update the menu display
         UpdateGunDisplay(currentSelectedGun);
+
     }
 
     // This method is now private and ONLY used internally. SelectGunByIndex is the public access point.
@@ -204,18 +205,52 @@ public class GunSelector : MonoBehaviour
     /// <summary>
     /// CONFIRM: Hanya berfungsi jika item yang saat ini terpilih memiliki IsSelected = true.
     /// </summary>
-    public void ConfirmGunSelectionAndGoBack()
+    public void ConfirmGunSelectionAndGoBack(int indexToConfirm)
     {
-        // NEW VALIDATION: Cek apakah item yang saat ini terpilih memiliki status IsSelected = true
-        // Kita berasumsi GunSelector.currentSelectedGun selalu disetel ke item yang sedang di-snap.
+        if (snapToItem == null)
+        {
+            Debug.LogError("SnapToItem reference is missing. Cannot perform confirmation logic.");
+            return;
+        }
 
-        // Temukan GunItemIdentifier yang cocok dengan currentSelectedGun (jika perlu validasi ketat)
-        // Atau, lebih sederhana, cek apakah ada item yang IsSelected-nya true.
-        bool isAnyItemSelected = gunItems.Any(item => item.IsSelected);
+        // 1. Dapatkan indeks item yang saat ini tersnap.
+        // Asumsi: SnapToItem memiliki properti publik untuk currentSnappedIndex.
+        // KARENA SnapToItem TIDAK memiliki properti publik untuk index yang tersnap, kita akan 
+        // menggunakan gunItems.FindIndex() berdasarkan currentSelectedGun.
 
-        if (!isAnyItemSelected)
+        // Perhatian: Ini mengasumsikan item dalam availableGuns berurutan sama dengan item UI.
+
+        int currentSnappedIndex = -1;
+        if (currentSelectedGun != null)
+        {
+            currentSnappedIndex = System.Array.IndexOf(availableGuns, currentSelectedGun);
+        }
+
+        // 2. Cek apakah index yang dikonfirmasi SAMA dengan index yang saat ini tersnap.
+        if (indexToConfirm != currentSnappedIndex)
+        {
+            // 3. Jika TIDAK SAMA, picu snap ke index yang ditekan/dikonfirmasi.
+            Debug.Log($"Mencoba konfirmasi item {indexToConfirm}, tapi item yang tersnap adalah {currentSnappedIndex}. Melakukan snap terlebih dahulu.");
+
+            // PENTING: Gunakan OnItemClick untuk memicu snap
+            snapToItem.OnItemClick(indexToConfirm);
+
+            // TIDAK MELANJUTKAN konfirmasi. Konfirmasi yang sebenarnya akan dipanggil 
+            // oleh SelectGunByIndex() di akhir proses snap, atau konfirmasi dipanggil 
+            // lagi oleh pengguna setelah snap selesai.
+            return;
+        }
+
+
+        // 4. Jika SAMA (atau jika item sudah tersnap, dan proses snap selesai), lanjutkan konfirmasi.
+
+        // Periksa validasi isSelected:
+        bool isCurrentItemSelected = gunItems.Count > currentSnappedIndex && gunItems[currentSnappedIndex].IsSelected;
+
+        if (!isCurrentItemSelected)
         {
             Debug.LogWarning("Please select a gun by snapping to it before confirming.");
+            // Kasus ini seharusnya tidak terjadi jika logika snapToItem dan SetSelectedIndex sudah benar.
             return;
         }
 
@@ -236,6 +271,8 @@ public class GunSelector : MonoBehaviour
             if (GameSelectionManager.Instance != null)
             {
                 GameSelectionManager.Instance.SetConfirmedGun(currentSelectedGun);
+
+                SoundManager.Instance.PlaySFX("Snap");
             }
             else
             {

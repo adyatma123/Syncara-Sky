@@ -19,8 +19,7 @@ public class SnapToItem : MonoBehaviour
     public RectTransform itemPrefab; // Used to get item width
     public HorizontalLayoutGroup HLG;
 
-    // bool isSnapped; // REMOVED: This non-functional variable is removed as requested.
-
+    private bool isCurrentlySnapping = false;
     public float snapForce;
     float snapSpeed;
 
@@ -106,6 +105,12 @@ public class SnapToItem : MonoBehaviour
             // Calculate the target X position for the content panel to snap to the center of the clamped 'currentItem'.
             float targetX = 0 - (currentItem * spacingAndWidth);
 
+            // Pemicu 1: Mulai snapping jika posisi BELUM di target (membutuhkan pergerakan)
+            if (Mathf.Abs(contentPanel.localPosition.x - targetX) > SNAP_TOLERANCE)
+            {
+                isCurrentlySnapping = true;
+            }
+
             contentPanel.localPosition = new Vector3(
                 Mathf.MoveTowards(contentPanel.localPosition.x, targetX, snapSpeed),
                 contentPanel.localPosition.y,
@@ -113,22 +118,35 @@ public class SnapToItem : MonoBehaviour
 
             if (Mathf.Abs(contentPanel.localPosition.x - targetX) < SNAP_TOLERANCE)
             {
-                // isSnapped = true; // No longer needed
-                targetItemIndex = -1; // Reset target index once snapped
-                snapSpeed = 0; // Reset snap speed
-
-                // Call the selection logic on the GunSelector upon successful snap.
-                if (gunSelector != null)
+                // Pemicu 2: Cek apakah snap BARU saja selesai
+                if (isCurrentlySnapping)
                 {
-                    gunSelector.SelectGunByIndex(currentItem);
+                    // isSnapped = true; // No longer needed
+                    targetItemIndex = -1; // Reset target index once snapped
+                    snapSpeed = 0; // Reset snap speed
+
+                    // Call the selection logic on the GunSelector upon successful snap.
+                    if (gunSelector != null)
+                    {
+                        gunSelector.SelectGunByIndex(currentItem);
+                    }
+
+                    // *** FIX: Hanya putar suara sekali saat snap benar-benar selesai ***
+                    if (SoundManager.Instance != null)
+                    {
+                        SoundManager.Instance.PlaySFX("Click");
+                    }
+
+                    // Reset flag setelah semua logic completion dijalankan untuk mencegah play berulang
+                    isCurrentlySnapping = false;
                 }
             }
         }
         else if (scrollRect.velocity.magnitude >= MIN_VELOCITY_FOR_SNAPPING)
         {
-            // isSnapped = false; // No longer needed
             targetItemIndex = -1; // Ensure click snap is cancelled if the user starts scrolling
             snapSpeed = 0;
+            isCurrentlySnapping = false; // Reset flag jika pengguna menggeser secara manual
         }
 
         // --- Scaling Logic (Continuous) ---
