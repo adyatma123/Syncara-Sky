@@ -1,7 +1,7 @@
-Name : Ignited Skies
-Version : Alpha 0.0.1
+**Name : Ignited Skies
+Version : Alpha 0.0.1**
 
-22/10/2025
+**22/10/2025**
 
 UI :
 
@@ -20,7 +20,7 @@ Selection
 > Add auto-generated slot button according to aircraft hardpoints
 > Add aircraft payload selections that can be confirmed and bring into next scene
 
-Features :
+**Features :**
 
 - Aircraft Selection
 - Gun Selection
@@ -33,19 +33,30 @@ Features :
 - Bullet Effect (Bounce, Critical Hit and Fuze)
 - Bullet Deflection (Actually a bug but since it doesn't broke the game...)
 
-On-development :
+**On-development :**
 - Payload selection menu ( DONE )
 - Aircraft, Gun and Payload Stats UI
 - More levels
 - Bug fixes
 - Gameplay UIs
 
-Controls :
+**Current issue :**
+
+- Aimbot still detecting after-death enemies
+- Gun and Loadout Selection is not function properly after leaving the hangar for the first time
+- Player missile can go and hit enemy beyond viewpoint
+- After-death animation issues :
+• Not yet dynamic
+• Helicopter tumbling yet not working, still aiming after when falling
+• The AD Animation toggles arent working
+
+
+**Controls :**
 Mouse Movement - Aircraft Movement
 Left Click - Shoot Gun
 Right Click - Shoot Missile
 X - Change Payload
 
-Debug :
+**Debug :**
 ~ - Unity Console
 F1 - Debug Status Overlay
