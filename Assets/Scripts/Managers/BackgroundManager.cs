@@ -27,12 +27,17 @@ public class BackgroundManager : MonoBehaviour
     public float scrollSpeed = 5f;
     [Tooltip("The number of segments needed to seamlessly fill the view (usually 2 or 3).")]
     public int segmentCount = 3;
+
+    // BARU: Jarak spasi tambahan antara segmen saat ditempatkan.
+    [Tooltip("Additional spacing between segments when they are positioned end-to-end.")]
+    public float segmentSpacing = 0f; // NEW: Serializable field for spacing
+
     [Tooltip("The time (in seconds) to wait after a segment moves off-screen before recycling it to the far end.")]
-    public float recycleDelayTime = 2f; // NEW: Public variable for the delay
+    public float recycleDelayTime = 2f; // Public variable for the delay
 
     private float segmentLength;
     private List<GameObject> activeSegments = new List<GameObject>();
-    private List<RecycleDelaySegment> delayedSegments = new List<RecycleDelaySegment>(); // NEW: List for segments in the delay queue
+    private List<RecycleDelaySegment> delayedSegments = new List<RecycleDelaySegment>(); // List for segments in the delay queue
     private Transform cameraTransform;
 
     void Start()
@@ -60,11 +65,13 @@ public class BackgroundManager : MonoBehaviour
     void InitializeSegments()
     {
         Vector3 currentSpawnPosition = transform.position;
+        // Hitung total panjang segmen (Panjang + Spasi)
+        float totalSegmentUnit = segmentLength + segmentSpacing;
 
         for (int i = 0; i < segmentCount; i++)
         {
-            // Position each segment sequentially
-            Vector3 spawnPosition = currentSpawnPosition + Vector3.forward * (i * segmentLength);
+            // MODIFIKASI: Posisi setiap segmen menggunakan totalSegmentUnit (Length + Spacing)
+            Vector3 spawnPosition = currentSpawnPosition + Vector3.forward * (i * totalSegmentUnit);
 
             // Instantiate the segment as a child of the manager object
             GameObject newSegment = Instantiate(backgroundPrefab, spawnPosition, transform.rotation, transform);
@@ -76,6 +83,7 @@ public class BackgroundManager : MonoBehaviour
     {
         // Calculate movement distance for this frame
         float moveDistance = scrollSpeed * Time.deltaTime;
+        float totalSegmentUnit = segmentLength + segmentSpacing; // Ulangi perhitungan
 
         // 1. Check for segments that have moved off-screen and add them to the delay queue
         if (activeSegments.Count > 0)
@@ -134,13 +142,14 @@ public class BackgroundManager : MonoBehaviour
                     if (activeSegments.Count > 0)
                     {
                         GameObject lastActiveSegment = activeSegments[activeSegments.Count - 1];
-                        newSpawnZ = lastActiveSegment.transform.position.z + segmentLength;
+                        // MODIFIKASI: Tambahkan totalSegmentUnit (Length + Spacing)
+                        newSpawnZ = lastActiveSegment.transform.position.z + totalSegmentUnit;
                     }
                     // Otherwise, spawn after the last segment that *was* active (which is the one being recycled)
-                    // This scenario is unlikely with segmentCount > 1, but handles edge cases.
                     else
                     {
-                        newSpawnZ = delayedSegment.transform.position.z + segmentLength;
+                        // MODIFIKASI: Tambahkan totalSegmentUnit (Length + Spacing)
+                        newSpawnZ = delayedSegment.transform.position.z + totalSegmentUnit;
                     }
 
                     // b. Reposition the segment to the far end

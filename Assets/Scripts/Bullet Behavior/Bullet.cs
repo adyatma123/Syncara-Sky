@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random; // Explicitly use UnityEngine.Random
 
 public class Bullet : MonoBehaviour
 {
@@ -8,19 +9,26 @@ public class Bullet : MonoBehaviour
 
     [Header("Bullet Stats")]
     public int damage = 100;
-    public float bulletSpeed = 50f; // Changed to float for consistency with Time.deltaTime
+    public float bulletSpeed = 50f;
 
     [Header("Bouncing Settings")]
     [Tooltip("The percentage chance (0 to 1) this bullet will bounce on hitting an ENEMY or other object.")]
     [Range(0f, 1f)]
-    public float bounceChance = 0.5f; // 50% chance to bounce
+    public float bounceChance = 0.5f;
 
     [Tooltip("The maximum angle range (+/-) the bounced bullet will deviate from the perfect reflection.")]
     [Range(0f, 45f)]
     public float bounceAngleMaxRange = 15f;
 
+    // MODIFIKASI: Critical Hit Settings menggantikan Penetration Settings
+    [Header("Critical Hit Settings")]
+    [Tooltip("The percentage chance (0 to 1) this bullet will inflict double damage (Critical Hit) on an ENEMY.")]
+    [Range(0f, 1f)]
+    public float criticalChance = 0.0f; // NEW: Peluang Critical Hit
+
     private Rigidbody rb;
     private int bounceCount = 0;
+    // Variabel penetrationCount dihapus karena tidak lagi digunakan.
 
     void Start()
     {
@@ -52,6 +60,7 @@ public class Bullet : MonoBehaviour
     {
         // Get the EnemyProps component (assuming it exists)
         EnemyProps enemy = collision.gameObject.GetComponent<EnemyProps>();
+        bool isEnemy = collision.gameObject.CompareTag("Enemy");
 
         // 1. Ignore collision with the Player vehicle itself.
         if (collision.gameObject.CompareTag("Player"))
@@ -60,80 +69,100 @@ public class Bullet : MonoBehaviour
         }
 
         // 2. Check if the object is an Enemy
-        if (collision.gameObject.CompareTag("Enemy") && enemy != null)
+        if (isEnemy && enemy != null)
         {
-            // Try to bounce off the enemy. The function will return true if it bounced.
-            if (!TryBounce(collision, applyDamage: true))
+            // Tentukan damage aktual (Normal atau Critical)
+            int actualDamage = TryCriticalHit();
+
+            // 3. Aplikasikan damage ke musuh
+            enemy.TakeDamage(actualDamage, this.gameObject);
+
+            // 4. Coba pantulkan peluru. Jika gagal, peluru dihancurkan.
+            // Damage sudah diaplikasikan, jadi kita tidak perlu mengaplikasikannya lagi di TryBounce.
+            if (!TryBounce(collision, applyDamage: false))
             {
-                // If the bounce failed (or bounce chance was zero), handle damage and destroy.
-                HandleEnemyDestruction(collision, enemy);
+                // Jika bounce gagal (atau bounce chance nol), handle penghancuran peluru.
+                HandleBulletDestruction();
             }
+            // Catatan: Jika TryBounce berhasil (return true), peluru tidak dihancurkan di sini.
         }
         else
         {
             // === PENAMBAHAN KODE UNTUK MENGABAIKAN OBJEK YANG TIDAK BER-TAG ===
             if (collision.gameObject.CompareTag("Untagged"))
             {
-                return; // Abaikan objek yang tidak memiliki tag (secara default "Untagged")
+                return;
             }
             // ==================================================================
 
-            // Jika memiliki tag selain "Player" dan "Enemy" (misalnya "Wall", "Ground")
-            // dan BUKAN "Untagged", maka coba memantul
-            TryBounce(collision, applyDamage: false);
+            // Jika bukan musuh, coba memantul tanpa memberikan damage
+            if (!TryBounce(collision, applyDamage: false))
+            {
+                // Jika bounce gagal, hancurkan peluru
+                HandleBulletDestruction();
+            }
         }
     }
 
     /// <summary>
-    /// Deals damage to the enemy and destroys the bullet. Called when bounce chance fails.
+    /// MODIFIKASI: Menghitung peluang Critical Hit dan mengembalikan damage aktual.
     /// </summary>
-    private void HandleEnemyDestruction(Collision collision, EnemyProps enemy)
+    /// <returns>Nilai damage aktual (damage normal atau damage * 2 jika critical).</returns>
+    private int TryCriticalHit()
+    {
+        // Cek apakah Critical Hit berhasil
+        if (Random.value < criticalChance)
+        {
+            // Play SFX/VFX untuk efek Critical Hit (opsional)
+            // VisualEffectManager.Instance.PlayEffect("Critical Hit Effect", transform.position, transform.rotation);
+            // SoundManager.Instance.PlaySFX("CriticalHit");
+
+            Debug.Log($"Bullet struck a Critical Hit! Damage: {damage} -> {damage * 2}");
+            return damage * 2; // Gandakan damage
+        }
+
+        // Normal Hit
+        return damage;
+    }
+
+    /// <summary>
+    /// Deals with bullet destruction after impact (not counting bounce).
+    /// </summary>
+    private void HandleBulletDestruction()
     {
         // Play effects and sound
         if (VisualEffectManager.Instance != null && !string.IsNullOrEmpty("Bullet Impact"))
         {
             VisualEffectManager.Instance.PlayEffect("Bullet Impact", transform.position, transform.rotation);
         }
-        SoundManager.Instance.PlaySFX("Bullet Impact");
+        // Pastikan SoundManager.Instance tidak null
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX("Bullet Impact");
+        }
 
-        // Deal damage and destroy the bullet
-        enemy.TakeDamage(damage, this.gameObject);
         Destroy(gameObject);
     }
 
     /// <summary>
     /// Checks the bounce chance and redirects the bullet if successful.
     /// </summary>
-    /// <param name="applyDamage">If true, damage is applied to the enemy before bouncing.</param>
+    /// <param name="applyDamage">If true, damage is applied to the enemy before bouncing. (SEKARANG SELALU FALSE KARENA DAMAGE DIHITUNG DI OnCollisionEnter)</param>
     /// <returns>True if the bullet successfully bounced, false otherwise.</returns>
-    private bool TryBounce(Collision collision, bool applyDamage)
+    private bool TryBounce(Collision collision, bool applyDamage) // Parameter applyDamage sekarang diabaikan
     {
         // Check if the bounce attempt is successful
         if (Random.value < bounceChance)
         {
-            if (applyDamage)
-            {
-                // Damage the enemy on bounce
-                EnemyProps enemy = collision.gameObject.GetComponent<EnemyProps>();
-                if (enemy != null)
-                {
-                    enemy.TakeDamage(damage, this.gameObject);
-                }
-            }
-
             // --- Bounce Logic (Reflect only on the X-axis) ---
 
             Vector3 contactNormal = collision.contacts[0].normal;
-            Vector3 incidentDirection = -transform.forward; // Since your update code moves backwards
+            Vector3 incidentDirection = -transform.forward;
 
             // 1. Calculate the perfect reflection direction
             Vector3 reflectedDirection = Vector3.Reflect(incidentDirection, contactNormal);
 
             // 2. FORCING X-AXIS ONLY REFLECTION:
-            // We zero out the Y and Z components of the normal before reflection to simulate a flat, vertical bounce.
-            // However, a cleaner way is to keep the incident Z direction and only flip the X direction relative to the world.
-
-            // This isolates the lateral (left/right) reflection while maintaining forward movement.
             Vector3 finalBounceDirection = incidentDirection;
 
             // If the normal is mostly pointing left/right (along world X), flip the bullet's current X movement
@@ -166,14 +195,10 @@ public class Bullet : MonoBehaviour
 
             // Increment bounce counter
             bounceCount++;
-
-            SoundManager.Instance.PlaySFX("Bullet Bounce");
             return true; // Bounce succeeded
         }
         else
         {
-            // Bounce failed, destroy the bullet
-            Destroy(gameObject);
             return false; // Bounce failed
         }
     }

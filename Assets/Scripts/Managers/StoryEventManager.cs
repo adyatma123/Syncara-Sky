@@ -1,9 +1,10 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Collections; // PENTING: Tambahkan ini untuk Coroutine
 
-// We assume a static helper class exists to call audio, matching your requirement:
-// public static class SoundManager { public static SoundManager Instance; public void PlayVoice(string clipID); }
+// Asumsi: DialogueProfileSO.cs sudah tersedia di project
+// public enum CharacterDisposition { Friendly, Enemy, Neutral }
 
 /// <summary>
 /// Defines the conditions for triggering a single story event (voice line).
@@ -12,11 +13,19 @@ using System.Collections.Generic;
 [System.Serializable]
 public class StoryCheckpoint
 {
-    public enum TriggerType { WaveIndex, TotalEnemiesDestroyed }
+    // NEW: Tambahkan kondisi pemicu baru
+    public enum TriggerType { WaveIndex, TotalEnemiesDestroyed, PreviousCheckpointTriggered }
 
-    [Header("Event Configuration")]
+    [Header("Profile and Audio")]
+    [Tooltip("The Scriptable Object defining the character's name and profile.")]
+    public DialogueProfileSO speakerProfile; // NEW: Referensi ke SO
+
     [Tooltip("The unique ID (name/key) your SoundManager uses to play this voice clip.")]
     public string voiceClipID;
+
+    // NEW: Jeda setelah event ini terpicu
+    [Tooltip("Delay in seconds AFTER this event is played/triggered before the next one can be checked.")]
+    public float delayAfterTrigger = 0f;
 
     [Tooltip("Check this if the voice clip should only play if all prior clips are finished.")]
     public bool waitForPreviousClip = true;
@@ -27,6 +36,10 @@ public class StoryCheckpoint
 
     [Tooltip("The required index (0-based) or count to trigger the event.")]
     public int requiredValue;
+
+    // NEW: Untuk TriggerType.PreviousCheckpointTriggered
+    [Tooltip("The index of the checkpoint that MUST have been triggered before this one can start. -1 means no specific previous requirement.")]
+    public int requiredPreviousIndex = -1;
 
     [HideInInspector] public bool hasTriggered = false;
 }
@@ -40,13 +53,21 @@ public class StoryEventManager : MonoBehaviour
     // Singleton Instance
     public static StoryEventManager Instance { get; private set; }
 
+    // NEW EVENT: Dipicu ketika Story Checkpoint berhasil dipicu. 
+    // Meneruskan index (0-based) dari checkpoint yang terpicu.
+    public event Action<int> OnCheckpointTriggered;
+
     [Header("Story Checkpoints")]
     [Tooltip("Define multiple checkpoints to trigger voice lines based on game progression.")]
     public StoryCheckpoint[] storyCheckpoints;
 
-    // Runtime state tracking (Assume these values are updated by a GameManager/WaveSpawner)
+    // State variables
+    private int _currentKillCount = 0;
     private int _currentWaveIndex = 0;
-    private int _totalEnemiesDestroyed = 0;
+    private bool _isClipPlaying = false;
+
+    // NEW: Variabel untuk menyimpan Coroutine jeda
+    private Coroutine _delayCoroutine;
 
     void Awake()
     {
@@ -57,109 +78,164 @@ public class StoryEventManager : MonoBehaviour
         else
         {
             Instance = this;
-            // DontDestroyOnLoad(gameObject); // Uncomment if this manager persists across scenes
+            // DontDestroyOnLoad(gameObject); 
         }
     }
 
     void Start()
     {
-        // Subscribe to events from the WaveSpawner and Enemy system (assuming they are set up)
-        if (WaveSpawner.Instance != null)
-        {
-            WaveSpawner.Instance.OnWaveCleared += CheckWaveTriggers;
-            Debug.Log("[Story Event Manager] Subscribed to WaveSpawner events.");
-        }
-        else
-        {
-            Debug.LogError("[Story Event Manager] WaveSpawner Instance not found. Wave triggers are disabled.");
-        }
+        // Asumsi WaveSpawner.Instance dan EnemyProps.OnEnemyDestroyed diatur di tempat lain
     }
 
     void OnDestroy()
     {
-        // Unsubscribe to prevent memory leaks
-        if (WaveSpawner.Instance != null)
-        {
-            WaveSpawner.Instance.OnWaveCleared -= CheckWaveTriggers;
-        }
+        // Unsubscribe logic should be here
     }
 
-    // --- Public methods for external scripts (like GameManager or EnemyProps) to call ---
+    // Dipanggil oleh SoundManager saat klip dialog selesai diputar
+    public void NotifyVoiceClipFinished()
+    {
+        _isClipPlaying = false;
+        // Pengecekan trigger otomatis terjadi setelah delay (jika ada) selesai
+    }
 
-    /// <summary>
-    /// Should be called by the WaveSpawner after a wave is cleared.
-    /// </summary>
+    // Dipanggil oleh GameManager/EnemyProps
+    public void IncrementEnemiesDestroyed()
+    {
+        _currentKillCount++;
+        CheckTriggers();
+    }
+
+    // Dipanggil oleh WaveSpawner
     public void UpdateWaveIndex(int newIndex)
     {
         _currentWaveIndex = newIndex;
-        CheckWaveTriggers(newIndex);
+        CheckTriggers();
     }
 
-    /// <summary>
-    /// Should be called whenever an enemy (by any means) is successfully destroyed.
-    /// </summary>
-    public void IncrementEnemiesDestroyed()
+    void Update()
     {
-        _totalEnemiesDestroyed++;
-        Debug.Log($"[Story Event Manager] Total Kills updated to: {_totalEnemiesDestroyed}");
-        CheckKillTriggers(_totalEnemiesDestroyed);
-    }
-
-    // --- Private Condition Checking ---
-
-    private void CheckWaveTriggers(int waveIndex)
-    {
-        foreach (var checkpoint in storyCheckpoints)
+        // Pastikan pengecekan trigger dilakukan secara berkala jika tidak ada Coroutine delay
+        if (!_isClipPlaying && _delayCoroutine == null)
         {
+            CheckTriggers();
+        }
+    }
+
+
+    // --- Private Condition Checking and Triggering ---
+
+    private void CheckTriggers()
+    {
+        if (_isClipPlaying || _delayCoroutine != null) return; // Jangan cek jika sedang ada klip atau delay
+
+        // Pengecekan pemicu harus iteratif
+        for (int i = 0; i < storyCheckpoints.Length; i++)
+        {
+            var checkpoint = storyCheckpoints[i];
+
             if (checkpoint.hasTriggered) continue;
 
-            if (checkpoint.triggerType == StoryCheckpoint.TriggerType.WaveIndex)
+            if (checkpoint.waitForPreviousClip && _isClipPlaying) continue;
+
+            // --- Pengecekan Kondisi ---
+            bool conditionMet = false;
+
+            switch (checkpoint.triggerType)
             {
-                if (waveIndex == checkpoint.requiredValue)
-                {
-                    TriggerEvent(checkpoint);
-                }
-                else
-                {
-                    Debug.Log($"[Story Event Check] Wave Trigger skipped. Current Wave: {waveIndex} (Needed: {checkpoint.requiredValue})");
-                }
+                case StoryCheckpoint.TriggerType.WaveIndex:
+                    conditionMet = _currentWaveIndex >= checkpoint.requiredValue;
+                    break;
+                case StoryCheckpoint.TriggerType.TotalEnemiesDestroyed:
+                    conditionMet = _currentKillCount >= checkpoint.requiredValue;
+                    break;
+                case StoryCheckpoint.TriggerType.PreviousCheckpointTriggered:
+                    conditionMet = CheckPreviousTrigger(i, checkpoint.requiredPreviousIndex);
+                    break;
+            }
+
+            if (conditionMet)
+            {
+                TriggerEvent(checkpoint, i); // Kirim indeks untuk melanjutkan
+                // Keluar dari loop setelah memicu event agar tidak memicu lebih dari satu per frame
+                return;
             }
         }
     }
 
-    private void CheckKillTriggers(int killCount)
+    // Logika pengecekan pemicu sebelumnya
+    private bool CheckPreviousTrigger(int currentIndex, int requiredIndex)
     {
-        foreach (var checkpoint in storyCheckpoints)
+        // Kondisi 1: requiredPreviousIndex = -1 (Tidak ada persyaratan pemicu sebelumnya)
+        // Checkpoint awal yang menggunakan tipe trigger ini akan langsung terpenuhi.
+        if (requiredIndex == -1)
         {
-            if (checkpoint.hasTriggered) continue;
-
-            if (checkpoint.triggerType == StoryCheckpoint.TriggerType.TotalEnemiesDestroyed)
-            {
-                if (killCount >= checkpoint.requiredValue)
-                {
-                    TriggerEvent(checkpoint);
-                }
-                else
-                {
-                    // --- CRITICAL DEBUG LOG ---
-                    Debug.Log($"[Story Event Check] Kill Trigger NOT met. Current Kills: {killCount} (Needed: {checkpoint.requiredValue}). Not yet triggering.");
-                }
-            }
+            return true;
         }
+
+        // Kondisi 2: requiredPreviousIndex valid dan sudah terpicu
+        if (requiredIndex >= 0 && requiredIndex < storyCheckpoints.Length)
+        {
+            return storyCheckpoints[requiredIndex].hasTriggered;
+        }
+
+        // Kondisi 3: requiredPreviousIndex tidak valid
+        Debug.LogError($"[Story Event Check] Checkpoint index {currentIndex} has an invalid requiredPreviousIndex: {requiredIndex}");
+        return false;
     }
 
-    private void TriggerEvent(StoryCheckpoint checkpoint)
+
+    private void TriggerEvent(StoryCheckpoint checkpoint, int index)
     {
+        // Jika ada coroutine delay yang sedang berjalan (seharusnya sudah dicek di CheckTriggers, tapi untuk jaga-jaga)
+        if (_delayCoroutine != null) StopCoroutine(_delayCoroutine);
+
+        // Pemicu Event Publik
+        OnCheckpointTriggered?.Invoke(index);
+
+        _delayCoroutine = StartCoroutine(TriggerEventCoroutine(checkpoint, index));
+    }
+
+    // Coroutine untuk menangani logic TriggerEvent dan delay
+    private IEnumerator TriggerEventCoroutine(StoryCheckpoint checkpoint, int index)
+    {
+        // 1. Lakukan Trigger
+        checkpoint.hasTriggered = true;
+        _isClipPlaying = true; // Tandai klip sedang diputar
+
+        if (checkpoint.speakerProfile != null)
+        {
+            Debug.Log($"[Story Event] Triggered '{checkpoint.voiceClipID}' by {checkpoint.speakerProfile.profileName} (Index {index}).");
+            // Logika untuk menampilkan nama/visual profil akan di tempat lain
+        }
+
+        // Putar Suara
         if (SoundManager.Instance != null)
         {
-            Debug.Log($"[Story Event] Triggered '{checkpoint.voiceClipID}' at {checkpoint.triggerType}: {checkpoint.requiredValue}");
             SoundManager.Instance.PlayVoice(checkpoint.voiceClipID);
-            checkpoint.hasTriggered = true;
         }
         else
         {
-            // Changed to Error for high visibility if the audio system is missing
-            Debug.LogError($"[Story Event] Cannot play voice clip '{checkpoint.voiceClipID}'. SoundManager.Instance is NULL. Check scene setup.");
+            Debug.LogError($"[Story Event] Cannot play voice clip '{checkpoint.voiceClipID}'. SoundManager.Instance is NULL.");
         }
+
+        // 2. Tunggu hingga klip selesai diputar (Anda harus memanggil NotifyVoiceClipFinished() dari SoundManager)
+        // Jika callback tidak dipanggil, _isClipPlaying akan tetap true hingga delay selesai.
+
+        // 3. Tunggu delay yang ditentukan oleh checkpoint
+        if (checkpoint.delayAfterTrigger > 0)
+        {
+            Debug.Log($"[Story Event] Waiting for {checkpoint.delayAfterTrigger} seconds before checking next event.");
+            yield return new WaitForSeconds(checkpoint.delayAfterTrigger);
+        }
+
+        // Setelah delay selesai, reset Coroutine dan cek lagi
+        _delayCoroutine = null;
+
+        // Jika SoundManager belum memanggil NotifyVoiceClipFinished, tandai selesai sebagai fallback.
+        if (_isClipPlaying) _isClipPlaying = false;
+
+        // 4. Lakukan pengecekan trigger lagi untuk memicu event berikutnya (jika ada)
+        CheckTriggers();
     }
 }

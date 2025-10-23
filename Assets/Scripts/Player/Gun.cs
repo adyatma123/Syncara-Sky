@@ -50,6 +50,9 @@ public class Gun : MonoBehaviour
     public float currentHeat = 0f;
     private bool gunOverheated = false;
 
+    // NEW: Toggle untuk Tutorial
+    private bool isFiringEnabled = true;
+
     // UI Visuals
     public float blinkDuration = 1f;
     private float blinkTimer = 0f;
@@ -115,6 +118,15 @@ public class Gun : MonoBehaviour
     }
 
     /// <summary>
+    /// PUBLIC: Dipanggil oleh Tutorial.cs untuk mengaktifkan/menonaktifkan kemampuan menembak.
+    /// </summary>
+    public void SetFiringEnabled(bool state)
+    {
+        isFiringEnabled = state;
+    }
+
+
+    /// <summary>
     /// PUBLIC: Called by the GunSelector to change the weapon's properties dynamically.
     /// This function switches the active Guns Scriptable Object.
     /// </summary>
@@ -170,8 +182,8 @@ public class Gun : MonoBehaviour
         }
 
         // --- Firing Logic (Uses SO heatRate, but local maxHeat) ---
-        // Only allow firing if a stage is active (gunStage > 0)
-        if (!gunOverheated && gunStage > 0)
+        // PENTING: Cek isFiringEnabled
+        if (isFiringEnabled && !gunOverheated && gunStage > 0)
         {
             if (Input.GetButton("Gun") && Time.time >= nextFireTime)
             {
@@ -194,26 +206,7 @@ public class Gun : MonoBehaviour
             }
         }
 
-        // --- Overheat Blink Logic (Remains unchanged) ---
-        if (gunOverheated && overheatText != null)
-        {
-            blinkTimer += Time.deltaTime;
-
-            float alpha;
-            if (blinkTimer <= blinkDuration / 2f) alpha = Mathf.Sin((blinkTimer / (blinkDuration / 2f)) * Mathf.PI / 2f);
-            else alpha = Mathf.Cos(((blinkTimer - blinkDuration / 2f) / (blinkDuration / 2f)) * Mathf.PI / 2f);
-
-            Color textColor = overheatText.color;
-            textColor.a = alpha;
-            overheatText.color = textColor;
-
-            if (blinkTimer >= blinkDuration) blinkTimer -= blinkDuration;
-        }
-
-        if (Input.GetKeyDown(KeyCode.Z))
-        {
-            if (aimbot != null) aimbot.enabled = !aimbot.enabled;
-        }
+        // ... (Logika Overheat, Aimbot, dan Cooldown) ...
 
         // --- Cooldown Logic (REVISED to 1% of maxHeat per second) ---
         if (currentHeat > 0)

@@ -676,6 +676,7 @@ IL2CPP_EXTERN_C const RuntimeMethod* DateTime__ctor_m3BCC46F053A8B6C0BF4E67B5E6A
 IL2CPP_EXTERN_C const RuntimeMethod* DateTime__ctor_m64AFCE84ABB24698256EB9F635EFD0A221823441_RuntimeMethod_var;
 IL2CPP_EXTERN_C const RuntimeMethod* DateTime__ctor_m8CFD20DDCCB14AB28392A047FC4EE3F11929B8F2_RuntimeMethod_var;
 IL2CPP_EXTERN_C const RuntimeMethod* DateTime__ctor_mA66CE5141E86C5BC75F79543F99A7BD77B420201_RuntimeMethod_var;
+IL2CPP_EXTERN_C const RuntimeMethod* DateTime__ctor_mD89390EF215242275A4E8F78C2C3E8BC3EF6F3C3_RuntimeMethod_var;
 IL2CPP_EXTERN_C const RuntimeMethod* DateTime__ctor_mF724D343E82431D326EF70E1A31B3B3C4295AFFE_RuntimeMethod_var;
 IL2CPP_EXTERN_C const RuntimeMethod* DateTime_op_Addition_m652BE1306897DBE4CDF3ADA99FFFE2E70BFE3865_RuntimeMethod_var;
 IL2CPP_EXTERN_C const RuntimeMethod* DateTime_op_Subtraction_m1005BD26EB55337BA2B1F230075D714791074C31_RuntimeMethod_var;
@@ -3364,6 +3365,7 @@ IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void DBNull__ctor_m0752C7E84B1327B63DB5C42B99
 IL2CPP_MANAGED_FORCE_INLINE IL2CPP_METHOD_ATTR void DateTime__ctor_mE0BBACEC3A7AADB76EC243F5B4D9DCC9545AF50C_inline (DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D* __this, uint64_t ___0_dateData, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int64_t DateTime_DateToTicks_m2ADC6FF6BB38418819671A51620FBD0CAE0A208C (int32_t ___0_year, int32_t ___1_month, int32_t ___2_day, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR int64_t DateTime_TimeToTicks_mFE9BA5F0AE03AB8E462BD15D006049ACF842B1F9 (int32_t ___0_hour, int32_t ___1_minute, int32_t ___2_second, const RuntimeMethod* method) ;
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void DateTime__ctor_mD89390EF215242275A4E8F78C2C3E8BC3EF6F3C3 (DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D* __this, int32_t ___0_year, int32_t ___1_month, int32_t ___2_day, int32_t ___3_hour, int32_t ___4_minute, int32_t ___5_second, int32_t ___6_kind, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR SerializationInfoEnumerator_t810DE600E5F6AA4F2B66A7F56074277CCD8F1540* SerializationInfo_GetEnumerator_m5230A1D4E4B612E90B10E2034C638CD42F667EA6 (SerializationInfo_t3C47F63E24BEB9FCE2DC6309E027F238DC5C5E37* __this, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR String_t* SerializationInfoEnumerator_get_Name_m58B6D682B6C829258730C1E952E9099ACDDAE734 (SerializationInfoEnumerator_t810DE600E5F6AA4F2B66A7F56074277CCD8F1540* __this, const RuntimeMethod* method) ;
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR bool String_op_Equality_m030E1B219352228970A076136E455C4E568C02C1 (String_t* ___0_a, String_t* ___1_b, const RuntimeMethod* method) ;
@@ -28661,6 +28663,64 @@ IL2CPP_EXTERN_C  void DateTime__ctor_m1F66A4327FE6B127F0F0E83A70CED25DB0DFFB00_A
 	int32_t _offset = 1;
 	_thisAdjusted = reinterpret_cast<DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D*>(__this + _offset);
 	DateTime__ctor_m1F66A4327FE6B127F0F0E83A70CED25DB0DFFB00(_thisAdjusted, ___0_year, ___1_month, ___2_day, ___3_hour, ___4_minute, ___5_second, method);
+}
+IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void DateTime__ctor_mD89390EF215242275A4E8F78C2C3E8BC3EF6F3C3 (DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D* __this, int32_t ___0_year, int32_t ___1_month, int32_t ___2_day, int32_t ___3_hour, int32_t ___4_minute, int32_t ___5_second, int32_t ___6_kind, const RuntimeMethod* method) 
+{
+	static bool s_Il2CppMethodInitialized;
+	if (!s_Il2CppMethodInitialized)
+	{
+		il2cpp_codegen_initialize_runtime_metadata((uintptr_t*)&DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D_il2cpp_TypeInfo_var);
+		s_Il2CppMethodInitialized = true;
+	}
+	int64_t V_0 = 0;
+	{
+		int32_t L_0 = ___6_kind;
+		if ((((int32_t)L_0) < ((int32_t)0)))
+		{
+			goto IL_000a;
+		}
+	}
+	{
+		int32_t L_1 = ___6_kind;
+		if ((((int32_t)L_1) <= ((int32_t)2)))
+		{
+			goto IL_001a;
+		}
+	}
+
+IL_000a:
+	{
+		ArgumentException_tAD90411542A20A9C72D5CDA3A84181D8B947A263* L_2 = (ArgumentException_tAD90411542A20A9C72D5CDA3A84181D8B947A263*)il2cpp_codegen_object_new(((RuntimeClass*)il2cpp_codegen_initialize_runtime_metadata_inline((uintptr_t*)&ArgumentException_tAD90411542A20A9C72D5CDA3A84181D8B947A263_il2cpp_TypeInfo_var)));
+		ArgumentException__ctor_m8F9D40CE19D19B698A70F9A258640EB52DB39B62(L_2, ((String_t*)il2cpp_codegen_initialize_runtime_metadata_inline((uintptr_t*)&_stringLiteralF5613A6A4EDEA9E0E59881C956F596200F1345F8)), ((String_t*)il2cpp_codegen_initialize_runtime_metadata_inline((uintptr_t*)&_stringLiteral414EEEFF5F961B9740DE01D5EC1AC2F0F745095E)), NULL);
+		IL2CPP_RAISE_MANAGED_EXCEPTION(L_2, ((RuntimeMethod*)il2cpp_codegen_initialize_runtime_metadata_inline((uintptr_t*)&DateTime__ctor_mD89390EF215242275A4E8F78C2C3E8BC3EF6F3C3_RuntimeMethod_var)));
+	}
+
+IL_001a:
+	{
+		int32_t L_3 = ___0_year;
+		int32_t L_4 = ___1_month;
+		int32_t L_5 = ___2_day;
+		il2cpp_codegen_runtime_class_init_inline(DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D_il2cpp_TypeInfo_var);
+		int64_t L_6;
+		L_6 = DateTime_DateToTicks_m2ADC6FF6BB38418819671A51620FBD0CAE0A208C(L_3, L_4, L_5, NULL);
+		int32_t L_7 = ___3_hour;
+		int32_t L_8 = ___4_minute;
+		int32_t L_9 = ___5_second;
+		int64_t L_10;
+		L_10 = DateTime_TimeToTicks_mFE9BA5F0AE03AB8E462BD15D006049ACF842B1F9(L_7, L_8, L_9, NULL);
+		V_0 = ((int64_t)il2cpp_codegen_add(L_6, L_10));
+		int64_t L_11 = V_0;
+		int32_t L_12 = ___6_kind;
+		__this->____dateData = ((int64_t)(L_11|((int64_t)(((int64_t)L_12)<<((int32_t)62)))));
+		return;
+	}
+}
+IL2CPP_EXTERN_C  void DateTime__ctor_mD89390EF215242275A4E8F78C2C3E8BC3EF6F3C3_AdjustorThunk (RuntimeObject* __this, int32_t ___0_year, int32_t ___1_month, int32_t ___2_day, int32_t ___3_hour, int32_t ___4_minute, int32_t ___5_second, int32_t ___6_kind, const RuntimeMethod* method)
+{
+	DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D* _thisAdjusted;
+	int32_t _offset = 1;
+	_thisAdjusted = reinterpret_cast<DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D*>(__this + _offset);
+	DateTime__ctor_mD89390EF215242275A4E8F78C2C3E8BC3EF6F3C3(_thisAdjusted, ___0_year, ___1_month, ___2_day, ___3_hour, ___4_minute, ___5_second, ___6_kind, method);
 }
 IL2CPP_EXTERN_C IL2CPP_METHOD_ATTR void DateTime__ctor_mA66CE5141E86C5BC75F79543F99A7BD77B420201 (DateTime_t66193957C73913903DDAD89FEDC46139BCA5802D* __this, int32_t ___0_year, int32_t ___1_month, int32_t ___2_day, int32_t ___3_hour, int32_t ___4_minute, int32_t ___5_second, int32_t ___6_millisecond, const RuntimeMethod* method) 
 {

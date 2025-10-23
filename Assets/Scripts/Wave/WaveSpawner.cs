@@ -14,6 +14,10 @@ public class Wave
 
     [Tooltip("The time delay (in seconds) to wait AFTER this wave has been cleared, but BEFORE the next wave is spawned.")]
     public float delayAfterClear = 1f;
+
+    [Header("Story Integration (Optional)")]
+    [Tooltip("The 0-based index of the Story Checkpoint that MUST be triggered before this wave can start. Set to -1 to ignore.")]
+    public int requiredCheckpointIndex = -1; // NEW FIELD
 }
 
 /// <summary>
@@ -42,6 +46,9 @@ public class WaveSpawner : MonoBehaviour
     // Reference to the coroutine so we can stop it for a restart
     private Coroutine spawnWavesCoroutine;
 
+    // NEW: Variabel untuk melacak status Story Checkpoint
+    private bool[] checkpointTriggerStatus;
+
     void Awake()
     {
         // --- SINGLETON SETUP ---
@@ -55,7 +62,12 @@ public class WaveSpawner : MonoBehaviour
         }
         // -------------------------
 
-        // Removed completionUIObject setup as it is now in GameManager
+        // Initialize status array
+        if (StoryEventManager.Instance != null && StoryEventManager.Instance.storyCheckpoints.Length > 0)
+        {
+            checkpointTriggerStatus = new bool[StoryEventManager.Instance.storyCheckpoints.Length];
+        }
+
     }
 
     void Start()
@@ -71,9 +83,36 @@ public class WaveSpawner : MonoBehaviour
             return;
         }
 
+        // Subscribe to StoryEventManager events if available
+        if (StoryEventManager.Instance != null)
+        {
+            StoryEventManager.Instance.OnCheckpointTriggered += OnStoryCheckpointTriggered;
+        }
+
         // Begin the initial spawning sequence
         spawnWavesCoroutine = StartCoroutine(SpawnAllWaves());
     }
+
+    void OnDestroy()
+    {
+        if (StoryEventManager.Instance != null)
+        {
+            StoryEventManager.Instance.OnCheckpointTriggered -= OnStoryCheckpointTriggered;
+        }
+    }
+
+    /// <summary>
+    /// Callback method for the StoryEventManager event.
+    /// </summary>
+    private void OnStoryCheckpointTriggered(int checkpointIndex)
+    {
+        if (checkpointIndex >= 0 && checkpointIndex < checkpointTriggerStatus.Length)
+        {
+            checkpointTriggerStatus[checkpointIndex] = true;
+            Debug.Log($"[WaveSpawner] Checkpoint {checkpointIndex} triggered. Checking for pending waves...");
+        }
+    }
+
 
     /// <summary>
     /// Checks for the debug key press to restart the wave sequence.
@@ -115,6 +154,16 @@ public class WaveSpawner : MonoBehaviour
         // 3. Reset state variables
         waveIndex = 0;
 
+        // Reset Checkpoint status
+        if (checkpointTriggerStatus != null)
+        {
+            for (int i = 0; i < checkpointTriggerStatus.Length; i++)
+            {
+                checkpointTriggerStatus[i] = false;
+            }
+        }
+
+
         // Reset level completion state in GameManager
         if (GameManager.Instance != null)
         {
@@ -135,6 +184,30 @@ public class WaveSpawner : MonoBehaviour
         for (waveIndex = 0; waveIndex < waves.Length; waveIndex++)
         {
             Wave wave = waves[waveIndex];
+
+            // NEW LOGIC: TUNGGU CHECKPOINT SEBELUM MEMULAI WAVE
+            if (wave.requiredCheckpointIndex != -1)
+            {
+                int reqIndex = wave.requiredCheckpointIndex;
+                if (StoryEventManager.Instance != null && checkpointTriggerStatus != null && reqIndex < checkpointTriggerStatus.Length)
+                {
+                    Debug.Log($"[WaveSpawner] Waiting for Story Checkpoint {reqIndex} to be triggered before starting Wave {waveIndex + 1}...");
+
+                    // Tunggu sampai status checkpoint berubah menjadi true
+                    yield return new WaitUntil(() => checkpointTriggerStatus[reqIndex]);
+
+                    Debug.Log($"[WaveSpawner] Story Checkpoint {reqIndex} triggered. Starting Wave {waveIndex + 1}.");
+                }
+                else if (StoryEventManager.Instance == null)
+                {
+                    Debug.LogWarning($"[WaveSpawner] Wave {waveIndex + 1} requires Checkpoint {reqIndex}, but StoryEventManager is missing. Ignoring requirement.");
+                }
+                else
+                {
+                    Debug.LogWarning($"[WaveSpawner] Wave {waveIndex + 1} requires Checkpoint {reqIndex}, but index is invalid. Ignoring requirement.");
+                }
+            }
+
 
             // 1. Log the start of the wave
             Debug.Log($"--- Starting Wave {waveIndex + 1}/{waves.Length} ---");

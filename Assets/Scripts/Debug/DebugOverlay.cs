@@ -5,6 +5,7 @@ using TMPro;
 using System.Text;
 using UnityEngine.SceneManagement;
 using System.Linq;
+using System; // Tambahkan namespace System untuk menggunakan TimeSpan
 
 /// <summary>
 /// Tracks the current mouse position in screen coordinates and manages a toggleable debug overlay 
@@ -12,6 +13,9 @@ using System.Linq;
 /// </summary>
 public class MousePos : MonoBehaviour
 {
+    // BARU: Status statis untuk mempertahankan visibilitas di seluruh scene.
+    private static bool isGloballyVisible = false;
+
     // EXISTING: Mouse position tracking
     [Header("Mouse Tracking")]
     [Tooltip("The last recorded screen position of the mouse.")]
@@ -33,9 +37,12 @@ public class MousePos : MonoBehaviour
     private SoundManager soundManager;
     private PayloadManager payloadManager;
 
+    // MODIFIKASI: Menambahkan referensi ke TimeManager
+    private TimeManager timeManager;
+
     // NEW: Internal State
-    private float startTime;
-    private bool isVisible = false;
+    // Variabel instance isVisible dihapus karena diganti oleh isGloballyVisible
+    // private bool isVisible = false;
 
     void Start()
     {
@@ -48,6 +55,9 @@ public class MousePos : MonoBehaviour
         storyEventManager = StoryEventManager.Instance;
         backgroundManager = FindObjectOfType<BackgroundManager>();
 
+        // BARU: Mencari TimeManager
+        timeManager = TimeManager.Instance;
+
         // 2. UI Validation
         if (debugText == null)
         {
@@ -57,9 +67,9 @@ public class MousePos : MonoBehaviour
         // 3. Initial state
         if (debugText != null)
         {
-            debugText.enabled = isVisible;
+            // PENTING: Gunakan status global saat startup scene
+            debugText.enabled = isGloballyVisible;
         }
-        startTime = Time.time;
     }
 
     void Update()
@@ -76,14 +86,17 @@ public class MousePos : MonoBehaviour
         // NEW: Debug Overlay Update/Toggle Logic
         if (Input.GetKeyDown(toggleKey))
         {
-            isVisible = !isVisible;
+            // TOGGLE: Ubah status global
+            isGloballyVisible = !isGloballyVisible;
+
             if (debugText != null)
             {
-                debugText.enabled = isVisible;
+                debugText.enabled = isGloballyVisible;
             }
         }
 
-        if (isVisible && debugText != null)
+        // Update teks hanya jika status global aktif
+        if (isGloballyVisible && debugText != null)
         {
             debugText.text = BuildDebugString();
         }
@@ -217,7 +230,28 @@ public class MousePos : MonoBehaviour
 
         // --- TIME STATE ---
         sb.AppendLine("<b><color=#FF00FF>--- TIME ---</color></b>");
-        sb.AppendLine($"Time elapsed: {Time.time - startTime:F2}s");
+
+        // BARU: Fungsi helper untuk format timestamp
+        string FormatTime(float seconds)
+        {
+            // Cek untuk menghindari crash jika TimeManager belum terinisialisasi
+            if (seconds < 0) return "N/A";
+
+            TimeSpan time = TimeSpan.FromSeconds(seconds);
+            // Format H:mm:ss
+            return string.Format("{0:D2}:{1:D2}:{2:D2}",
+                                 (int)time.TotalHours,
+                                 time.Minutes,
+                                 time.Seconds);
+        }
+
+        // BARU: Menampilkan waktu total permainan (global) dalam format timestamp
+        float totalTime = timeManager != null ? timeManager.totalElapsedTime : 0f;
+        sb.AppendLine($"Total Game Time: {FormatTime(totalTime)}");
+
+        // BARU: Menampilkan waktu yang berlalu di scene saat ini dalam format timestamp
+        float sceneTime = timeManager != null ? timeManager.GetSceneElapsedTime() : 0f;
+        sb.AppendLine($"Scene Elapsed Time: {FormatTime(sceneTime)}");
 
         return sb.ToString();
     }

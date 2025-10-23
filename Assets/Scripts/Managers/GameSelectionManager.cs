@@ -1,5 +1,6 @@
-// GameSelectionManager.cs (Revised)
+// GameSelectionManager.cs (Revised for Slot Count)
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
 /// A persistent Singleton that holds selected game state data across scenes.
@@ -8,8 +9,11 @@ public class GameSelectionManager : MonoBehaviour
 {
     public static GameSelectionManager Instance { get; private set; }
 
-    // This is the data we need to persist. It starts as null.
     public Guns ConfirmedGunSelection { get; private set; }
+    public Payload[] ConfirmedPayloadSelections { get; private set; }
+
+    // NEW: Jumlah slot yang diambil dari PayloadManager kendaraan yang dipilih.
+    public int VehiclePayloadSlotCount { get; private set; } = 2; // Default ke 4
 
     private void Awake()
     {
@@ -18,6 +22,9 @@ public class GameSelectionManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+
+            // Inisialisasi default
+            ConfirmedPayloadSelections = new Payload[VehiclePayloadSlotCount];
         }
         else
         {
@@ -33,5 +40,28 @@ public class GameSelectionManager : MonoBehaviour
     {
         ConfirmedGunSelection = gunData;
         Debug.Log($"Selection Manager: Confirmed gun set to {gunData.name}.");
+    }
+
+    /// <summary>
+    /// NEW: Called by VhcChgr to set the confirmed payload slot count.
+    /// </summary>
+    /// <param name="count">The number of payload slots available on the vehicle.</param>
+    public void SetVehiclePayloadSlotCount(int count)
+    {
+        VehiclePayloadSlotCount = count;
+        Debug.Log($"Selection Manager: Payload Slot Count set to {count}.");
+
+        ConfirmedPayloadSelections = new Payload[count];
+    }
+
+
+    /// <summary>
+    /// Called by PayloadSelector when the player confirms their loadout.
+    /// </summary>
+    /// <param name="payloads">The array of Payload ScriptableObjects for all slots.</param>
+    public void SetConfirmedPayloads(Payload[] payloads)
+    {
+        ConfirmedPayloadSelections = payloads;
+        Debug.Log($"Selection Manager: Confirmed payload loadout set with {payloads.Length} slots.");
     }
 }

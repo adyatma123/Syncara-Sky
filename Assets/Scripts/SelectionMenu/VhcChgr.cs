@@ -1,3 +1,4 @@
+﻿// VhcChgr.cs (Revised for Payload Slot Transfer and MenuController Accessibility)
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -6,6 +7,9 @@ public class VhcChgr : MonoBehaviour
     [Header("Menu Components")]
     [Tooltip("Reference to the script handling UI/Camera transitions.")]
     [SerializeField] private MenuCameraController menuController;
+
+    // NEW: Public property for accessibility (Fixes 'inaccessible' error)
+    public MenuCameraController MenuController => menuController;
 
     [Header("Vehicle Selection")]
     [SerializeField] private ScriptableObject[] scriptableObjects;
@@ -27,7 +31,6 @@ public class VhcChgr : MonoBehaviour
 
     private void Awake()
     {
-        // Ensure MenuController is available
         if (menuController == null)
         {
             Debug.LogError("Menu Controller not assigned to VhcChgr. UI transitions will fail.", this);
@@ -35,36 +38,40 @@ public class VhcChgr : MonoBehaviour
             return;
         }
 
-        vehicleDisplay.VehicleDisplayer((Vehicles)scriptableObjects[0]);
-        UpdateSelectedVehicle();
+        // Assuming Vehicles is a type derived from ScriptableObject
+        if (scriptableObjects.Length > 0 && scriptableObjects[0] is Vehicles)
+        {
+            vehicleDisplay.VehicleDisplayer((Vehicles)scriptableObjects[0]);
+            UpdateSelectedVehicle();
+        }
     }
 
     void Update()
     {
-        // Check for the Escape key press to navigate back
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            // Call the shared 'Back' function on the menu controller
             GoBackInMenu();
         }
     }
 
     public void ChangeScriptableObject(int _change)
     {
-        // Note: We rely on MenuCameraController to enforce the state check before allowing the vehicle change.
         currentIndex += _change;
         if (currentIndex < 0) currentIndex = scriptableObjects.Length - 1;
         else if (currentIndex > scriptableObjects.Length - 1) currentIndex = 0;
 
-        if (vehicleDisplay != null) vehicleDisplay.VehicleDisplayer((Vehicles)scriptableObjects[currentIndex]);
+        if (vehicleDisplay != null && scriptableObjects[currentIndex] is Vehicles)
+            vehicleDisplay.VehicleDisplayer((Vehicles)scriptableObjects[currentIndex]);
 
         UpdateSelectedVehicle();
     }
 
     private void UpdateSelectedVehicle()
     {
-        Vehicles vehicleData = (Vehicles)scriptableObjects[currentIndex];
-        selectedVehiclePrefab = vehicleData.vehiclePrefab;
+        if (scriptableObjects[currentIndex] is Vehicles vehicleData)
+        {
+            selectedVehiclePrefab = vehicleData.vehiclePrefab;
+        }
     }
 
     /// <summary>
@@ -75,7 +82,30 @@ public class VhcChgr : MonoBehaviour
         if (selectedVehiclePrefab != null)
         {
             vehicleToLoad = selectedVehiclePrefab;
-            menuController.TransitionToLoadout(); // Delegate UI/Camera transition
+
+            // NEW LOGIC: Dapatkan jumlah slot dari PayloadManager
+            int slotCount = GetPayloadSlotCountFromSelectedVehicle(selectedVehiclePrefab);
+
+            // Kirim jumlah slot ke GameSelectionManager sebelum transisi
+            if (GameSelectionManager.Instance != null)
+            {
+                GameSelectionManager.Instance.SetVehiclePayloadSlotCount(slotCount);
+
+                // 🔽 Tambahkan baris ini untuk memaksa PayloadSelector refresh
+                PayloadSelector payloadSelector = FindObjectOfType<PayloadSelector>(true);
+                if (payloadSelector != null)
+                {
+                    payloadSelector.InitializeSlotButtons();
+                    Debug.Log($"PayloadSelector refreshed with {slotCount} slots.");
+                }
+                else
+                {
+                    Debug.LogWarning("PayloadSelector not found in current scene (might be inactive or in next menu).");
+                }
+            }
+
+            // Transisi ke menu berikutnya
+            menuController.TransitionToLoadout();
             SoundManager.Instance.PlaySFX("Click");
         }
         else
@@ -85,33 +115,51 @@ public class VhcChgr : MonoBehaviour
     }
 
     /// <summary>
+    /// Helper: Mengambil jumlah slot dari PayloadManager yang ada pada prefab kendaraan.
+    /// </summary>
+    private int GetPayloadSlotCountFromSelectedVehicle(GameObject vehiclePrefab)
+    {
+        // ... (Logika GetPayloadSlotCountFromSelectedVehicle tetap sama) ...
+        PayloadManager payloadMgr = vehiclePrefab.GetComponent<PayloadManager>();
+
+        if (payloadMgr != null && payloadMgr.payloadSlots != null)
+        {
+            return payloadMgr.payloadSlots.Length;
+        }
+
+        Debug.LogWarning($"PayloadManager not found or payloadSlots array is null on prefab {vehiclePrefab.name}. Defaulting to 4 slots.");
+        return 4;
+    }
+
+    /// <summary>
     /// PUBLIC ACCESS POINT: This function is called by the 'Back' button or the ESC key.
     /// It delegates the intelligent back-navigation to the MenuCameraController.
     /// </summary>
     public void GoBackInMenu()
     {
-        menuController.GoBack(); // Delegate multi-level back logic
+        // NEW: Gunakan properti publik untuk akses
+        if (MenuController != null)
+        {
+            MenuController.GoBack();
+        }
     }
 
-    // This is now redundant, replaced by GoBackInMenu, but keeping public access name for clarity
     public void BackToVhcSlct()
     {
         GoBackInMenu();
-
         SoundManager.Instance.PlaySFX("Click");
     }
 
     public void GunMenu()
     {
-        menuController.TransitionToGunMenu();
-
+        if (MenuController != null) MenuController.TransitionToGunMenu();
         SoundManager.Instance.PlaySFX("Click");
     }
 
     public void PayloadMenu()
     {
-        menuController.TransitionToPayloadMenu();
-
+        // NEW: Memanggil transisi ke Slot Selection Panel
+        if (MenuController != null) MenuController.TransitionToPayloadMenu();
         SoundManager.Instance.PlaySFX("Click");
     }
 
@@ -119,12 +167,10 @@ public class VhcChgr : MonoBehaviour
     {
         if (SceneLoader.Instance != null)
         {
-            // *** This is the key change: delegating the load process ***
             SceneLoader.Instance.LoadNewScene(nextSceneName);
         }
         else
         {
-            // Fallback for debugging/error handling
             Debug.LogError("SceneLoader.Instance not found! Falling back to direct load (without loading screen).");
             SceneManager.LoadScene(nextSceneName);
         }

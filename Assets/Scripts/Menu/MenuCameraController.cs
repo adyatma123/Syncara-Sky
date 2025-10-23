@@ -7,7 +7,8 @@ using UnityEngine;
 public class MenuCameraController : MonoBehaviour
 {
     // Enum to define the current camera/UI state
-    private enum MenuState { VehicleSelection, LoadoutMenu, GunLoadout, PayloadLoadout }
+    // MODIFIKASI: Tambahkan state untuk Payload Slot Selection
+    private enum MenuState { VehicleSelection, LoadoutMenu, GunLoadout, PayloadSlotLoadout, PayloadItemLoadout }
     [Header("Current State")]
     [Tooltip("The current state of the menu.")]
     [SerializeField] private MenuState currentMenuState = MenuState.VehicleSelection;
@@ -17,11 +18,14 @@ public class MenuCameraController : MonoBehaviour
     [SerializeField] private GameObject vehicleSelection;
     [Tooltip("The main Loadout Menu panel (shows Gun/Payload buttons).")]
     [SerializeField] private GameObject loadoutMenu;
-    [Tooltip("The specific UI panel for Gun configuration.")]
+    [Tooltip("The specific UI panel for Gun configuration (all in one).")]
     [SerializeField] private GameObject gunConfigPanel;
-    [Tooltip("The specific UI panel for Payload configuration.")]
-    [SerializeField] private GameObject payloadConfigPanel;
 
+    // MODIFIKASI: Payload Panel dipecah menjadi dua
+    [Tooltip("The main UI panel for Payload Slot selection (shows all slot buttons).")]
+    [SerializeField] private GameObject payloadSlotPanel; // NEW: Untuk menampilkan tombol slot
+    [Tooltip("The UI panel for selecting a specific Payload Item (Scroll View, stats, etc.).")]
+    [SerializeField] private GameObject payloadItemConfigPanel; // NEW: Untuk memilih item payload
 
     [Header("Camera & Rotation")]
     [Tooltip("The Camera to move and control (usually the Main Camera).")]
@@ -50,7 +54,7 @@ public class MenuCameraController : MonoBehaviour
     [Tooltip("The Transform for the Gun Loadout view (Gun PoV).")]
     [SerializeField] private Transform gunCameraPosition;
     [Tooltip("The Transform for the Payload Loadout view (Payload PoV).")]
-    [SerializeField] private Transform payloadCameraPosition;
+    [SerializeField] private Transform payloadCameraPosition; // Digunakan untuk Payload Slot dan Item
 
     [Tooltip("The speed at which the camera moves to the new position.")]
     [SerializeField] private float cameraMoveSpeed = 5f;
@@ -78,7 +82,9 @@ public class MenuCameraController : MonoBehaviour
         if (vehicleSelection != null) vehicleSelection.SetActive(true);
         if (loadoutMenu != null) loadoutMenu.SetActive(false);
         if (gunConfigPanel != null) gunConfigPanel.SetActive(false);
-        if (payloadConfigPanel != null) payloadConfigPanel.SetActive(false);
+        // MODIFIKASI: Pastikan kedua panel payload disembunyikan
+        if (payloadSlotPanel != null) payloadSlotPanel.SetActive(false);
+        if (payloadItemConfigPanel != null) payloadItemConfigPanel.SetActive(false);
     }
 
     void FixedUpdate()
@@ -102,7 +108,9 @@ public class MenuCameraController : MonoBehaviour
             case MenuState.GunLoadout:
                 targetTransform = gunCameraPosition;
                 break;
-            case MenuState.PayloadLoadout:
+            // MODIFIKASI: Gunakan PoV yang sama untuk kedua tahap payload
+            case MenuState.PayloadSlotLoadout:
+            case MenuState.PayloadItemLoadout:
                 targetTransform = payloadCameraPosition;
                 break;
             default:
@@ -135,7 +143,7 @@ public class MenuCameraController : MonoBehaviour
         }
         else
         {
-            // LOGIKA POIN PoV TETAP (UNTUK LoadoutMenu, GunLoadout, PayloadLoadout, ATAU JIKA rotationTargetTransform NULL)
+            // LOGIKA POIN PoV TETAP (UNTUK semua Loadout, ATAU JIKA rotationTargetTransform NULL)
             targetPos = targetTransform.position;
             // targetRot sudah diatur ke targetTransform.rotation di awal FixedUpdate()
         }
@@ -215,8 +223,12 @@ public class MenuCameraController : MonoBehaviour
     {
         switch (currentMenuState)
         {
-            case MenuState.PayloadLoadout:
-                // From Payload Config -> Go back to main Loadout Menu
+            case MenuState.PayloadItemLoadout:
+                // NEW: Dari pemilihan item payload -> Kembali ke pemilihan slot payload
+                TransitionToPayloadSlotMenu();
+                break;
+            case MenuState.PayloadSlotLoadout:
+                // MODIFIKASI: Dari pemilihan slot payload -> Kembali ke Loadout Menu
                 TransitionToLoadoutMenuFromConfig();
                 break;
             case MenuState.GunLoadout:
@@ -230,7 +242,7 @@ public class MenuCameraController : MonoBehaviour
             case MenuState.VehicleSelection:
                 // Already at the main menu, ignore or handle quitting the game
                 Debug.Log("Exiting application or opening pause menu.");
-                // Application.Quit(); // Uncomment this line if ESC should quit from main menu
+                // Application.Quit(); 
                 break;
         }
     }
@@ -253,12 +265,37 @@ public class MenuCameraController : MonoBehaviour
         if (gunConfigPanel != null) gunConfigPanel.SetActive(true);
     }
 
+    /// <summary>
+    /// PUBLIC: Dipanggil oleh VhcChgr untuk masuk ke menu Payload (tampilan Slot Selection).
+    /// </summary>
     public void TransitionToPayloadMenu()
     {
-        currentMenuState = MenuState.PayloadLoadout;
-        // UI Logic: Hide Loadout Main, Show Payload Config
+        currentMenuState = MenuState.PayloadSlotLoadout;
+        // UI Logic: Hide Loadout Main, Show Payload Slot Panel
         if (loadoutMenu != null) loadoutMenu.SetActive(false);
-        if (payloadConfigPanel != null) payloadConfigPanel.SetActive(true);
+        if (payloadSlotPanel != null) payloadSlotPanel.SetActive(true);
+    }
+
+    /// <summary>
+    /// NEW: Dipanggil oleh PayloadSelector ketika tombol slot ditekan.
+    /// </summary>
+    public void TransitionToPayloadItemConfig()
+    {
+        currentMenuState = MenuState.PayloadItemLoadout;
+        // UI Logic: Hide Slot Panel, Show Item Config Panel
+        if (payloadSlotPanel != null) payloadSlotPanel.SetActive(false);
+        if (payloadItemConfigPanel != null) payloadItemConfigPanel.SetActive(true);
+    }
+
+    /// <summary>
+    /// NEW: Dipanggil oleh GoBack() atau PayloadSelector untuk kembali ke tampilan Slot Selection.
+    /// </summary>
+    public void TransitionToPayloadSlotMenu()
+    {
+        currentMenuState = MenuState.PayloadSlotLoadout;
+        // UI Logic: Hide Item Config Panel, Show Slot Panel
+        if (payloadItemConfigPanel != null) payloadItemConfigPanel.SetActive(false);
+        if (payloadSlotPanel != null) payloadSlotPanel.SetActive(true);
     }
 
     /// <summary>
@@ -269,7 +306,9 @@ public class MenuCameraController : MonoBehaviour
         currentMenuState = MenuState.LoadoutMenu;
         // UI Logic: Hide Config Panels, Show Loadout Main
         if (gunConfigPanel != null) gunConfigPanel.SetActive(false);
-        if (payloadConfigPanel != null) payloadConfigPanel.SetActive(false);
+        // MODIFIKASI: Pastikan kedua panel payload disembunyikan
+        if (payloadSlotPanel != null) payloadSlotPanel.SetActive(false);
+        if (payloadItemConfigPanel != null) payloadItemConfigPanel.SetActive(false);
         if (loadoutMenu != null) loadoutMenu.SetActive(true);
     }
 
@@ -281,6 +320,8 @@ public class MenuCameraController : MonoBehaviour
         if (vehicleSelection != null) vehicleSelection.SetActive(true);
         if (loadoutMenu != null) loadoutMenu.SetActive(false);
         if (gunConfigPanel != null) gunConfigPanel.SetActive(false);
-        if (payloadConfigPanel != null) payloadConfigPanel.SetActive(false);
+        // MODIFIKASI: Pastikan kedua panel payload disembunyikan
+        if (payloadSlotPanel != null) payloadSlotPanel.SetActive(false);
+        if (payloadItemConfigPanel != null) payloadItemConfigPanel.SetActive(false);
     }
 }

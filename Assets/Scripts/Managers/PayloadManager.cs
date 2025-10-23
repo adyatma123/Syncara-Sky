@@ -43,6 +43,9 @@ public class PayloadManager : MonoBehaviour
     public int CurrentPayloadIndex => currentPayloadIndex;
     private int currentPayloadIndex = 0;
 
+    // NEW: Toggle untuk Tutorial
+    private bool isPayloadEnabled = true;
+
     /// <summary>
     /// Debug Accessor: Returns the number of unique payload types equipped.
     /// </summary>
@@ -81,6 +84,50 @@ public class PayloadManager : MonoBehaviour
     }
 
     /// <summary>
+    /// PUBLIC: Dipanggil oleh PayloadSelector atau saat runtime untuk mengatur ulang 
+    /// payload yang terpasang pada slot tertentu.
+    /// </summary>
+    /// <param name="slotIndex">Index dari PayloadSlot yang akan diubah.</param>
+    /// <param name="newPayload">Payload ScriptableObject baru untuk slot tersebut.</param>
+    public void SetPayloadAtSlotIndex(int slotIndex, Payload newPayload)
+    {
+        if (slotIndex >= 0 && slotIndex < payloadSlots.Length)
+        {
+            // Update payload SO pada slot yang bersangkutan
+            payloadSlots[slotIndex].payload = newPayload;
+
+            // Re-initialize loadout setelah perubahan
+            ReinitializeLoadout();
+
+            Debug.Log($"[PayloadManager] Slot {slotIndex + 1} diatur ke: {newPayload?.payloadName ?? "Kosong"}");
+        }
+        else
+        {
+            Debug.LogError($"[PayloadManager] Indeks slot {slotIndex} tidak valid. Maksimum: {payloadSlots.Length}");
+        }
+    }
+
+    /// <summary>
+    /// Membersihkan processedPayloadSlots dan memproses ulang payloadSlots.
+    /// Dipanggil setelah ada perubahan pada loadout.
+    /// </summary>
+    public void ReinitializeLoadout()
+    {
+        processedPayloadSlots.Clear();
+        currentPayloadIndex = 0;
+        ProcessPayloadSlots();
+    }
+
+    /// <summary>
+    /// PUBLIC: Dipanggil oleh Tutorial.cs untuk mengaktifkan/menonaktifkan payload.
+    /// </summary>
+    public void SetPayloadEnabled(bool state)
+    {
+        isPayloadEnabled = state;
+    }
+
+
+    /// <summary>
     /// Processes the raw payloadSlots array to merge all identical payloads into single slots.
     /// This combines hardpoints and aggregates max ammo.
     /// </summary>
@@ -105,6 +152,9 @@ public class PayloadManager : MonoBehaviour
                 }
             }
 
+            // Hapus duplikat hardpoints jika ada, meskipun seharusnya sudah dihindari
+            allHardpoints = allHardpoints.Distinct().ToList();
+
             // 2. Create the new, combined PayloadSlot
             PayloadSlot newSlot = new PayloadSlot
             {
@@ -112,7 +162,9 @@ public class PayloadManager : MonoBehaviour
                 hardpoints = allHardpoints.ToArray(), // Array of all combined hardpoints
 
                 // IMPORTANT: Calculate total ammo across all combined slots
-                currentAmmo = uniquePayload.maxAmmo * group.Count(),
+                // Jumlah ammo dihitung dari jumlah Hardpoints yang digabungkan 
+                // dikalikan dengan maxAmmo per unit hardpoint.
+                currentAmmo = uniquePayload.maxAmmo * allHardpoints.Count,
             };
 
             processedPayloadSlots.Add(newSlot);
@@ -145,6 +197,9 @@ public class PayloadManager : MonoBehaviour
     /// </summary>
     public void FireCurrentPayload()
     {
+        // PENTING: Cek isPayloadEnabled
+        if (!isPayloadEnabled) return;
+
         if (processedPayloadSlots.Count == 0) return;
 
         PayloadSlot currentSlot = processedPayloadSlots[currentPayloadIndex];
@@ -152,6 +207,8 @@ public class PayloadManager : MonoBehaviour
 
         // Check for nulls and if reloading is in progress or if the fire rate cooldown is active
         if (currentPayload == null || currentSlot.isReloading || Time.time < currentSlot.nextFireTime) return;
+
+        // ... (Logika firing yang sudah ada) ...
 
         // Check if a hardpoint is available
         if (currentSlot.hardpoints.Length == 0)
@@ -174,8 +231,18 @@ public class PayloadManager : MonoBehaviour
         else
         {
             // Standard payload (rocket or single-target missile): Fire from the next hardpoint in sequence.
-            launchPoints.Add(currentSlot.hardpoints[initialIndex]);
-            ammoCost = 1;
+            // Pastikan initialIndex valid sebelum diakses
+            if (initialIndex >= 0 && initialIndex < currentSlot.hardpoints.Length)
+            {
+                launchPoints.Add(currentSlot.hardpoints[initialIndex]);
+                ammoCost = 1;
+            }
+            else
+            {
+                // Fallback jika index hardpoint rusak (seharusnya tidak terjadi)
+                Debug.LogError($"Hardpoint index {initialIndex} di luar batas untuk {currentPayload.payloadName}.");
+                return;
+            }
         }
 
         // Final check if we have enough ammo to cover the launch
@@ -189,28 +256,26 @@ public class PayloadManager : MonoBehaviour
         int launchesCount = 0;
         foreach (Transform spawnPoint in launchPoints)
         {
-            // Only fire if the hardpoint is not empty (i.e., we are not cycling past the available ammo if multiTargets is false)
-            // Note: For multiTargets=true, the ammo check above ensures we have enough.
-            if (currentPayload.isMissile && currentPayload.multiTargets)
-            {
-                // Instantiate the payload prefab
-                GameObject newPayload = Instantiate(currentPayload.payloadPrefab, spawnPoint.position, spawnPoint.rotation);
-                InitializePayload(newPayload, currentPayload);
-                launchesCount++;
-            }
-            else if (spawnPoint == currentSlot.hardpoints[initialIndex]) // Only fire the single, designated hardpoint
-            {
-                // Instantiate the payload prefab
-                GameObject newPayload = Instantiate(currentPayload.payloadPrefab, spawnPoint.position, spawnPoint.rotation);
-                InitializePayload(newPayload, currentPayload);
-                launchesCount++;
-            }
+            // Hanya tembak jika spawnPoint valid (diperlukan untuk kasus multi-target yang mungkin memiliki hardpoint null)
+            if (spawnPoint == null) continue;
 
-            // Adjust for rocket pods if applicable (only needs to be instantiated once per physical slot, but for simplicity here we keep the check)
+            // Instantiate the payload prefab
+            GameObject newPayload = Instantiate(currentPayload.payloadPrefab, spawnPoint.position, spawnPoint.rotation);
+            InitializePayload(newPayload, currentPayload);
+            launchesCount++;
+
+            // Adjust for rocket pods if applicable (hanya perlu ditembakkan sekali per hardpoint yang menembak)
             if (currentPayload.podPrefab != null && !currentPayload.isMissile)
             {
                 Instantiate(currentPayload.podPrefab, spawnPoint.position, spawnPoint.rotation, transform);
             }
+        }
+
+        if (launchesCount == 0)
+        {
+            // Pencegahan jika tidak ada peluncuran yang terjadi
+            Debug.LogWarning($"Peluncuran {currentPayload.payloadName} dibatalkan karena tidak ada hardpoint yang valid.");
+            return;
         }
 
         // Decrease ammo count
@@ -270,9 +335,9 @@ public class PayloadManager : MonoBehaviour
         // Use the Payload's reload time for the wait duration
         yield return new WaitForSeconds(slotToReload.payload.reloadTime);
 
-        // When reloading, we restore the ammo to the value of ONE Payload SO's maxAmmo, 
-        // multiplied by the total number of hardpoints associated with this payload type.
-        // NOTE: The total ammo logic here assumes each original slot instance contributed 'maxAmmo' to the total.
+        // Ketika memuat ulang, kita mengembalikan amunisi ke nilai maksimum
+        // dari payload yang bersangkutan dikalikan dengan jumlah total hardpoint yang 
+        // digunakan oleh payload jenis ini.
         slotToReload.currentAmmo = slotToReload.payload.maxAmmo * slotToReload.hardpoints.Length;
 
         slotToReload.isReloading = false;

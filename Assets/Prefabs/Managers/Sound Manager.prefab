@@ -1,0 +1,176 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2682608805083000953
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8147394165782308914}
+  - component: {fileID: 5301700103233978388}
+  m_Layer: 0
+  m_Name: Sound Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8147394165782308914
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2682608805083000953}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5301700103233978388
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2682608805083000953}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6ad991a950c7c444a50bc296ab9340b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  masterMixer: {fileID: 24100000, guid: 6f84129c93fb0db4e88481b2ac36245f, type: 2}
+  audioGroups:
+  - groupName: Music
+    mixerGroup: {fileID: -7034521575333633907, guid: 6f84129c93fb0db4e88481b2ac36245f, type: 2}
+    soundClips:
+    - keyName: Hangar BGM
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: fa651532778b6934d8bee63fc9bfb896, type: 3}
+    - keyName: Stage 1-1
+      volume: 0.6
+      clips:
+      - {fileID: 8300000, guid: d6cc751332cc3d044adf6576e7e29940, type: 3}
+    - keyName: Mission Complete
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: c07b1aeca1dd063498a504260e6de413, type: 3}
+    useFadeIn: 0
+    useFadeOut: 1
+    fadeDuration: 1
+  - groupName: SFX
+    mixerGroup: {fileID: -5335768885569913699, guid: 6f84129c93fb0db4e88481b2ac36245f, type: 2}
+    soundClips:
+    - keyName: LMG
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: 4fdd274cc64a4454699820000b420f66, type: 3}
+      - {fileID: 8300000, guid: 63f0f6b8813a662428875ac0601ae537, type: 3}
+    - keyName: HMG
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: 36935df82dfcb134bb22dbece091d1d2, type: 3}
+    - keyName: Cannon
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: 9e24099dfc317d64cbb18865efd183c8, type: 3}
+    - keyName: Player Missile
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: 966cd2d0eea6a934d95634a552de9a70, type: 3}
+    - keyName: Player Rocket
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: 46cd242901a213c4081727ba3580747b, type: 3}
+    - keyName: Explode
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: bb48cea4b8055634ab67fe0006e2ac1d, type: 3}
+    - keyName: Bullet Impact
+      volume: 0.3
+      clips:
+      - {fileID: 8300000, guid: da3fbcbe8e646794198400b104e77766, type: 3}
+      - {fileID: 8300000, guid: 8874e238302b7104a8e7880ca8cd1864, type: 3}
+      - {fileID: 8300000, guid: 54c077d46b1d0754e9b2944165ff0b0e, type: 3}
+      - {fileID: 8300000, guid: 39bfb5d0ba41ba64cb838441d79ed1e8, type: 3}
+      - {fileID: 8300000, guid: 6c6e87f49c957b24392de06878f5fdd8, type: 3}
+    - keyName: Player Hit
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: efd36cab8ba7f874ca461fa9f45b9ad9, type: 3}
+      - {fileID: 8300000, guid: 513573b59061c7e43a2e3aba89b3fcf8, type: 3}
+      - {fileID: 8300000, guid: cf051887c86978c4aa466f0269197d2f, type: 3}
+      - {fileID: 8300000, guid: f91c5a6208641ab4eb1c22fa61a5628b, type: 3}
+    - keyName: Enemy Shoot
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: 9481c4fe9410a7a4b9c844507fafde73, type: 3}
+    - keyName: AA Flak
+      volume: 0.2
+      clips:
+      - {fileID: 8300000, guid: 9e24099dfc317d64cbb18865efd183c8, type: 3}
+    - keyName: Missile Explode
+      volume: 0.6
+      clips:
+      - {fileID: 8300000, guid: bdc95b29613820247a28681d284c15bb, type: 3}
+    - keyName: Click
+      volume: 0.9
+      clips:
+      - {fileID: 8300000, guid: 253ce3a4aff91ad4c83c74ac06820294, type: 3}
+    - keyName: Snap
+      volume: 0.6
+      clips:
+      - {fileID: 8300000, guid: 6dc8185e24448204a91ae79b8bc71bce, type: 3}
+    useFadeIn: 0
+    useFadeOut: 0
+    fadeDuration: 1
+  - groupName: Voice
+    mixerGroup: {fileID: -3198709200151570932, guid: 6f84129c93fb0db4e88481b2ac36245f, type: 2}
+    soundClips:
+    - keyName: Enemy1
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: 19bb6c8ec236ea447bef8c6ef04d0e2c, type: 3}
+    useFadeIn: 0
+    useFadeOut: 0
+    fadeDuration: 1
+  - groupName: Tutorial
+    mixerGroup: {fileID: -3198709200151570932, guid: 6f84129c93fb0db4e88481b2ac36245f, type: 2}
+    soundClips:
+    - keyName: Tutor1
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: d04dc290ad5288b4eb9c4b6829979c97, type: 3}
+    - keyName: Tutor2
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: 57dbb6058220b644eb4272c26e6ef8ff, type: 3}
+    - keyName: Tutor3
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: 2d674e8c950dfa244ba281748c6a81b6, type: 3}
+    - keyName: Tutor4
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: 1dccb2934e5c40840bd822600def6fa7, type: 3}
+    - keyName: Tutor5
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: 61d6fe886d3f0ea4683aeb6f515866c9, type: 3}
+    - keyName: Tutor6
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: 07bfd8c81447d0b45986e7fea038a0be, type: 3}
+    - keyName: Tutor7
+      volume: 1
+      clips:
+      - {fileID: 8300000, guid: 618d3c4b76030f340bf779abce16533b, type: 3}
+    useFadeIn: 0
+    useFadeOut: 0
+    fadeDuration: 1
