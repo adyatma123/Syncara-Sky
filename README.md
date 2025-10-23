@@ -1,5 +1,5 @@
-**Name : Ignited Skies
-Version : Alpha 0.0.1**
+**Name : Ignited Skies**
+**Version : Alpha 0.0.1**
 
 **22/10/2025**
 
@@ -46,9 +46,9 @@ Selection
 - Gun and Loadout Selection is not function properly after leaving the hangar for the first time
 - Player missile can go and hit enemy beyond viewpoint
 - After-death animation issues :
-• Not yet dynamic
-• Helicopter tumbling yet not working, still aiming after when falling
-• The AD Animation toggles arent working
+- > Not yet dynamic
+- > Helicopter tumbling yet not working, still aiming after when falling
+- > The AD Animation toggles arent working
 
 
 **Controls :**
