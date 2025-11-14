@@ -51,7 +51,33 @@ public class GameSelectionManager : MonoBehaviour
         VehiclePayloadSlotCount = count;
         Debug.Log($"Selection Manager: Payload Slot Count set to {count}.");
 
-        ConfirmedPayloadSelections = new Payload[count];
+        // KRUSIAL: Hanya buat array baru jika array yang ada 'null' ATAU ukurannya BERBEDA.
+        // Jika ukurannya SAMA, kita biarkan array yang ada (beserta isinya)
+        if (ConfirmedPayloadSelections == null || ConfirmedPayloadSelections.Length != count)
+        {
+            Debug.Log($"Selection Manager: Array size mismatch (was {ConfirmedPayloadSelections?.Length ?? -1}). Creating new array for {count} slots.");
+
+            // Simpan data lama sementara
+            Payload[] oldPayloads = ConfirmedPayloadSelections;
+
+            // Buat array baru
+            ConfirmedPayloadSelections = new Payload[count];
+
+            // Coba salin data lama sebanyak mungkin (berguna jika ganti dari 4 slot ke 2 slot)
+            if (oldPayloads != null)
+            {
+                int slotsToCopy = Mathf.Min(oldPayloads.Length, ConfirmedPayloadSelections.Length);
+                for (int i = 0; i < slotsToCopy; i++)
+                {
+                    ConfirmedPayloadSelections[i] = oldPayloads[i];
+                }
+                Debug.Log($"Selection Manager: Copied {slotsToCopy} old payload(s) to new array.");
+            }
+        }
+        else
+        {
+            Debug.Log($"Selection Manager: Array size {count} matches. Retaining existing payloads.");
+        }
     }
 
 
