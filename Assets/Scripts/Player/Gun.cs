@@ -206,8 +206,6 @@ public class Gun : MonoBehaviour
             }
         }
 
-        // ... (Logika Overheat, Aimbot, dan Cooldown) ...
-
         // --- Cooldown Logic (REVISED to 1% of maxHeat per second) ---
         if (currentHeat > 0)
         {

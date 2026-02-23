@@ -24,6 +24,12 @@ public class EnemyHomingMissile : MonoBehaviour
     [Tooltip("The time (in seconds) the missile continues flying straight after guidance expires before self-destructing.")]
     public float timeAfterGuidance = 1.0f;
 
+    [Header("Flare Avoidance")]
+    public float flareSearchRadius = 50f;
+
+    private bool hasSwitchedToFlare = false;
+
+
     private Rigidbody rb;
     private Transform target;
 
@@ -97,16 +103,18 @@ public class EnemyHomingMissile : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Only apply homing rotation if a target exists AND the missile is still in its guidance phase
-        if (target != null && isGuided)
+        if (isGuided)
         {
-            ApplyHoming();
-        }
+            CheckForFlare();
 
-        // CRITICAL FIX: Always update the velocity based on the current forward direction.
-        // This guarantees continuous, full-speed movement whether homing is active or disabled.
+            if (target != null)
+            {
+                ApplyHoming();
+            }
+        }
         rb.velocity = transform.forward * speed;
     }
+
 
     private void ApplyHoming()
     {
@@ -114,7 +122,10 @@ public class EnemyHomingMissile : MonoBehaviour
         Vector3 targetPosition = target.position;
 
         // 2. CRITICAL FIX: FORCE TARGET Y TO MISSILE'S Y
-        targetPosition.y = transform.position.y;
+        if (target.CompareTag("Player"))
+        {
+            targetPosition.y = transform.position.y;
+        }
 
         // Calculate the direction needed to point towards the target
         Vector3 directionToTarget = (targetPosition - transform.position).normalized;
@@ -125,6 +136,29 @@ public class EnemyHomingMissile : MonoBehaviour
         // Smoothly rotate towards the target direction
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * homingRotationSpeed);
     }
+
+    private void CheckForFlare()
+    {
+        if (hasSwitchedToFlare) return;
+
+        Collider[] hits = Physics.OverlapSphere(
+            transform.position,
+            flareSearchRadius
+        );
+
+        foreach (Collider hit in hits)
+        {
+            if (hit.CompareTag("P_Flare"))
+            {
+                target = hit.transform;
+                hasSwitchedToFlare = true;
+
+                Debug.Log("Missile redirected to flare");
+                return;
+            }
+        }
+    }
+
 
     void OnCollisionEnter(Collision collision)
     {
@@ -141,6 +175,16 @@ public class EnemyHomingMissile : MonoBehaviour
         if (collision.gameObject.CompareTag("Player"))
         {
             // Apply damage logic here (if hitting player)
+            if (VisualEffectManager.Instance != null && !string.IsNullOrEmpty("Bullet Impact"))
+            {
+                // Spawn the effect at the enemy's position and current rotation
+                VisualEffectManager.Instance.PlayEffect("Bullet Impact", transform.position, transform.rotation);
+            }
+
+            SoundManager.Instance.PlaySFX("Player Hit");
+
+            player.TakeDamage(damage);
+
             // Destroy the missile after impact
             Destroy(gameObject);
         }

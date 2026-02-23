@@ -8,7 +8,8 @@ public enum EnemyType
 {
     Aircraft,   // Standard airplane or fixed-wing craft
     Helicopter, // Rotary-wing craft, often stationary or moving vertically
-    Drone       // Small, fast, or robotic craft
+    Drone,       // Small, fast, or robotic craft
+    BossProp    // Boss' properties
 }
 
 /// <summary>

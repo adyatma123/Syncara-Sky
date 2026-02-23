@@ -11,6 +11,7 @@ public class GameSelectionManager : MonoBehaviour
 
     public Guns ConfirmedGunSelection { get; private set; }
     public Payload[] ConfirmedPayloadSelections { get; private set; }
+    public Vehicles ConfirmedVehicle { get; private set; }
 
     // NEW: Jumlah slot yang diambil dari PayloadManager kendaraan yang dipilih.
     public int VehiclePayloadSlotCount { get; private set; } = 2; // Default ke 4
@@ -30,6 +31,12 @@ public class GameSelectionManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    public void SetConfirmedVehicle(Vehicles vehicleData)
+    {
+        ConfirmedVehicle = vehicleData;
+        Debug.Log($"Selection Manager: Confirmed vehicle set to {vehicleData.name} (Tier {vehicleData.Tier}).");
     }
 
     /// <summary>

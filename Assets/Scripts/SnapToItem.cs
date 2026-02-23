@@ -3,141 +3,141 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using TMPro;
 
-/// <summary>
-/// Controls a horizontal ScrollRect to snap content to the nearest item when scrolling stops.
-/// Now handles both GunSelector and PayloadSelector.
-/// </summary>
 public class SnapToItem : MonoBehaviour
 {
-    // NEW: Reference to the GunSelector to call SelectGunByIndex on snap completion.
+    public enum SnapTargetMode
+    {
+        None,
+        Gun,
+        Payload
+    }
+
+    [Header("Mode Control")]
+    public SnapTargetMode currentMode = SnapTargetMode.None;
+
     [Header("Dependencies")]
     public GunSelector gunSelector;
-    public PayloadSelector payloadSelector; // NEW: Reference for Payload Selector
+    public PayloadSelector payloadSelector;
 
     [Header("UI References")]
     public ScrollRect scrollRect;
     public RectTransform contentPanel;
-    public RectTransform itemPrefab; // Used to get item width (Must be set from the first child)
+    public RectTransform itemPrefab;
     public HorizontalLayoutGroup HLG;
 
     private bool isCurrentlySnapping = false;
     float snapSpeed;
 
-    private int targetItemIndex = -1;
-    private int lastSnappedIndex = -1; // Added for better tracking of selection calls
+    private int targetVisualIndex = -1; // Index visual (0, 1, 2 dari item yang aktif saja)
+    private int lastSnappedVisualIndex = -1;
 
     [Header("Snapping Settings")]
-    [Tooltip("The force (speed) with which the panel snaps to the item.")]
     public float snappingForce = 15f;
 
     [Header("Scaling Settings")]
-    [Tooltip("The scale factor for the snapped item (1.0 is original size).")]
     public float snappedScaleMultiplier = 1.2f;
-
-    [Tooltip("The scale factor for the other items (1.0 is original size).")]
     public float defaultScaleMultiplier = 0.8f;
-
-    [Tooltip("The speed at which the scale changes for a smooth visual transition.")]
     public float scaleSmoothness = 10f;
-
-    [Tooltip("How far (in multiples of item width) the item's center can be before it fully returns to the default scale.")]
     public float maxScaleDistanceMultiplier = 1.5f;
 
+    // BARU: Struct untuk memetakan item visual ke index data aslinya
+    private struct ActiveItem
+    {
+        public RectTransform rect;
+        public int originalIndex; // Index asli di hierarki/array data
+    }
 
-    // Internal state variables
+    // List hanya untuk item yang AKTIF
+    private List<ActiveItem> activeItems = new List<ActiveItem>();
+
     private float itemWidth;
     private float spacingAndWidth;
-    private List<RectTransform> itemRects = new List<RectTransform>();
 
-    // Constants
     private const float MIN_VELOCITY_FOR_SNAPPING = 200f;
     private const float SNAP_TOLERANCE = 0.01f;
 
     void Start()
     {
-        // Calculate item width and total width + spacing, which is needed for movement calculations
+        // Panggil refresh saat start jika memungkinkan
+        UpdateActiveItems();
+    }
+
+    /// <summary>
+    /// MEMPERBARUI daftar item yang aktif. Harus dipanggil oleh Selector setelah filtering selesai.
+    /// </summary>
+    public void UpdateActiveItems()
+    {
         if (itemPrefab != null && HLG != null && contentPanel != null)
         {
             itemWidth = itemPrefab.rect.width;
             spacingAndWidth = itemWidth + HLG.spacing;
 
-            // Populate the list of item RectTransforms (assuming they are direct children of the contentPanel)
-            foreach (Transform child in contentPanel)
-            {
-                if (child.TryGetComponent<RectTransform>(out RectTransform rect))
-                {
-                    itemRects.Add(rect);
-                }
-            }
+            activeItems.Clear();
 
-            if (itemRects.Count == 0 && contentPanel.childCount > 0)
+            // Iterasi semua anak di contentPanel
+            int childCount = contentPanel.childCount;
+            for (int i = 0; i < childCount; i++)
             {
-                Debug.LogWarning("Content Panel has children, but they are not RectTransforms or the Item Prefab is not set up correctly.");
+                Transform child = contentPanel.GetChild(i);
+                // Hanya masukkan ke list jika item tersebut AKTIF
+                if (child.gameObject.activeSelf && child.TryGetComponent<RectTransform>(out RectTransform rect))
+                {
+                    // Simpan Rect dan Index Aslinya (i)
+                    activeItems.Add(new ActiveItem { rect = rect, originalIndex = i });
+                }
             }
         }
     }
 
     void Update()
     {
-        if (itemRects.Count == 0 || itemPrefab == null)
+        // Safety check
+        if (activeItems.Count == 0 || itemPrefab == null)
         {
-            // Re-populate itemRects in case Start() failed or items were added later (e.g. dynamic items)
-            if (itemRects.Count == 0 && contentPanel.childCount > 0)
-            {
-                itemRects.Clear();
-                foreach (Transform child in contentPanel)
-                {
-                    if (child.TryGetComponent<RectTransform>(out RectTransform rect))
-                    {
-                        itemRects.Add(rect);
-                    }
-                }
-
-                // Re-calculate spacing if necessary (assuming itemPrefab is set externally/on start)
-                if (itemPrefab != null)
-                {
-                    itemWidth = itemPrefab.rect.width;
-                    if (HLG != null) spacingAndWidth = itemWidth + HLG.spacing;
-                }
-            }
-            if (itemRects.Count == 0) return;
+            // Coba refresh jika list kosong tapi ada anak
+            if (contentPanel.childCount > 0) UpdateActiveItems();
+            if (activeItems.Count == 0) return;
         }
 
-        // Determine the item index to snap to. 
-        int calculatedItem = targetItemIndex != -1
-            ? targetItemIndex
+        // 1. Hitung posisi scroll saat ini (Visual Index)
+        int calculatedVisualItem = targetVisualIndex != -1
+            ? targetVisualIndex
             : Mathf.RoundToInt((0 - contentPanel.localPosition.x) / spacingAndWidth);
 
-        // --- NEW: Bounds Checking for Snapping ---
-        int currentItem = Mathf.Clamp(calculatedItem, 0, itemRects.Count - 1);
+        // Clamp ke jumlah item yang AKTIF
+        int currentVisualItem = Mathf.Clamp(calculatedVisualItem, 0, activeItems.Count - 1);
 
-        // Call SetSelectedIndex on the active selector
-        if (gunSelector != null && gunSelector.isActiveAndEnabled &&
-        (payloadSelector == null || !payloadSelector.isActiveAndEnabled))
+        // Ambil Data Index yang sebenarnya dari mapping
+        int currentDataIndex = activeItems[currentVisualItem].originalIndex;
+
+        // --- Logic Selection (Preview saat scroll) ---
+        // Kita kirim Data Index (bukan Visual Index) ke Selector
+        switch (currentMode)
         {
-            if (currentItem >= 0 && gunSelector.availableGuns != null && currentItem < gunSelector.availableGuns.Length)
-            {
-                gunSelector.SetSelectedIndex(currentItem);
-                gunSelector.SelectGunByIndex(currentItem);
-            }
-        }
-        else if (payloadSelector != null && payloadSelector.isActiveAndEnabled &&
-                 (gunSelector == null || !gunSelector.isActiveAndEnabled))
-        {
-            if (currentItem >= 0 && payloadSelector.availablePayloads != null && currentItem < payloadSelector.availablePayloads.Length)
-            {
-                payloadSelector.SetSelectedIndex(currentItem);
-                payloadSelector.SelectPayloadByIndex(currentItem);
-            }
+            case SnapTargetMode.Gun:
+                if (gunSelector != null)
+                {
+                    // Gunakan index asli untuk set selected status
+                    gunSelector.SetSelectedIndex(currentDataIndex);
+                }
+                break;
+
+            case SnapTargetMode.Payload:
+                if (payloadSelector != null)
+                {
+                    payloadSelector.SetSelectedIndex(currentDataIndex);
+                }
+                break;
         }
 
         // --- Snapping Logic ---
-        if (scrollRect.velocity.magnitude < MIN_VELOCITY_FOR_SNAPPING || targetItemIndex != -1)
+        if (scrollRect.velocity.magnitude < MIN_VELOCITY_FOR_SNAPPING || targetVisualIndex != -1)
         {
             scrollRect.velocity = Vector2.zero;
             snapSpeed += snappingForce * Time.deltaTime;
 
-            float targetX = 0 - (currentItem * spacingAndWidth);
+            // Target X berdasarkan Visual Index
+            float targetX = 0 - (currentVisualItem * spacingAndWidth);
 
             if (Mathf.Abs(contentPanel.localPosition.x - targetX) > SNAP_TOLERANCE)
             {
@@ -149,86 +149,89 @@ public class SnapToItem : MonoBehaviour
                 contentPanel.localPosition.y,
                 contentPanel.localPosition.z);
 
+            // Cek jika Snap Selesai
             if (Mathf.Abs(contentPanel.localPosition.x - targetX) < SNAP_TOLERANCE)
             {
-                // Pemicu 2: Cek apakah snap BARU saja selesai DAN index berubah
-                if (isCurrentlySnapping || currentItem != lastSnappedIndex)
+                if (isCurrentlySnapping || currentVisualItem != lastSnappedVisualIndex)
                 {
-                    targetItemIndex = -1; // Reset target index once snapped
-                    snapSpeed = 0; // Reset snap speed
+                    targetVisualIndex = -1;
+                    snapSpeed = 0;
 
-                    // Call the selection logic on the active selector upon successful snap.
-                    if (currentItem != lastSnappedIndex)
+                    // Panggil Selector Final Selection hanya jika item berubah
+                    if (currentVisualItem != lastSnappedVisualIndex)
                     {
-                        if (gunSelector != null && gunSelector.isActiveAndEnabled)
+                        if (currentMode == SnapTargetMode.Gun && gunSelector != null)
                         {
-                            gunSelector.SelectGunByIndex(currentItem);
+                            // Kirim Data Index asli
+                            gunSelector.SelectGunByIndex(currentDataIndex);
                         }
-                        else if (payloadSelector != null && payloadSelector.isActiveAndEnabled)
+                        else if (currentMode == SnapTargetMode.Payload && payloadSelector != null)
                         {
-                            if (payloadSelector.availablePayloads != null &&
-                                currentItem >= 0 && currentItem < payloadSelector.availablePayloads.Length)
-                            {
-                                payloadSelector.SetSelectedIndex(currentItem);
-                                payloadSelector.SelectPayloadByIndex(currentItem);
-                            }
+                            payloadSelector.SelectPayloadByIndex(currentDataIndex);
                         }
                     }
 
-                    // *** FIX: Hanya putar suara sekali saat snap benar-benar selesai ***
                     if (isCurrentlySnapping && SoundManager.Instance != null)
                     {
                         SoundManager.Instance.PlaySFX("Click");
                     }
 
-                    lastSnappedIndex = currentItem;
+                    lastSnappedVisualIndex = currentVisualItem;
                     isCurrentlySnapping = false;
                 }
             }
         }
         else if (scrollRect.velocity.magnitude >= MIN_VELOCITY_FOR_SNAPPING)
         {
-            targetItemIndex = -1;
+            targetVisualIndex = -1;
             snapSpeed = 0;
             isCurrentlySnapping = false;
         }
 
-        // --- Scaling Logic (Continuous) ---
         ScaleItems();
     }
 
     /// <summary>
-    /// Public function to be called by a Button's OnClick() event.
-    /// Initiates a smooth snap to the item corresponding to the given index.
+    /// Dipanggil oleh tombol/selector. Menerima DATA INDEX (Index asli).
+    /// Kita harus mencari Visual Index mana yang sesuai dengan Data Index ini.
     /// </summary>
-    public void OnItemClick(int itemIndex)
+    public void OnItemClick(int dataIndex)
     {
-        // Clamp the itemIndex to ensure it's a valid target
-        itemIndex = Mathf.Clamp(itemIndex, 0, itemRects.Count - 1);
-
-        if (itemIndex >= 0 && itemIndex < itemRects.Count)
+        // Cari Visual Index yang punya originalIndex == dataIndex
+        int visualIndex = -1;
+        for (int i = 0; i < activeItems.Count; i++)
         {
-            targetItemIndex = itemIndex;
-            snapSpeed = 0;
+            if (activeItems[i].originalIndex == dataIndex)
+            {
+                visualIndex = i;
+                break;
+            }
+        }
 
-            // Stop current scroll velocity immediately
+        if (visualIndex != -1)
+        {
+            targetVisualIndex = visualIndex; // Snap ke posisi visual yang benar
+            snapSpeed = 0;
             scrollRect.velocity = Vector2.zero;
+        }
+        else
+        {
+            Debug.LogWarning($"SnapToItem: Mencoba snap ke Data Index {dataIndex} tapi item tersebut tidak aktif/tidak ditemukan.");
         }
     }
 
-    /// <summary>
-    /// Adjusts the scale of all items based on their distance from the scroll view's center.
-    /// </summary>
     private void ScaleItems()
     {
         float centerOffset = contentPanel.localPosition.x;
         float maxDistance = spacingAndWidth * maxScaleDistanceMultiplier;
 
-        for (int i = 0; i < itemRects.Count; i++)
+        // Hanya scale item yang aktif
+        for (int i = 0; i < activeItems.Count; i++)
         {
-            RectTransform itemRect = itemRects[i];
-
+            RectTransform itemRect = activeItems[i].rect;
+            // Posisi visual berdasarkan index visual (i)
             float itemCenterPos = i * spacingAndWidth;
+
             float distance = Mathf.Abs(itemCenterPos + centerOffset);
             float normalizedDistance = Mathf.Clamp01(distance / maxDistance);
             float targetScale = Mathf.Lerp(snappedScaleMultiplier, defaultScaleMultiplier, normalizedDistance);

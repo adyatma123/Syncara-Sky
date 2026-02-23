@@ -16,6 +16,9 @@ public class HomingMissile : MonoBehaviour
     [Tooltip("The Payload ScriptableObject that defines this missile's properties.")]
     public Payload payloadData;
 
+    [SerializeField]
+    private float interceptRefreshInterval = 0.2f; // seconds
+
     private string missileName;
     private int mDamage;
     private float speed;
@@ -23,6 +26,9 @@ public class HomingMissile : MonoBehaviour
     private float lockRadius;
     private float maxHomingAngle;
     private float guidanceTime;
+    private Vector3 cachedInterceptPoint;
+    private float interceptRefreshTimer;
+    
 
     void Awake()
     {
@@ -133,39 +139,62 @@ public class HomingMissile : MonoBehaviour
         }
     }
 
+    private Vector3 GetTargetVelocity()
+    {
+        Rigidbody targetRb = target.GetComponent<Rigidbody>();
+        return targetRb != null ? targetRb.velocity : Vector3.zero;
+    }
+
     private void ApplyHoming()
     {
-        // Check for loss of homing lock
-        float distanceToTarget = Vector3.Distance(transform.position, target.position);
-        Vector3 directionToTarget = (target.position - transform.position).normalized;
-        float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
+        float distanceToTarget =
+            Vector3.Distance(transform.position, target.position);
+
+        Vector3 toTarget =
+            (target.position - transform.position).normalized;
+
+        float angleToTarget =
+            Vector3.Angle(transform.forward, toTarget);
 
         if (distanceToTarget > lockRadius || angleToTarget > maxHomingAngle)
         {
-            // RELEASE THE TARGET: If we lose lock, remove the component
-            if (target != null)
-            {
-                var marker = target.GetComponent<TargetedByMissile>();
-                if (marker != null)
-                {
-                    Destroy(marker);
-                }
-            }
+            var marker = target.GetComponent<TargetedByMissile>();
+            if (marker != null) Destroy(marker);
 
             isHoming = false;
             target = null;
             return;
         }
 
-        // Calculate the rotation needed to point towards the target
-        Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
+        Vector3 targetVelocity = GetTargetVelocity();
+        Vector3 rawToTarget = target.position - transform.position;
 
-        // Smoothly rotate towards the target direction
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * homingRotationSpeed);
+        float distance = rawToTarget.magnitude;
+        float timeToIntercept = distance / speed;
 
-        // Update the missile's velocity to maintain constant speed
+        Vector3 predictedPosition = target.position + targetVelocity * timeToIntercept;
+
+        Vector3 desiredDirection = (predictedPosition - transform.position).normalized;
+
+        float angleToPredicted =
+            Vector3.Angle(transform.forward, desiredDirection);
+
+        if (angleToPredicted > maxHomingAngle)
+        {
+            desiredDirection = transform.forward;
+        }
+
+        Quaternion targetRotation = Quaternion.LookRotation(desiredDirection);
+
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            targetRotation,
+            Time.fixedDeltaTime * homingRotationSpeed
+        );
+
         rb.velocity = transform.forward * speed;
     }
+
 
     void OnCollisionEnter(Collision collision)
     {

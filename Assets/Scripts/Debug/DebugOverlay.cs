@@ -180,8 +180,12 @@ public class MousePos : MonoBehaviour
         {
             Gun gun = playerAircraft.controlledGun;
 
-            // FIX: Get Aircraft Name from the VehicleName property (which checks the SO first)
             sb.AppendLine($"Aircraft Name: {playerAircraft.VehicleName}");
+
+            string aircraftTier = playerAircraft.vehicleData != null ?
+                                  playerAircraft.vehicleData.Tier.ToString() :
+                                  "N/A";
+            sb.AppendLine($"Aircraft Tier: {aircraftTier}");
 
             // Health
             sb.AppendLine($"Health: {playerAircraft.currentHealth}/{playerAircraft.maxHealth}");
