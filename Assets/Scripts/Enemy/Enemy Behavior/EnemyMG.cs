@@ -46,13 +46,23 @@ public class EnemyMG : MonoBehaviour
         }
     }
 
+    // Update your Activate method in EnemyMG.cs
     public void Activate()
     {
-        if (enemyProps == null || !enemyProps.IsArmedMG) return;
+        // RE-FETCH: Ensure we have the synced data from EnemyProps
+        if (enemyProps == null) enemyProps = GetComponent<EnemyProps>();
+
+        // Check armed status AFTER syncing
+        if (enemyProps == null || !enemyProps.IsArmedMG)
+        {
+            Debug.LogWarning($"[EnemyMG] {gameObject.name} failed to activate. ArmedMG: {enemyProps?.IsArmedMG}");
+            return;
+        }
+
         if (isShooting) return;
 
         isShooting = true;
-        sequentialFirePointIndex = 0; // Reset index on activation
+        sequentialFirePointIndex = 0;
         nextFireTimeMG = Time.time;
     }
 

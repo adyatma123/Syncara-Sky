@@ -54,6 +54,8 @@ public class GameManager : MonoBehaviour
     private bool isPaused = false;
     // -------------------------------------------
 
+    public MissionCompleteUI missionUI;
+
 
     void Awake()
     {
@@ -221,9 +223,14 @@ public class GameManager : MonoBehaviour
             SoundManager.Instance.PlayMusic("Mission Complete");
         }
 
-        // Show the completion text/UI object
-        if (completionUIObject != null)
+        // This calls the logic we just wrote above
+        if (missionUI != null)
         {
+            missionUI.ShowMissionComplete();
+        }
+        else if (completionUIObject != null)
+        {
+            // Fallback for your old UI object if missionUI isn't assigned
             completionUIObject.SetActive(true);
         }
     }

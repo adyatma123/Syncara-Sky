@@ -263,4 +263,19 @@ public class WaveSpawner : MonoBehaviour
     {
         return waveIndex >= waves.Length && currentWaveInstance == null;
     }
+
+    public int GetTotalEnemyCount()
+    {
+        int total = 0;
+
+        foreach (var wave in waves)
+        {
+            if (wave.waveContainerPrefab != null)
+            {
+                total += wave.waveContainerPrefab.GetComponentsInChildren<EnemyProps>(true).Length;
+            }
+        }
+
+        return total;
+    }
 }

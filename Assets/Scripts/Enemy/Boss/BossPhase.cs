@@ -1,31 +1,15 @@
-using System;
 using UnityEngine;
 
-[Serializable]
-public class BossPart
-{
-    public string partName;
-    public GameObject partObject;
-    public EnemyData partData;
-
-    [Tooltip("If false, the collider will be disabled until this phase is reached.")]
-    public bool canBeHitOutsidePhase = false;
-
-    [HideInInspector] public EnemyProps props;
-}
-
-[Serializable]
+[System.Serializable]
 public class BossPhase
 {
-    public string phaseName;
-    public BossPart[] phaseParts;
+    public BossWeakpoint[] weakpoints;
 
-    public bool IsPhaseComplete()
+    public bool IsComplete()
     {
-        foreach (var part in phaseParts)
+        foreach (var wp in weakpoints)
         {
-            // If any part in this phase still has health, the phase is not over
-            if (part.props != null && part.props.currentHealth > 0)
+            if (wp != null && wp.gameObject.activeSelf)
                 return false;
         }
         return true;

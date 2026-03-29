@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random; // Explicitly use UnityEngine.Random
@@ -58,47 +58,47 @@ public class Bullet : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        // Get the EnemyProps component (assuming it exists)
-        EnemyProps enemy = collision.gameObject.GetComponent<EnemyProps>();
-        bool isEnemy = collision.gameObject.CompareTag("Enemy");
-
-        // 1. Ignore collision with the Player vehicle itself.
         if (collision.gameObject.CompareTag("Player"))
+            return;
+
+        // 1. CHECK BOSS WEAKPOINT FIRST
+        BossWeakpoint wp = collision.gameObject.GetComponent<BossWeakpoint>();
+
+        if (wp != null)
         {
+            int actualDamage = TryCriticalHit();
+            wp.TakeDamage(actualDamage);
+
+            if (!TryBounce(collision, false))
+            {
+                HandleBulletDestruction();
+            }
+
             return;
         }
 
-        // 2. Check if the object is an Enemy
+        // 2. NORMAL ENEMY
+        EnemyProps enemy = collision.gameObject.GetComponent<EnemyProps>();
+        bool isEnemy = collision.gameObject.CompareTag("Enemy");
+
         if (isEnemy && enemy != null)
         {
-            // Tentukan damage aktual (Normal atau Critical)
             int actualDamage = TryCriticalHit();
 
-            // 3. Aplikasikan damage ke musuh
             enemy.TakeDamage(actualDamage, this.gameObject);
 
-            // 4. Coba pantulkan peluru. Jika gagal, peluru dihancurkan.
-            // Damage sudah diaplikasikan, jadi kita tidak perlu mengaplikasikannya lagi di TryBounce.
-            if (!TryBounce(collision, applyDamage: false))
+            if (!TryBounce(collision, false))
             {
-                // Jika bounce gagal (atau bounce chance nol), handle penghancuran peluru.
                 HandleBulletDestruction();
             }
-            // Catatan: Jika TryBounce berhasil (return true), peluru tidak dihancurkan di sini.
         }
         else
         {
-            // === PENAMBAHAN KODE UNTUK MENGABAIKAN OBJEK YANG TIDAK BER-TAG ===
             if (collision.gameObject.CompareTag("Untagged"))
-            {
                 return;
-            }
-            // ==================================================================
 
-            // Jika bukan musuh, coba memantul tanpa memberikan damage
-            if (!TryBounce(collision, applyDamage: false))
+            if (!TryBounce(collision, false))
             {
-                // Jika bounce gagal, hancurkan peluru
                 HandleBulletDestruction();
             }
         }

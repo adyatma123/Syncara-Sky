@@ -1,6 +1,7 @@
+﻿using System.Linq;
 using UnityEngine;
 
-public class ModularBossController : MonoBehaviour
+public class BossPhaseController : MonoBehaviour
 {
     [Header("Boss Identity")]
     public string bossName = "Goliath Class";
@@ -8,82 +9,79 @@ public class ModularBossController : MonoBehaviour
     [Header("Entrance Settings")]
     public float entrySpeed = 2f;
     public float initialMovementEndZ = 15f;
-    public bool isInitialMovementComplete = false; // Public for behavior access
+    public bool isInitialMovementComplete = false;
 
-    [Header("Phase Management")]
+    [Header("Phase System (Weakpoints)")]
     public BossPhase[] phases;
-    public int currentPhaseIndex = -1; // Public for behavior access
+
+    private int currentPhase = -1;
+    public int CurrentPhase => currentPhase;
 
     void Start()
     {
-        SetupBossParts();
-    }
-
-    private void SetupBossParts()
-    {
+        // Disable ALL weakpoints at start
         foreach (var phase in phases)
         {
-            foreach (var part in phase.phaseParts)
+            foreach (var wp in phase.weakpoints)
             {
-                if (part.partObject == null) continue;
-
-                // 1. Setup EnemyProps
-                part.props = part.partObject.GetComponent<EnemyProps>();
-                if (part.props == null) part.props = part.partObject.AddComponent<EnemyProps>();
-                part.props.enemyDataSource = part.partData;
-
-                // 2. Setup Collider and initial vulnerability
-                Collider col = part.partObject.GetComponent<Collider>();
-                if (col != null)
-                {
-                    // If true, collider stays on. If false, it's disabled until its phase
-                    col.enabled = part.canBeHitOutsidePhase;
-                }
+                if (wp != null)
+                    wp.Deactivate();
             }
         }
     }
 
     void Update()
     {
+        // 🚀 ENTRANCE LOGIC (UNCHANGED)
         if (!isInitialMovementComplete)
         {
             transform.position += Vector3.back * entrySpeed * Time.deltaTime;
+
             if (transform.position.z <= initialMovementEndZ)
             {
                 isInitialMovementComplete = true;
                 StartNextPhase();
             }
+
             return;
         }
 
-        if (currentPhaseIndex >= 0 && currentPhaseIndex < phases.Length)
+        // 🔁 PHASE CHECK
+        if (currentPhase >= 0 && currentPhase < phases.Length)
         {
-            if (phases[currentPhaseIndex].IsPhaseComplete())
+            if (phases[currentPhase].IsComplete())
             {
                 StartNextPhase();
             }
         }
     }
 
-    private void StartNextPhase()
+    void StartNextPhase()
     {
-        currentPhaseIndex++;
+        currentPhase++;
 
-        if (currentPhaseIndex < phases.Length)
+        if (currentPhase >= phases.Length)
         {
-            // Activate all parts in the new phase
-            foreach (var part in phases[currentPhaseIndex].phaseParts)
-            {
-                if (part.partObject == null) continue;
+            Debug.Log($"[Boss] {bossName} defeated!");
 
-                // Enable Collider so it can now take damage
-                Collider col = part.partObject.GetComponent<Collider>();
-                if (col != null) col.enabled = true;
+            if (GameManager.Instance != null)
+                GameManager.Instance.NotifyAllWavesCompleted();
 
-                // Enable the specific controller/weapons if they exist
-                EnemyController ctrl = part.partObject.GetComponent<EnemyController>();
-                if (ctrl != null) ctrl.enabled = true;
-            }
+            return;
         }
+
+        Debug.Log($"[Boss] {bossName} Phase {currentPhase} START");
+
+        // Activate weakpoints for this phase
+        foreach (var wp in phases[currentPhase].weakpoints)
+        {
+            if (wp != null)
+                wp.Activate();
+        }
+    }
+
+    public void OnWeakpointDestroyed(BossWeakpoint wp)
+    {
+        Debug.Log($"[Boss] Weakpoint destroyed: {wp.name}");
     }
 }

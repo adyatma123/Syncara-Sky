@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// Provides a wavy motion that only activates during a specific boss phase
@@ -26,12 +26,12 @@ public class BossWavyIdle : MonoBehaviour, IEnemyBehavior
     private float _phaseX, _phaseY;
 
     // References
-    private ModularBossController _bossController;
+    private BossPhaseController _bossController;
 
     void Start()
     {
         // Find the main boss controller in the parent
-        _bossController = GetComponentInParent<ModularBossController>();
+        _bossController = GetComponentInParent<BossPhaseController>();
 
         // Initialize random wave parameters
         _speedX = Random.Range(minSpeedX, maxSpeedX);
@@ -42,18 +42,25 @@ public class BossWavyIdle : MonoBehaviour, IEnemyBehavior
         _anchorPosition = transform.position;
     }
 
+    private bool wasActive = false;
+
     void Update()
     {
-        // 1. Safety check for the controller
         if (_bossController == null) return;
 
-        // 2. Check if the initial movement is complete and if we are in the correct phase
-        if (!IsCorrectPhaseActive())
+        bool isActive = IsCorrectPhaseActive();
+
+        if (!isActive)
         {
-            // Keep updating the anchor position so that when the phase starts, 
-            // the wave begins from the part's current position.
-            _anchorPosition = transform.position;
+            wasActive = false;
             return;
+        }
+
+        // 🔥 Set anchor ONLY when phase starts
+        if (!wasActive)
+        {
+            _anchorPosition = transform.position;
+            wasActive = true;
         }
 
         ApplyWavyMotion();
@@ -61,14 +68,10 @@ public class BossWavyIdle : MonoBehaviour, IEnemyBehavior
 
     private bool IsCorrectPhaseActive()
     {
-        // Accessing variables from the ModularBossController
-        // Note: You may need to make 'isInitialMovementComplete' and 'currentPhaseIndex' 
-        // public or add public properties in your ModularBossController script.
+        if (_bossController == null) return false;
 
-        bool movementDone = _bossController.isInitialMovementComplete;
-        bool phaseMatch = _bossController.currentPhaseIndex == activeDuringPhase;
-
-        return movementDone && phaseMatch;
+        return _bossController.isInitialMovementComplete &&
+               _bossController.CurrentPhase == activeDuringPhase;
     }
 
     private void ApplyWavyMotion()

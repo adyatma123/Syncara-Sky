@@ -184,4 +184,10 @@ public class EnemyProps : MonoBehaviour
             // ... (rest of the code) ...
         }
     }
+
+    public static void ReportEnemyDestroyed(int score)
+    {
+        OnEnemyDestroyed?.Invoke();
+        OnEnemyDestroyedByPlayerScore?.Invoke(score);
+    }
 }
