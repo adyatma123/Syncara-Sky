@@ -2,16 +2,29 @@ using UnityEngine;
 using TMPro; // Pastikan menggunakan TextMeshPro
 
 /// <summary>
-/// Mengelola dan menampilkan Trivia secara acak di layar loading.
+/// Mengelola dan menampilkan Trivia secara acak di layar loading,
+/// serta menampilkan informasi Stage saat ini.
 /// </summary>
 public class LoadingScreenTriviaManager : MonoBehaviour
 {
-    [Header("UI References (TextMeshPro)")]
+    [Header("Stage Info UI References")]
+    [Tooltip("Komponen TMP_Text untuk menampilkan Nama Stage.")]
+    [SerializeField] private TMP_Text stageNameText;
+
+    [Tooltip("Komponen TMP_Text untuk menampilkan Lokasi.")]
+    [SerializeField] private TMP_Text locationText;
+
+    [Tooltip("Komponen TMP_Text untuk menampilkan Tanggal.")]
+    [SerializeField] private TMP_Text dateText;
+
+
+    [Header("Trivia UI References (TextMeshPro)")]
     [Tooltip("Komponen TMP_Text untuk menampilkan Judul Trivia.")]
     [SerializeField] private TMP_Text triviaNameText;
 
     [Tooltip("Komponen TMP_Text untuk menampilkan Konten Trivia.")]
     [SerializeField] private TMP_Text triviaContentText;
+
 
     [Header("Trivia Data")]
     [Tooltip("Array dari semua Scriptable Object TriviaData yang tersedia.")]
@@ -26,9 +39,32 @@ public class LoadingScreenTriviaManager : MonoBehaviour
 
     void Start()
     {
-        // Panggil fungsi untuk menampilkan trivia secara berulang
+        // 1. Tampilkan data stage saat scene loading dimulai
+        InitializeStageData();
+
+        // 2. Panggil fungsi untuk menampilkan trivia secara berulang
         // Parameters: "Nama Fungsi", Waktu Tunggu Awal, Interval Pengulangan
         InvokeRepeating("DisplayRandomTrivia", initialDelay, changeInterval);
+    }
+
+    /// <summary>
+    /// Mengambil StageData dari SceneLoader dan memperbarui teks UI.
+    /// </summary>
+    private void InitializeStageData()
+    {
+        // Pastikan SceneLoader ada dan memiliki data stage
+        if (SceneLoader.Instance != null && SceneLoader.Instance.currentStageData != null)
+        {
+            StageData data = SceneLoader.Instance.currentStageData;
+
+            if (stageNameText != null) stageNameText.text = data.stageName;
+            if (locationText != null) locationText.text = data.location;
+            if (dateText != null) dateText.text = data.date;
+        }
+        else
+        {
+            Debug.LogWarning("SceneLoader instance or StageData not found. Stage info UI will not be updated.");
+        }
     }
 
     /// <summary>

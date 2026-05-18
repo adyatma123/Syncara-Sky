@@ -2,38 +2,45 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
 
+// 1. Create a serializable class/struct to hold your stage parameters
+// so they can be viewed and edited in the Unity Inspector
+[System.Serializable]
+public class StageData
+{
+    public string stageName;
+    public string location;
+    public string date;
+}
+
 public class SceneLoader : MonoBehaviour
 {
-    // Singleton pattern
     public static SceneLoader Instance;
 
-    // Nama scene target yang akan dimuat secara async
-    private string sceneToLoad;
+    [Header("Current Loading Data")]
+    // 2. This will hold the data for the scene currently being loaded
+    public StageData currentStageData;
 
-    // Objek operasi asinkron saat ini. Ini akan diakses oleh LoadingUIHandler.cs
+    private string sceneToLoad;
     private AsyncOperation currentAsyncOperation;
 
     private void Awake()
     {
-        // Implementasi Singleton
         if (Instance == null)
         {
             Instance = this;
-            // Penting: Memastikan objek ini tidak hancur saat scene berpindah
             DontDestroyOnLoad(gameObject);
         }
         else
         {
-            // Hancurkan duplikat
             Destroy(gameObject);
         }
     }
 
     /// <summary>
-    /// Dipanggil dari scene lain (misalnya VhcChgr) untuk memulai proses loading.
+    /// Call this method from your level triggers to start loading.
+    /// It now accepts the StageData which you can set in the Inspector of the calling script.
     /// </summary>
-    /// <param name="sceneName">Nama scene yang akan dimuat setelah LoadingScene.</param>
-    public void LoadNewScene(string sceneName)
+    public void LoadNewScene(string sceneName, StageData stageData)
     {
         if (string.IsNullOrEmpty(sceneName))
         {
@@ -42,17 +49,11 @@ public class SceneLoader : MonoBehaviour
         }
 
         sceneToLoad = sceneName;
-        // Langkah 1: Muat Scene Loading secara INSTAN
+        currentStageData = stageData; // Save the parameters to read later
+
         SceneManager.LoadScene("LoadingScene");
-        // Langkah 2: Ketika "LoadingScene" dimuat, skrip LoadingUIHandler di sana 
-        // akan memanggil StartLoadingOperation() untuk melanjutkan ke sceneToLoad.
     }
 
-    /// <summary>
-    /// Dipanggil oleh LoadingUIHandler.cs setelah 'LoadingScene' selesai dimuat.
-    /// Memulai operasi loading asinkron dan mengembalikan objek operasi tersebut.
-    /// </summary>
-    /// <returns>Objek AsyncOperation untuk melacak progress.</returns>
     public AsyncOperation StartLoadingOperation()
     {
         if (string.IsNullOrEmpty(sceneToLoad))
@@ -61,28 +62,18 @@ public class SceneLoader : MonoBehaviour
             return null;
         }
 
-        // Memulai coroutine loading dan menyimpan referensi operasi
         StartCoroutine(LoadAsynchronously(sceneToLoad));
-
-        // Kembalikan operasi yang sedang berjalan ke LoadingUIHandler untuk pembaruan UI
         return currentAsyncOperation;
     }
 
     IEnumerator LoadAsynchronously(string sceneName)
     {
-        // Memastikan sceneToLoad dikosongkan setelah digunakan untuk mencegah pemuatan ulang
         sceneToLoad = "";
-
-        // Panggil operasi loading yang sebenarnya
         AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
-
-        // Simpan referensi operasi
         currentAsyncOperation = operation;
 
-        // Mencegah scene baru aktif secara otomatis pada 90%
         operation.allowSceneActivation = false;
 
-        // Coroutine hanya menunggu hingga operasi selesai (yaitu mencapai 0.9)
         while (!operation.isDone)
         {
             yield return null;

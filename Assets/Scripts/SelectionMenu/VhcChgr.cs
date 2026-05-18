@@ -15,6 +15,8 @@ public class VhcChgr : MonoBehaviour
     [SerializeField] private ScriptableObject[] scriptableObjects;
     [SerializeField] private VhcDis vehicleDisplay;
     [SerializeField] private string nextSceneName;
+    [SerializeField] private StageData nextStageData;
+
 
     private int currentIndex;
     public static GameObject vehicleToLoad;
@@ -167,7 +169,7 @@ public class VhcChgr : MonoBehaviour
     {
         if (SceneLoader.Instance != null)
         {
-            SceneLoader.Instance.LoadNewScene(nextSceneName);
+            SceneLoader.Instance.LoadNewScene(nextSceneName, nextStageData);
         }
         else
         {
