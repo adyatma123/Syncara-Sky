@@ -51,7 +51,7 @@ public class CursorManager : MonoBehaviour
         // 3. Set the Cursor
         // Unity requires the texture used by SetCursor to be readable, even if 
         // Graphics.Blit was used. It's best practice to destroy the old one.
-        Cursor.SetCursor(_sizedCursorTexture, _cursorHotspot, CursorMode.ForceSoftware);
+        Cursor.SetCursor(_sizedCursorTexture, _cursorHotspot, CursorMode.Auto);
     }
 
     /// <summary>

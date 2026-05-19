@@ -1,6 +1,6 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SocialPlatforms.Impl;
-using System.Linq; // Tambahkan ini jika PayloadManager menggunakan Linq
+using System.Linq;
 
 public class PlayerController : MonoBehaviour
 {
@@ -11,48 +11,45 @@ public class PlayerController : MonoBehaviour
     private Collider planeCollider;
     private Ray ray;
     private RaycastHit hit;
-    private AircraftController controlledAircraft; // Reference to the aircraft being controlled
+    private AircraftController controlledAircraft;
     private PayloadManager payloadManager;
 
     public static int totalScore = 0;
 
-    // NEW: Toggles untuk kontrol tutorial
     [Header("Tutorial Control")]
-    [SerializeField] private bool enableMovement = true; // NEW
-    [SerializeField] private bool enableWeapons = true; // NEW
+    [SerializeField] private bool enableMovement = true;
+    [SerializeField] private bool enableWeapons = true;
 
-    // NEW: Properti untuk mendeteksi input selama tutorial
     public bool MovementDetected { get; private set; } = false;
     public bool PrimaryFireDetected { get; private set; } = false;
     public bool PayloadFireDetected { get; private set; } = false;
 
+    [Header("Viewport Boundary Settings")]
+    [Tooltip("Batas minimum area pandang (0 = paling kiri/bawah layar). Beri sedikit padding agar tidak terlalu mepet ke ujung.")]
+    [SerializeField][Range(0f, 0.5f)] private float minViewportPadding = 0.02f;
+    [Tooltip("Batas maksimum area pandang (1 = paling kanan/atas layar).")]
+    [SerializeField][Range(0.5f, 1f)] private float maxViewportPadding = 0.98f;
 
-    // Start is called before the first frame update
+
     void Start()
     {
         bool vehicleInstantiated = false;
         GameObject newAircraftInstance = null;
 
-        // -----------------------------------------------------------
-        // BAGIAN 1A: INSTANSIASI DARI VhcChgr (Prioritas 1)
-        // -----------------------------------------------------------
         if (VhcChgr.vehicleToLoad != null)
         {
-            // Instantiate the vehicle at the spawn point.
             newAircraftInstance = Instantiate(
                 VhcChgr.vehicleToLoad,
                 spawnPoint.position,
                 spawnPoint.rotation
             );
 
-            // PENTING: Jamin objek memiliki tag "Player"
             if (!newAircraftInstance.CompareTag("Player"))
             {
                 newAircraftInstance.tag = "Player";
                 Debug.Log("[PlayerController] Tag 'Player' added to instantiated aircraft.");
             }
 
-            // 1. Dapatkan referensi AircraftController
             controlledAircraft = newAircraftInstance.GetComponent<AircraftController>();
             if (controlledAircraft == null)
             {
@@ -64,23 +61,17 @@ public class PlayerController : MonoBehaviour
                 vehicleInstantiated = true;
             }
 
-            // 2. JAMINAN AKTIVASI SKRIP: Ulangi dan aktifkan SEMUA skrip pada instance ini.
             MonoBehaviour[] scripts = newAircraftInstance.GetComponents<MonoBehaviour>();
             foreach (MonoBehaviour script in scripts)
             {
                 script.enabled = true;
             }
-
-            // VhcChgr.vehicleToLoad = null; // Clear static reference (DIJAGA TIDAK DI-NULL UNTUK RESET)
         }
         else
         {
             Debug.LogWarning("VhcChgr.vehicleToLoad is null. Attempting to find existing 'Player' tagged object as fallback.");
         }
 
-        // -----------------------------------------------------------
-        // BAGIAN 1B: PENCARIAN FALLBACK (Prioritas 2)
-        // -----------------------------------------------------------
         if (!vehicleInstantiated)
         {
             GameObject existingPlayer = GameObject.FindGameObjectWithTag("Player");
@@ -99,7 +90,6 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // Final check for controlledAircraft outside of the instantiation/search block
         if (controlledAircraft == null)
         {
             Debug.LogError("PlayerController could not find or instantiate any controlled aircraft.");
@@ -111,12 +101,7 @@ public class PlayerController : MonoBehaviour
             ApplyConfirmedPayloadLoadout();
         }
 
-
-        // -----------------------------------------------------------
-        // BAGIAN 2: PENGATURAN REFERENSI LAIN
-        // -----------------------------------------------------------
         cam = Camera.main;
-        // Mencari Plane di Start() lebih aman daripada di Update()
         GameObject planeObj = GameObject.Find("Plane");
         if (planeObj != null)
         {
@@ -129,37 +114,26 @@ public class PlayerController : MonoBehaviour
         totalScore = 0;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        // Hanya jalankan logika kontrol jika sudah siap
         if (controlledAircraft == null || cam == null || planeCollider == null)
         {
-            // Tambahkan logika pencarian per frame untuk kasus yang sangat lambat 
-            // ATAU objek player dibuat setelah Start()
             if (controlledAircraft == null)
             {
                 FindExistingPlayerPerFrame();
             }
 
-            // Jika masih null, keluar dari Update
             if (controlledAircraft == null) return;
         }
 
-        // Jalankan input handler hanya jika diizinkan
         if (enableMovement) HandleMovementInput();
         if (enableWeapons) HandleWeaponInput();
 
-        // Reset deteksi input per frame
         MovementDetected = false;
         PrimaryFireDetected = false;
         PayloadFireDetected = false;
     }
 
-    /// <summary>
-    /// Mencari objek "Player" di setiap frame jika controlledAircraft masih null.
-    /// Ini berguna untuk kasus di mana objek diinstansiasi dengan delay.
-    /// </summary>
     private void FindExistingPlayerPerFrame()
     {
         GameObject existingPlayer = GameObject.FindGameObjectWithTag("Player");
@@ -173,9 +147,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// NEW: Mengambil payload yang dikonfirmasi dari GameSelectionManager dan menerapkannya.
-    /// </summary>
     private void ApplyConfirmedPayloadLoadout()
     {
         if (payloadManager == null || GameSelectionManager.Instance == null)
@@ -192,12 +163,10 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Terapkan loadout yang dikonfirmasi ke PayloadManager Player
         for (int i = 0; i < confirmedPayloads.Length; i++)
         {
             if (i < payloadManager.payloadSlots.Length)
             {
-                // SetPayloadAtSlotIndex akan otomatis memanggil ReinitializeLoadout()
                 payloadManager.SetPayloadAtSlotIndex(i, confirmedPayloads[i]);
             }
             else
@@ -210,38 +179,43 @@ public class PlayerController : MonoBehaviour
         Debug.Log($"[PlayerController] {confirmedPayloads.Length} payload berhasil diterapkan dari GameSelectionManager.");
     }
 
-
     public void AddScore(int score)
     {
         totalScore += score;
-        Debug.Log("Player Score: " + totalScore); // Log the score for testing
-        // You would typically update UI here
+        Debug.Log("Player Score: " + totalScore);
     }
 
-    // NEW: Public setter untuk kontrol gerakan
     public void SetMovementEnabled(bool state)
     {
         enableMovement = state;
     }
 
-    // NEW: Public setter untuk kontrol senjata
     public void SetWeaponsEnabled(bool state)
     {
         enableWeapons = state;
     }
 
-
     void HandleMovementInput()
     {
-        // Pengecekan pergerakan mouse (misalnya perubahan posisi mouse)
         if (Input.GetAxis("Mouse X") != 0 || Input.GetAxis("Mouse Y") != 0)
         {
             MovementDetected = true;
-
             enableMovement = true;
         }
 
-        ray = cam.ScreenPointToRay(Input.mousePosition);
+        // 🌟 BARU: Logika Penguncian Posisi di dalam Viewport Kamera
+        // 1. Ubah posisi mouse pixel (Screen Space) menjadi koordinat persentase Viewport (0.0 sampai 1.0)
+        Vector3 mouseViewportPos = cam.ScreenToViewportPoint(Input.mousePosition);
+
+        // 2. Kunci (Clamp) nilai X dan Y agar tidak pernah keluar dari batas yang ditentukan
+        mouseViewportPos.x = Mathf.Clamp(mouseViewportPos.x, minViewportPadding, maxViewportPadding);
+        mouseViewportPos.y = Mathf.Clamp(mouseViewportPos.y, minViewportPadding, maxViewportPadding);
+
+        // 3. Kembalikan koordinat Viewport yang sudah dikunci menjadi koordinat Screen/Pixel kembali
+        Vector3 clampedMouseScreenPos = cam.ViewportToScreenPoint(mouseViewportPos);
+
+        // 4. Tembakkan Ray menggunakan posisi layar yang sudah dikunci tadi, bukan menggunakan Input.mousePosition mentah
+        ray = cam.ScreenPointToRay(clampedMouseScreenPos);
 
         if (Physics.Raycast(ray, out hit))
         {
@@ -251,36 +225,30 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
-                // Jika raycast mengenai objek lain, reset rotasi atau abaikan input
                 controlledAircraft.ResetRotation();
             }
         }
         else
         {
-            // Jika raycast tidak mengenai apa-apa, reset rotasi
             controlledAircraft.ResetRotation();
         }
     }
 
     void HandleWeaponInput()
     {
-        // controlledAircraft dijamin tidak null karena ada pengecekan di Update()
-
-        // Deteksi input payload
-        if (Input.GetButtonDown("Payload")) // Right Mouse Button for missiles
+        if (Input.GetButtonDown("Payload"))
         {
-            PayloadFireDetected = true; // Tandai deteksi
+            PayloadFireDetected = true;
             controlledAircraft.FirePayload();
         }
-        if (Input.GetButtonDown("Change Payload")) // X key to switch payload
+        if (Input.GetButtonDown("Change Payload"))
         {
             controlledAircraft.SwitchPayload();
         }
 
-        // Deteksi input senjata utama (Gun)
-        if (Input.GetButton("Gun")) // Asumsi "Gun" adalah input fire utama
+        if (Input.GetButton("Gun"))
         {
-            PrimaryFireDetected = true; // Tandai deteksi
+            PrimaryFireDetected = true;
         }
     }
 }

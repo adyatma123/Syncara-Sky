@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿// PayloadSelector.cs (Updated with Tier Filtering based on Selected Vehicle)
+using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -69,7 +70,7 @@ public class PayloadSelector : MonoBehaviour
 
     /// <summary>
     /// Find and link all manually placed PayloadItemIdentifier components 
-    /// under the payloadItemsContent.
+    /// under the payloadItemsContent. Includes Tier filtering.
     /// </summary>
     private void InitializePayloadItems()
     {
@@ -82,49 +83,73 @@ public class PayloadSelector : MonoBehaviour
         // Ambil semua PayloadItemIdentifier yang ada di bawah Content Panel
         payloadItems = payloadItemsContent.GetComponentsInChildren<PayloadItemIdentifier>(true).ToList();
 
+        // 🌟 BARU: Deteksi Tier Maksimal yang diperbolehkan dari pesawat aktif
+        int maxAllowedTier = 99; // Default jika tidak ditemukan kendaraan (bisa akses semua)
+        if (vhcChgr != null && vhcChgr.CurrentVehicle != null)
+        {
+            maxAllowedTier = vhcChgr.CurrentVehicle.Tier;
+            Debug.Log($"[PayloadSelector] Filtering payloads for Vehicle: {vhcChgr.CurrentVehicle.name} (Max Tier: {maxAllowedTier})");
+        }
+
         if (payloadItems.Count == 0)
         {
             Debug.LogWarning("No PayloadItemIdentifier components found in the Content Panel. Ensure items are placed manually.");
         }
 
-        // Link data dari availablePayloads ke setiap item UI
-        LinkManuallyPlacedPayloadItems();
-    }
-
-    /// <summary>
-    /// Links the Payload Scriptable Objects to the manually placed UI items.
-    /// </summary>
-    private void LinkManuallyPlacedPayloadItems()
-    {
+        // Link data dari availablePayloads ke setiap item UI dengan filter Tier
         for (int i = 0; i < payloadItems.Count; i++)
         {
-            if (i < availablePayloads.Length)
+            if (i < availablePayloads.Length && availablePayloads[i] != null)
             {
-                Payload data = availablePayloads[i];
-
-                // Panggil Initialize pada setiap item identifier
-                payloadItems[i].Initialize(this, i, data);
-
-                // Pastikan item-item ini aktif (jika prefab/item diatur mati)
-                payloadItems[i].gameObject.SetActive(true);
+                // Saring berdasarkan Tier kendaraan saat ini
+                if (availablePayloads[i].Tier <= maxAllowedTier)
+                {
+                    payloadItems[i].Initialize(this, i, availablePayloads[i]);
+                    payloadItems[i].gameObject.SetActive(true); // Aktifkan item legal
+                }
+                else
+                {
+                    payloadItems[i].gameObject.SetActive(false); // Sembunyikan item tier tinggi
+                }
             }
             else
             {
                 // Jika ada lebih banyak item UI daripada data, sembunyikan item UI tersebut
                 payloadItems[i].gameObject.SetActive(false);
-                // Debug.LogWarning($"More UI Payload items ({payloadItems.Count}) exist than available Payloads ({availablePayloads.Length}). Hiding item at index {i}.");
             }
         }
 
-        // CRITICAL: Set SnapToItem's itemPrefab reference from the first child
-        if (payloadItems.Count > 0)
+        // 🌟 BARU: Ambil komponen anak pertama yang AKTIF (valid) untuk dijadikan itemPrefab acuan SnapToItem
+        RectTransform validItemPrefab = null;
+        for (int i = 0; i < payloadItemsContent.childCount; i++)
         {
-            RectTransform firstChild = payloadItems[0].GetComponent<RectTransform>();
-            if (firstChild != null)
+            Transform child = payloadItemsContent.GetChild(i);
+            if (child.gameObject.activeSelf)
             {
-                snapToItem.itemPrefab = firstChild;
+                validItemPrefab = child.GetComponent<RectTransform>();
+                break;
             }
         }
+
+        // Fallback jika tidak ada yang aktif
+        if (validItemPrefab == null && payloadItems.Count > 0)
+        {
+            validItemPrefab = payloadItems[0].GetComponent<RectTransform>();
+        }
+
+        if (validItemPrefab != null)
+        {
+            snapToItem.itemPrefab = validItemPrefab;
+        }
+    }
+
+    /// <summary>
+    /// Links the Payload Scriptable Objects to the manually placed UI items.
+    /// (LOGIC MOVED DIRECTLY INTO INITIALIZEPAYLOADITEMS TO SUPPORT TIER FILTERING)
+    /// </summary>
+    private void LinkManuallyPlacedPayloadItems()
+    {
+        // Diabaikan karena logikanya sudah disatukan di InitializePayloadItems agar filter berjalan optimal
     }
 
     /// <summary>
@@ -132,14 +157,12 @@ public class PayloadSelector : MonoBehaviour
     /// </summary>
     public void InitializeSlotButtons()
     {
-        // Pastikan prefab referensi tidak null
         if (slotButtonPrefab == null)
         {
             Debug.LogError("Slot Button Prefab reference is missing in PayloadSelector!");
             return;
         }
 
-        // 🔒 Pastikan prefab referensi disembunyikan dari UI
         if (slotButtonPrefab.activeSelf)
         {
             slotButtonPrefab.SetActive(false);
@@ -154,31 +177,27 @@ public class PayloadSelector : MonoBehaviour
         }
         slotButtons.Clear();
 
-        // Ambil jumlah slot dari GameSelectionManager
         int slotCount = GameSelectionManager.Instance != null
                         ? GameSelectionManager.Instance.VehiclePayloadSlotCount
                         : 4; // fallback
 
-        // Buat tombol baru secara dinamis
         for (int i = 0; i < slotCount; i++)
         {
             GameObject newButton = Instantiate(slotButtonPrefab, slotButtonContainer);
             newButton.name = $"SlotButton_{i}";
-            newButton.SetActive(true); // aktifkan hasil clone agar terlihat di UI
+            newButton.SetActive(true);
 
-            // Dapatkan komponen Button dan Text
             Button buttonComponent = newButton.GetComponent<Button>();
             TextMeshProUGUI buttonText = newButton.GetComponentInChildren<TextMeshProUGUI>();
 
             if (buttonComponent != null)
             {
-                int index = i; // closure fix
+                int index = i;
                 buttonComponent.onClick.AddListener(() => OnSlotButtonClick(index));
             }
 
             if (buttonText != null)
             {
-                // Ambil payload yang sudah dikonfirmasi untuk slot ini
                 Payload existingPayload = GameSelectionManager.Instance.ConfirmedPayloadSelections[i];
                 buttonText.text = $"{(existingPayload != null ? existingPayload.payloadName : $"SLOT {i + 1}\n")}";
             }
@@ -186,130 +205,90 @@ public class PayloadSelector : MonoBehaviour
             slotButtons.Add(newButton);
         }
 
-        // Force rebuild layout setelah membuat tombol
         LayoutRebuilder.ForceRebuildLayoutImmediate(slotButtonContainer);
     }
 
     // --- Slot Button Handling ---
 
-    /// <summary>
-    /// Dipanggil ketika salah satu tombol slot ditekan.
-    /// </summary>
-    /// <param name="slotIndex">Index dari slot yang ditekan.</param>
     public void OnSlotButtonClick(int slotIndex)
     {
         currentSlotIndex = slotIndex;
         SoundManager.Instance.PlaySFX("Click");
 
-        // NEW: Gunakan MenuCameraController untuk mengelola transisi UI/Camera state
-        // Memastikan MenuController dapat diakses melalui properti publik
         if (vhcChgr.MenuController != null)
         {
-            vhcChgr.MenuController.TransitionToPayloadItemConfig(); // Pindah ke tampilan Item Selection
+            vhcChgr.MenuController.TransitionToPayloadItemConfig();
         }
         else
         {
             Debug.LogError("MenuController is not accessible on VhcChgr.");
         }
 
-        // Inisialisasi tampilan seleksi payload
         InitializePayloadSelectionUI();
     }
 
-    /// <summary>
-    /// Didesain agar dipanggil oleh tombol 'Back' saat berada di tampilan seleksi payload.
-    /// </summary>
     public void BackToSlotSelection()
     {
-        currentSlotIndex = -1; // Reset index
+        currentSlotIndex = -1;
 
-        // NEW: Implementasikan payload ke PayloadManager pada 'Player'
         ImplementConfirmedPayloadToPlayer();
 
-        // NEW: Gunakan MenuCameraController untuk mengelola transisi UI/Camera state
         if (vhcChgr.MenuController != null)
         {
-            vhcChgr.MenuController.TransitionToPayloadSlotMenu(); // Kembali ke tampilan Slot Selection
+            vhcChgr.MenuController.TransitionToPayloadSlotMenu();
         }
         else
         {
             Debug.LogError("MenuController is not accessible on VhcChgr.");
         }
 
-        // Muat ulang tombol slot untuk menampilkan payload yang sudah dipilih
         InitializeSlotButtons();
-
         SoundManager.Instance.PlaySFX("Click");
     }
 
-    /// <summary>
-    /// PUBLIC: Dipanggil oleh VhcChgr.GoBackInMenu() untuk kembali ke menu sebelumnya (Loadout).
-    /// HANYA dipanggil saat berada di tampilan Slot Selection.
-    /// </summary>
     public void GoBackToLoadoutMenu()
     {
-        // HANYA kembali jika kita berada di tampilan Slot Selection
         if (slotButtonContainer.gameObject.activeInHierarchy)
         {
-            // NEW: Implementasikan payload ke PayloadManager sebelum kembali ke Loadout
             ImplementConfirmedPayloadToPlayer();
-
             vhcChgr.GoBackInMenu();
         }
         else
         {
-            // Jika berada di tampilan Payload Selection, kembali ke Slot Selection
             BackToSlotSelection();
         }
     }
 
-    /// <summary>
-    /// NEW: Mencari PayloadManager di GameObject ber-tag 'Player' dan memperbarui loadout-nya.
-    /// </summary>
     private void ImplementConfirmedPayloadToPlayer()
     {
-        // 1. Cari GameObject dengan tag 'Player'
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-
         if (player == null)
         {
             Debug.LogWarning("[PayloadSelector] GameObject dengan tag 'Player' tidak ditemukan. Gagal implementasi payload.");
             return;
         }
 
-        // 2. Dapatkan komponen PayloadManager
         PayloadManager payloadManager = player.GetComponent<PayloadManager>();
-
         if (payloadManager == null)
         {
             Debug.LogWarning($"[PayloadSelector] Komponen PayloadManager tidak ditemukan pada GameObject '{player.name}'. Gagal implementasi payload.");
             return;
         }
 
-        // 3. Update SEMUA slot pada PayloadManager, karena GameSelectionManager 
-        //    memegang satu-satunya sumber kebenaran untuk loadout.
         Payload[] confirmedPayloads = GameSelectionManager.Instance.ConfirmedPayloadSelections;
-
         if (confirmedPayloads.Length != payloadManager.payloadSlots.Length)
         {
             Debug.LogError($"[PayloadSelector] Jumlah slot di GameSelectionManager ({confirmedPayloads.Length}) tidak cocok dengan jumlah slot fisik di Player ({payloadManager.payloadSlots.Length}). Gagal implementasi.");
             return;
         }
 
-        // 4. Update setiap slot
         for (int i = 0; i < confirmedPayloads.Length; i++)
         {
-            // Panggil metode pada PayloadManager untuk mengatur payload baru.
-            // PayloadManager yang akan menangani ReinitializeLoadout/Processing.
             payloadManager.SetPayloadAtSlotIndex(i, confirmedPayloads[i]);
         }
 
-        // 5. Setelah semua slot diatur, panggil ReinitializeLoadout satu kali (Opsional, sudah ada di SetPayloadAtSlotIndex)
-        // payloadManager.ReinitializeLoadout();
-
         Debug.Log("[PayloadSelector] Loadout Payload telah diimplementasikan ke Player.");
     }
-
 
     // --- Payload Selection UI Handling ---
 
@@ -321,27 +300,42 @@ public class PayloadSelector : MonoBehaviour
             return;
         }
 
-        // Konfigurasi SnapToItem
         LayoutRebuilder.ForceRebuildLayoutImmediate(payloadItemsContent);
-        snapToItem.payloadSelector = this; // Pastikan referensi SnapToItem terisi
+        snapToItem.payloadSelector = this;
 
-        // Cari payload yang sudah dikonfirmasi di slot ini
+        // Ambil batasan tier kendaraan saat ini
+        int maxAllowedTier = vhcChgr != null && vhcChgr.CurrentVehicle != null ? vhcChgr.CurrentVehicle.Tier : 99;
+
         Payload existingPayload = GameSelectionManager.Instance.ConfirmedPayloadSelections[currentSlotIndex];
-        int initialIndex = existingPayload != null ? System.Array.IndexOf(availablePayloads, existingPayload) : 0;
+        int initialIndex = existingPayload != null ? System.Array.IndexOf(availablePayloads, existingPayload) : -1;
 
-        // Pastikan initialIndex valid
-        if (initialIndex < 0 || initialIndex >= availablePayloads.Length) initialIndex = 0;
+        // 🌟 BARU: Jika item yang sebelumnya disimpan ternyata melebihi tier (tidak valid) atau belum ada, cari indeks legal pertama
+        if (initialIndex == -1 || availablePayloads[initialIndex].Tier > maxAllowedTier)
+        {
+            initialIndex = -1;
+            for (int i = 0; i < availablePayloads.Length; i++)
+            {
+                if (availablePayloads[i] != null && availablePayloads[i].Tier <= maxAllowedTier && i < payloadItems.Count)
+                {
+                    initialIndex = i;
+                    break;
+                }
+            }
+        }
 
-        // Snap ke item yang sudah ada atau ke item 0
+        // Jika tidak ada payload yang legal sama sekali
+        if (initialIndex == -1)
+        {
+            Debug.LogError("No Payloads available at or below the selected vehicle's tier.");
+            return;
+        }
+
+        // Jalankan snapping awal ke item legal pertama/terpilih
         snapToItem.OnItemClick(initialIndex);
         SetSelectedIndex(initialIndex);
         SelectPayloadByIndex(initialIndex);
     }
 
-
-    /// <summary>
-    /// Dipanggil oleh SnapToItem.Update() atau OnItemClick untuk mengatur status IsSelected.
-    /// </summary>
     public void SetSelectedIndex(int index)
     {
         for (int i = 0; i < payloadItems.Count; i++)
@@ -350,9 +344,6 @@ public class PayloadSelector : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// PUBLIC: Called by SnapToItem when a snap is complete. Updates the main UI display.
-    /// </summary>
     public void SelectPayloadByIndex(int index)
     {
         if (index < 0 || index >= availablePayloads.Length)
@@ -366,7 +357,6 @@ public class PayloadSelector : MonoBehaviour
 
         Debug.Log($"[PayloadSelector] Snapped to payload: {currentSelectedPayload.payloadName} (Index {index})");
 
-        // Perbarui UI kanan
         UpdatePayloadDisplay(currentSelectedPayload);
     }
 
@@ -384,9 +374,6 @@ public class PayloadSelector : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// PUBLIC: Dipanggil oleh tombol "CONFIRM" di tampilan seleksi payload.
-    /// </summary>
     public void ConfirmPayloadSelection()
     {
         if (currentSlotIndex == -1)
@@ -401,12 +388,10 @@ public class PayloadSelector : MonoBehaviour
             return;
         }
 
-        // --- 1️⃣ Tentukan index payload yang sedang tersnap ---
         int currentSnappedIndex = -1;
         if (currentSelectedPayload != null)
             currentSnappedIndex = System.Array.IndexOf(availablePayloads, currentSelectedPayload);
 
-        // --- 2️⃣ Cegah konfirmasi jika belum tersnap ke item yang benar ---
         if (currentSnappedIndex < 0 || currentSelectedPayload == null || !payloadItems[currentSnappedIndex].IsSelected)
         {
             Debug.Log($"[PayloadSelector] Belum tersnap ke payload yang benar. Snap ulang sebelum konfirmasi...");
@@ -415,9 +400,6 @@ public class PayloadSelector : MonoBehaviour
             return;
         }
 
-        // --- 3️⃣ Lanjutkan jika sudah tersnap dengan benar ---
-
-        // --- 4️⃣ Simpan payload ke GameSelectionManager (Sumber Kebenaran) ---
         if (GameSelectionManager.Instance != null)
         {
             Payload[] confirmedPayloads = GameSelectionManager.Instance.ConfirmedPayloadSelections;
@@ -425,12 +407,10 @@ public class PayloadSelector : MonoBehaviour
             if (confirmedPayloads.Length > currentSlotIndex)
             {
                 confirmedPayloads[currentSlotIndex] = currentSelectedPayload;
-                // GameSelectionManager.Instance.SetConfirmedPayloads(confirmedPayloads); // Tidak perlu dipanggil lagi karena array sudah diubah referensinya
 
                 SoundManager.Instance.PlaySFX("Snap");
                 Debug.Log($"[PayloadSelector] Payload dikonfirmasi: {currentSelectedPayload.payloadName} ke Slot {currentSlotIndex + 1}.");
 
-                // NEW: Setelah disimpan ke GameSelectionManager, implementasikan ke Player
                 ImplementConfirmedPayloadToPlayer();
             }
             else
@@ -443,7 +423,6 @@ public class PayloadSelector : MonoBehaviour
             Debug.LogError("[PayloadSelector] GameSelectionManager.Instance tidak ditemukan.");
         }
 
-        // --- 5️⃣ Kembali ke menu slot selection ---
         BackToSlotSelection();
     }
 }

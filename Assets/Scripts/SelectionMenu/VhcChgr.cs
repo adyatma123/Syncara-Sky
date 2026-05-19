@@ -1,4 +1,4 @@
-﻿// VhcChgr.cs (Revised for Payload Slot Transfer and MenuController Accessibility)
+﻿// VhcChgr.cs (Revised to expose Current Vehicle data)
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,7 +8,6 @@ public class VhcChgr : MonoBehaviour
     [Tooltip("Reference to the script handling UI/Camera transitions.")]
     [SerializeField] private MenuCameraController menuController;
 
-    // NEW: Public property for accessibility (Fixes 'inaccessible' error)
     public MenuCameraController MenuController => menuController;
 
     [Header("Vehicle Selection")]
@@ -17,11 +16,23 @@ public class VhcChgr : MonoBehaviour
     [SerializeField] private string nextSceneName;
     [SerializeField] private StageData nextStageData;
 
-
     private int currentIndex;
     public static GameObject vehicleToLoad;
     private GameObject selectedVehiclePrefab;
     public static Guns selectedGunData;
+
+    // 🌟 BARU: Properti publik untuk mendapatkan data kendaraan yang saat ini dipilih
+    public Vehicles CurrentVehicle
+    {
+        get
+        {
+            if (scriptableObjects != null && currentIndex >= 0 && currentIndex < scriptableObjects.Length)
+            {
+                return scriptableObjects[currentIndex] as Vehicles;
+            }
+            return null;
+        }
+    }
 
     private void Start()
     {
@@ -40,7 +51,6 @@ public class VhcChgr : MonoBehaviour
             return;
         }
 
-        // Assuming Vehicles is a type derived from ScriptableObject
         if (scriptableObjects.Length > 0 && scriptableObjects[0] is Vehicles)
         {
             vehicleDisplay.VehicleDisplayer((Vehicles)scriptableObjects[0]);
@@ -76,24 +86,18 @@ public class VhcChgr : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Called when the player selects a vehicle. Transitions to the main Loadout Menu.
-    /// </summary>
     public void SelectVehicle()
     {
         if (selectedVehiclePrefab != null)
         {
             vehicleToLoad = selectedVehiclePrefab;
 
-            // NEW LOGIC: Dapatkan jumlah slot dari PayloadManager
             int slotCount = GetPayloadSlotCountFromSelectedVehicle(selectedVehiclePrefab);
 
-            // Kirim jumlah slot ke GameSelectionManager sebelum transisi
             if (GameSelectionManager.Instance != null)
             {
                 GameSelectionManager.Instance.SetVehiclePayloadSlotCount(slotCount);
 
-                // 🔽 Tambahkan baris ini untuk memaksa PayloadSelector refresh
                 PayloadSelector payloadSelector = FindObjectOfType<PayloadSelector>(true);
                 if (payloadSelector != null)
                 {
@@ -106,7 +110,6 @@ public class VhcChgr : MonoBehaviour
                 }
             }
 
-            // Transisi ke menu berikutnya
             menuController.TransitionToLoadout();
             SoundManager.Instance.PlaySFX("Click");
         }
@@ -116,12 +119,8 @@ public class VhcChgr : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Helper: Mengambil jumlah slot dari PayloadManager yang ada pada prefab kendaraan.
-    /// </summary>
     private int GetPayloadSlotCountFromSelectedVehicle(GameObject vehiclePrefab)
     {
-        // ... (Logika GetPayloadSlotCountFromSelectedVehicle tetap sama) ...
         PayloadManager payloadMgr = vehiclePrefab.GetComponent<PayloadManager>();
 
         if (payloadMgr != null && payloadMgr.payloadSlots != null)
@@ -133,13 +132,8 @@ public class VhcChgr : MonoBehaviour
         return 4;
     }
 
-    /// <summary>
-    /// PUBLIC ACCESS POINT: This function is called by the 'Back' button or the ESC key.
-    /// It delegates the intelligent back-navigation to the MenuCameraController.
-    /// </summary>
     public void GoBackInMenu()
     {
-        // NEW: Gunakan properti publik untuk akses
         if (MenuController != null)
         {
             MenuController.GoBack();
@@ -160,7 +154,6 @@ public class VhcChgr : MonoBehaviour
 
     public void PayloadMenu()
     {
-        // NEW: Memanggil transisi ke Slot Selection Panel
         if (MenuController != null) MenuController.TransitionToPayloadMenu();
         SoundManager.Instance.PlaySFX("Click");
     }

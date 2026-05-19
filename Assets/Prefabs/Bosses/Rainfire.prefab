@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6634581758308190456}
   - component: {fileID: 9018322996809455663}
   - component: {fileID: 2210712362496536616}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Rotor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -109,7 +109,7 @@ GameObject:
   - component: {fileID: 5308987727526689772}
   - component: {fileID: 3048472032071273118}
   - component: {fileID: 6707086707163465887}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: RWS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -194,7 +194,8 @@ GameObject:
   - component: {fileID: 1233109078932143751}
   - component: {fileID: 3974629947192529374}
   - component: {fileID: 1365086506187242798}
-  m_Layer: 0
+  - component: {fileID: 1837660487827235429}
+  m_Layer: 7
   m_Name: RWS 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -261,6 +262,27 @@ MonoBehaviour:
   bulletPrefab: {fileID: 4003252818657007039, guid: fb4595b122610474b9906d4c3d181755, type: 3}
   firePoints:
   - {fileID: 8546327882046679498}
+--- !u!65 &1837660487827235429
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 237294366794166239}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2, y: 16, z: 2}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &580254507544648815
 GameObject:
   m_ObjectHideFlags: 0
@@ -272,7 +294,7 @@ GameObject:
   - component: {fileID: 4700958584838011954}
   - component: {fileID: 6998663073172205603}
   - component: {fileID: 4895499602092227332}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: 40mm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -370,12 +392,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 803085798190072905}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.70710677, y: 0.000000057601163, z: 0.000000057601156, w: 0.7071068}
-  m_LocalPosition: {x: 1.9679497, y: 0.29692698, z: 0.0023012012}
-  m_LocalScale: {x: 406.51126, y: 406.51126, z: 406.51126}
+  m_LocalRotation: {x: -0.70710677, y: 0.00000008940696, z: 0.000000059604638, w: 0.7071069}
+  m_LocalPosition: {x: 1.9679503, y: 0.296927, z: 0.0023012161}
+  m_LocalScale: {x: 406.51132, y: 406.51123, z: 406.51123}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8383172417885867082}
+  m_Father: {fileID: 984714830623016514}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8565440925900406083
 MeshFilter:
@@ -438,7 +460,7 @@ GameObject:
   - component: {fileID: 3130366564644766063}
   - component: {fileID: 5644324396504945448}
   - component: {fileID: 1194438052434575914}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Refuel Probe
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -521,7 +543,7 @@ GameObject:
   - component: {fileID: 4084177083295445533}
   - component: {fileID: 2374199068343763244}
   - component: {fileID: 7566277312001968967}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: RWS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -702,7 +724,7 @@ GameObject:
   - component: {fileID: 4202001601742873294}
   - component: {fileID: 2077939219706107466}
   - component: {fileID: 4498624034512088193}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: 20mm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -783,7 +805,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3624446545001014357}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Shoot 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -814,7 +836,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8546327882046679498}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Shoot 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -848,7 +870,7 @@ GameObject:
   - component: {fileID: 4356628825949667148}
   - component: {fileID: 5210893257957492618}
   - component: {fileID: 8788366402561867238}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Rotor.001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -946,7 +968,7 @@ GameObject:
   - component: {fileID: 1499112503343185244}
   - component: {fileID: 8295899664352840818}
   - component: {fileID: 2280464982475987320}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Rotor.003
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1043,7 +1065,7 @@ GameObject:
   - component: {fileID: 984714830623016514}
   - component: {fileID: 4815376632586449391}
   - component: {fileID: 1955299757722744203}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1077,6 +1099,7 @@ Transform:
   - {fileID: 5522096406464202269}
   - {fileID: 828960574437679525}
   - {fileID: 1357916006027646643}
+  - {fileID: 809637278227299735}
   m_Father: {fileID: 8383172417885867082}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4815376632586449391
@@ -1126,7 +1149,7 @@ GameObject:
   - component: {fileID: 753728794765067430}
   - component: {fileID: 7414303377961010251}
   - component: {fileID: 1795639101536518746}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Engine.001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1210,7 +1233,8 @@ GameObject:
   - component: {fileID: 5822728315055715232}
   - component: {fileID: 7943091525221143729}
   - component: {fileID: 6264322439070229818}
-  m_Layer: 0
+  - component: {fileID: 8919626696406582870}
+  m_Layer: 7
   m_Name: RWS 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1277,6 +1301,27 @@ MonoBehaviour:
   bulletPrefab: {fileID: 4003252818657007039, guid: fb4595b122610474b9906d4c3d181755, type: 3}
   firePoints:
   - {fileID: 6112965793028353726}
+--- !u!65 &8919626696406582870
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5238730206490012426}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2, y: 16, z: 2}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &5497802870780997874
 GameObject:
   m_ObjectHideFlags: 0
@@ -1288,7 +1333,7 @@ GameObject:
   - component: {fileID: 6959832866959621708}
   - component: {fileID: 2525514494045542040}
   - component: {fileID: 4494710689547281012}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Engine.002
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1372,7 +1417,7 @@ GameObject:
   - component: {fileID: 6332230816242696180}
   - component: {fileID: 3070231952019956890}
   - component: {fileID: 6080980852934158506}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Rotor.002
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1469,7 +1514,7 @@ GameObject:
   - component: {fileID: 1357916006027646643}
   - component: {fileID: 3413290003495546517}
   - component: {fileID: 3410168823070612398}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Tail
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1554,7 +1599,7 @@ GameObject:
   - component: {fileID: 5419470172666606193}
   - component: {fileID: 8333161666159438227}
   - component: {fileID: 7577162724431692706}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Wings
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1673,7 +1718,7 @@ GameObject:
   - component: {fileID: 953212269149722589}
   - component: {fileID: 261795668758739826}
   - component: {fileID: 1407966506661448165}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Engine.003
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1754,7 +1799,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5414017313621822132}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Shoot 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1787,7 +1832,7 @@ GameObject:
   - component: {fileID: 3771665252991876863}
   - component: {fileID: 3208330146205645624}
   - component: {fileID: 2959590585333882894}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: 105mm
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1871,7 +1916,8 @@ GameObject:
   - component: {fileID: 5716578794974004327}
   - component: {fileID: 6812550377929493173}
   - component: {fileID: 1094723898833115112}
-  m_Layer: 0
+  - component: {fileID: 4645574621218694507}
+  m_Layer: 7
   m_Name: RWS 4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1938,6 +1984,27 @@ MonoBehaviour:
   bulletPrefab: {fileID: 4003252818657007039, guid: fb4595b122610474b9906d4c3d181755, type: 3}
   firePoints:
   - {fileID: 3624446545001014357}
+--- !u!65 &4645574621218694507
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8131848069197207828}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2, y: 16, z: 2}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &8423503565798555269
 GameObject:
   m_ObjectHideFlags: 0
@@ -1949,7 +2016,7 @@ GameObject:
   - component: {fileID: 6086214056862757122}
   - component: {fileID: 1377447914678461844}
   - component: {fileID: 274986748708810920}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Engine
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2033,7 +2100,8 @@ GameObject:
   - component: {fileID: 154404520041554909}
   - component: {fileID: 4518818091344468583}
   - component: {fileID: 7331965888084177678}
-  m_Layer: 0
+  - component: {fileID: 906876417628081954}
+  m_Layer: 7
   m_Name: RWS 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2100,6 +2168,27 @@ MonoBehaviour:
   bulletPrefab: {fileID: 4003252818657007039, guid: fb4595b122610474b9906d4c3d181755, type: 3}
   firePoints:
   - {fileID: 5414017313621822132}
+--- !u!65 &906876417628081954
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8521543762599223575}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2, y: 16, z: 2}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &8554908492225052256
 GameObject:
   m_ObjectHideFlags: 0
@@ -2111,7 +2200,7 @@ GameObject:
   - component: {fileID: 4876355515905130873}
   - component: {fileID: 5445936865503991125}
   - component: {fileID: 1207088554960976589}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: RWS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2195,7 +2284,7 @@ GameObject:
   - component: {fileID: 5334685666046534043}
   - component: {fileID: 2531427567814247491}
   - component: {fileID: 5796553817172089991}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2278,7 +2367,7 @@ GameObject:
   - component: {fileID: 1285919186147503659}
   - component: {fileID: 7482925142876643155}
   - component: {fileID: 4289810330989107624}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: RWS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2360,7 +2449,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6112965793028353726}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Shoot 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2412,7 +2501,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8966838801275901912}
-  - {fileID: 809637278227299735}
   - {fileID: 984714830623016514}
   - {fileID: 7205195551937183422}
   - {fileID: 4827819812073973333}
