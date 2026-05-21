@@ -379,7 +379,13 @@ public class Tutorial : MonoBehaviour
 
             if (profile != null)
             {
-                if (profileNameText != null) profileNameText.text = profile.profileName;
+                if (profileNameText != null)
+                {
+                    profileNameText.text = profile.profileName;
+
+                    // Change text color based on disposition
+                    profileNameText.color = GetDispositionColor(profile.disposition);
+                }
                 if (factionText != null) factionText.text = profile.faction;
                 if (characterPortrait != null)
                 {
@@ -390,7 +396,13 @@ public class Tutorial : MonoBehaviour
             else
             {
                 // Clear UI jika profile null atau indeks invalid
-                if (profileNameText != null) profileNameText.text = "SYSTEM";
+                if (profileNameText != null)
+                {
+                    profileNameText.text = "SYSTEM";
+
+                    // Default neutral/system color
+                    profileNameText.color = new Color32(255, 253, 57, 255);
+                }
                 if (factionText != null) factionText.text = "NONE";
                 if (characterPortrait != null) characterPortrait.enabled = false;
             }
@@ -417,5 +429,21 @@ public class Tutorial : MonoBehaviour
 
         // Contoh: Muat scene berikutnya atau aktifkan WaveSpawner
         Debug.Log("Tutorial completed. Full control returned to player.");
+    }
+
+    private Color GetDispositionColor(CharacterDisposition disposition)
+    {
+        switch (disposition)
+        {
+            case CharacterDisposition.Friendly:
+                return new Color32(0, 196, 255, 255); // #00C4FF
+
+            case CharacterDisposition.Enemy:
+                return new Color32(255, 57, 84, 255); // #FF3954
+
+            case CharacterDisposition.Neutral:
+            default:
+                return new Color32(255, 253, 57, 255); // #FFFD39
+        }
     }
 }

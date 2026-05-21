@@ -256,6 +256,50 @@ public class SoundManager : MonoBehaviour
         musicSource.clip = null; // Clear clip name for debug accessor
     }
 
+    public void StopAllAudio()
+    {
+        // Stop coroutines first
+        if (musicFadeCoroutine != null)
+        {
+            StopCoroutine(musicFadeCoroutine);
+            musicFadeCoroutine = null;
+        }
+
+        // Stop every source instantly
+        if (musicSource != null)
+        {
+            musicSource.Stop();
+            musicSource.clip = null;
+        }
+
+        if (sfxSource != null)
+        {
+            sfxSource.Stop();
+        }
+
+        if (voiceSource != null)
+        {
+            voiceSource.Stop();
+            voiceSource.clip = null;
+        }
+    }
+
+    /// <summary>
+    /// Pause all currently playing audio.
+    /// </summary>
+    public void PauseAllAudio()
+    {
+        AudioListener.pause = true;
+    }
+
+    /// <summary>
+    /// Resume all paused audio.
+    /// </summary>
+    public void ResumeAllAudio()
+    {
+        AudioListener.pause = false;
+    }
+
     // --- COROUTINE FOR FADING ---
 
     /// <summary>

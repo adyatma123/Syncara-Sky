@@ -93,11 +93,7 @@ public class GunSelector : MonoBehaviour
         // 1. Rekonstruksi layout agar ukuran konten langsung sinkron setelah ada item yang disembunyikan
         LayoutRebuilder.ForceRebuildLayoutImmediate(contentPanel);
 
-        // Setelah semua SetActive selesai
-        snapToItem.UpdateActiveItems();
-
-        // 2. Set referensi SnapToItem
-        snapToItem.gunSelector = this;
+        
             
         // 3. Modifikasi Pengambilan itemPrefab: Ambil dari anak pertama yang berstatus AKTIF (valid)
         RectTransform validItemPrefab = null;
@@ -126,6 +122,12 @@ public class GunSelector : MonoBehaviour
             Debug.LogError("Content Panel contains no valid child items for SnapToItem initialization.");
         }
 
+        // Setelah semua SetActive selesai
+        snapToItem.UpdateActiveItems();
+
+        // 2. Set referensi SnapToItem
+        snapToItem.gunSelector = this;
+
         // 5. Cari indeks pertama senjata yang valid/diperbolehkan (bukan asal indeks 0)
         int firstValidIndex = -1;
         for (int i = 0; i < availableGuns.Length; i++)
@@ -137,14 +139,37 @@ public class GunSelector : MonoBehaviour
             }
         }
 
-        // Jika ada senjata yang lolos seleksi tier, lakukan snap otomatis ke item tersebut
+        // RESET SCROLL POSITION FIRST
+        contentPanel.localPosition = new Vector3(
+            0,
+            contentPanel.localPosition.y,
+            contentPanel.localPosition.z
+        );
+
+        snapToItem.scrollRect.velocity = Vector2.zero;
+
+        // Jika ada senjata legal
         if (firstValidIndex != -1)
         {
-            if (snapToItem.itemPrefab != null)
-            {
-                snapToItem.OnItemClick(firstValidIndex); // Snap ke senjata legal pertama
-            }
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentPanel);
 
+            snapToItem.UpdateActiveItems();
+
+            snapToItem.gunSelector = this;
+
+            // RESET SCROLL STATE
+            contentPanel.localPosition = new Vector3(
+                0,
+                contentPanel.localPosition.y,
+                contentPanel.localPosition.z
+            );
+
+            snapToItem.scrollRect.velocity = Vector2.zero;
+
+            // SNAP
+            snapToItem.OnItemClick(firstValidIndex);
+
+            // FORCE SELECT
             SetSelectedIndex(firstValidIndex);
             SelectGunByIndex(firstValidIndex);
         }

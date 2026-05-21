@@ -239,4 +239,14 @@ public class SnapToItem : MonoBehaviour
             itemRect.localScale = Vector3.Lerp(itemRect.localScale, Vector3.one * targetScale, Time.deltaTime * scaleSmoothness);
         }
     }
+
+    public void ResetSnapState()
+    {
+        targetVisualIndex = -1;
+        lastSnappedVisualIndex = -1;
+        snapSpeed = 0;
+        isCurrentlySnapping = false;
+
+        scrollRect.velocity = Vector2.zero;
+    }
 }
