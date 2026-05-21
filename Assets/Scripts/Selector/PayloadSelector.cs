@@ -72,7 +72,7 @@ public class PayloadSelector : MonoBehaviour
     /// Find and link all manually placed PayloadItemIdentifier components 
     /// under the payloadItemsContent. Includes Tier filtering.
     /// </summary>
-    private void InitializePayloadItems()
+    public void InitializePayloadItems()
     {
         if (payloadItemsContent == null)
         {
@@ -301,6 +301,9 @@ public class PayloadSelector : MonoBehaviour
         }
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(payloadItemsContent);
+
+        snapToItem.UpdateActiveItems();
+
         snapToItem.payloadSelector = this;
 
         // Ambil batasan tier kendaraan saat ini

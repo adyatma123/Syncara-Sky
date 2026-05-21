@@ -20,17 +20,17 @@ public class VhcChgr : MonoBehaviour
     public static GameObject vehicleToLoad;
     private GameObject selectedVehiclePrefab;
     public static Guns selectedGunData;
+    public Vehicles CurrentVehicle { get; private set; }
 
     // 🌟 BARU: Properti publik untuk mendapatkan data kendaraan yang saat ini dipilih
-    public Vehicles CurrentVehicle
+    private void UpdateSelectedVehicle()
     {
-        get
+        if (scriptableObjects[currentIndex] is Vehicles vehicleData)
         {
-            if (scriptableObjects != null && currentIndex >= 0 && currentIndex < scriptableObjects.Length)
-            {
-                return scriptableObjects[currentIndex] as Vehicles;
-            }
-            return null;
+            CurrentVehicle = vehicleData;
+            selectedVehiclePrefab = vehicleData.vehiclePrefab;
+
+            Debug.Log($"[VhcChgr] Current Vehicle Updated: {vehicleData.name} Tier {vehicleData.Tier}");
         }
     }
 
@@ -69,20 +69,32 @@ public class VhcChgr : MonoBehaviour
     public void ChangeScriptableObject(int _change)
     {
         currentIndex += _change;
-        if (currentIndex < 0) currentIndex = scriptableObjects.Length - 1;
-        else if (currentIndex > scriptableObjects.Length - 1) currentIndex = 0;
 
-        if (vehicleDisplay != null && scriptableObjects[currentIndex] is Vehicles)
-            vehicleDisplay.VehicleDisplayer((Vehicles)scriptableObjects[currentIndex]);
+        if (currentIndex < 0)
+            currentIndex = scriptableObjects.Length - 1;
+        else if (currentIndex > scriptableObjects.Length - 1)
+            currentIndex = 0;
 
+        // UPDATE DATA FIRST
         UpdateSelectedVehicle();
-    }
 
-    private void UpdateSelectedVehicle()
-    {
-        if (scriptableObjects[currentIndex] is Vehicles vehicleData)
+        // THEN update visual
+        if (vehicleDisplay != null && scriptableObjects[currentIndex] is Vehicles)
         {
-            selectedVehiclePrefab = vehicleData.vehiclePrefab;
+            vehicleDisplay.VehicleDisplayer((Vehicles)scriptableObjects[currentIndex]);
+        }
+
+        // THEN refresh selectors
+        GunSelector gunSelector = FindObjectOfType<GunSelector>(true);
+        if (gunSelector != null && gunSelector.gameObject.activeInHierarchy)
+        {
+            gunSelector.InitializeGunSelector();
+        }
+
+        PayloadSelector payloadSelector = FindObjectOfType<PayloadSelector>(true);
+        if (payloadSelector != null && payloadSelector.gameObject.activeInHierarchy)
+        {
+            payloadSelector.InitializePayloadItems();
         }
     }
 

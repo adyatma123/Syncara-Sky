@@ -51,7 +51,7 @@ public class GunSelector : MonoBehaviour
         }
     }
 
-    void InitializeGunSelector()
+    public void InitializeGunSelector()
     {
         if (contentPanel == null || snapToItem == null)
         {
@@ -93,9 +93,12 @@ public class GunSelector : MonoBehaviour
         // 1. Rekonstruksi layout agar ukuran konten langsung sinkron setelah ada item yang disembunyikan
         LayoutRebuilder.ForceRebuildLayoutImmediate(contentPanel);
 
+        // Setelah semua SetActive selesai
+        snapToItem.UpdateActiveItems();
+
         // 2. Set referensi SnapToItem
         snapToItem.gunSelector = this;
-
+            
         // 3. Modifikasi Pengambilan itemPrefab: Ambil dari anak pertama yang berstatus AKTIF (valid)
         RectTransform validItemPrefab = null;
         for (int i = 0; i < contentPanel.childCount; i++)
