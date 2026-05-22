@@ -1124,15 +1124,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e4240a8aba7b554b89c15cd5b24e39f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  storyCheckpoints:
-  - speakerProfile: {fileID: 11400000, guid: 2a1e7784b6427094bbab72cf118ef17c, type: 2}
-    voiceClipID: Enemy1
-    delayAfterTrigger: 0
-    waitForPreviousClip: 0
-    triggerType: 1
-    requiredValue: 1
-    requiredPreviousIndex: -1
-    hasTriggered: 0
+  storyCheckpoints: []
 --- !u!4 &272693582
 Transform:
   m_ObjectHideFlags: 0
@@ -7295,10 +7287,11 @@ MonoBehaviour:
   enemiesKilledByPlayer: 0
   completionUIObject: {fileID: 2055973709}
   levelMusic: Stage 1-1
-  nextSceneName: SelectionTesting
+  nextSceneName: Main Menu
   pauseMenuUI: {fileID: 1763952623}
   HangarScene: SelectionTesting
-  ExitScene: 
+  ExitScene: Main Menu
+  missionUI: {fileID: 0}
 --- !u!114 &707037561
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9744,6 +9737,8 @@ MonoBehaviour:
   spawnPoint: {fileID: 1661524635}
   enableMovement: 1
   enableWeapons: 1
+  minViewportPadding: 0.02
+  maxViewportPadding: 0.98
 --- !u!1 &1586039528
 GameObject:
   m_ObjectHideFlags: 0

@@ -203,6 +203,27 @@ public class GameManager : MonoBehaviour
 #endif
     }
 
+    public void LoadExitScene()
+    {
+        ResumeGame(); // Restore timescale first
+
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopAllAudio();
+        }
+
+        if (!string.IsNullOrEmpty(ExitScene))
+        {
+            Debug.Log($"Loading Exit Scene: {ExitScene}");
+            SceneManager.LoadScene(ExitScene);
+        }
+        else
+        {
+            Debug.LogWarning("ExitScene is empty. Falling back to desktop exit.");
+            ExitToDesktop();
+        }
+    }
+
 
     // --- LEVEL FLOW MANAGEMENT (MOVED FROM WAVESPAWNER) ---
 
