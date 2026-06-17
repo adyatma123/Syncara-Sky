@@ -51,4 +51,21 @@ public class Payload : ScriptableObject
     [Tooltip("The maximum angle (in degrees) from the missile's forward direction to acquire a homing lock.")]
     [Range(0, 180)]
     public float maxHomingAngle = 60f;
+
+    private void OnValidate()
+    {
+        damage = Mathf.Clamp(damage, 0, 10000);
+        speed = Mathf.Max(1f, speed);
+        reloadTime = Mathf.Max(0.1f, reloadTime);
+        lifeTime = Mathf.Max(1, lifeTime);
+        maxAmmo = Mathf.Max(0, maxAmmo);
+
+        Tier = Mathf.Max(1, Tier);
+        Price = Mathf.Max(0, Price);
+
+        proximityRadius = Mathf.Max(0f, proximityRadius);
+        rotationSpeed = Mathf.Max(0, rotationSpeed);
+        lockRadius = Mathf.Max(1f, lockRadius);
+        maxHomingAngle = Mathf.Clamp(maxHomingAngle, 0f, 180f);
+    }
 }
