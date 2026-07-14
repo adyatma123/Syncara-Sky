@@ -198,6 +198,16 @@ public class HomingMissile : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
+        BossWeakpoint wp = collision.gameObject.GetComponent<BossWeakpoint>();
+
+        if (wp != null)
+        {
+            wp.TakeDamage(mDamage);
+
+            Destroy(gameObject);
+            return;
+        }
+
         // --- FIX: IGNORE COLLISION WITH PLAYER TAG ---
         if (collision.gameObject.CompareTag("Player"))
         {

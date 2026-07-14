@@ -108,6 +108,16 @@ public class Rocket : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
+        BossWeakpoint wp = collision.gameObject.GetComponent<BossWeakpoint>();
+
+        if (wp != null)
+        {
+            wp.TakeDamage(_damage);
+
+            Destroy(gameObject);
+            return;
+        }
+
         if (collision.gameObject.CompareTag("Enemy"))
         {
             EnemyProps enemy = collision.gameObject.GetComponent<EnemyProps>();

@@ -134,6 +134,16 @@ public class ManualGuidedMissile : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
+        BossWeakpoint wp = collision.gameObject.GetComponent<BossWeakpoint>();
+
+        if (wp != null)
+        {
+            wp.TakeDamage(mDamage);
+
+            Destroy(gameObject);
+            return;
+        }
+
         // Only destroy the missile and apply damage if it hits an enemy.
         if (collision.gameObject.CompareTag("Enemy"))
         {
