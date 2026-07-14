@@ -102,7 +102,10 @@ public class AircraftController : MonoBehaviour
         vehicleData = data;
 
         // Apply Health stats
-        maxHealth = data.health;
+        maxHealth = Mathf.Max(
+            1,
+            data.health
+        );
 
         // Apply Movement stats
         movSpeed = data.movSpeed;

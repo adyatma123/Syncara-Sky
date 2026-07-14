@@ -295,6 +295,9 @@ public class GunSelector : MonoBehaviour
             if (GameSelectionManager.Instance != null)
             {
                 GameSelectionManager.Instance.SetConfirmedGun(currentSelectedGun);
+            }
+            if (SoundManager.Instance != null)
+            {
                 SoundManager.Instance.PlaySFX("Snap");
             }
             else

@@ -19,4 +19,14 @@ public class Guns : ScriptableObject
     public float heatRate;
     public int Tier;
     public int Price;
+
+    private void OnValidate()
+    {
+        damage = Mathf.Clamp(damage, 0, 10000);
+        bulletSpeed = Mathf.Max(1f, bulletSpeed);
+        rateOfFire = Mathf.Clamp(rateOfFire, 1f, 3000f);
+        heatRate = Mathf.Max(0f, heatRate);
+        Tier = Mathf.Max(1, Tier);
+        Price = Mathf.Max(0, Price);
+    }
 }

@@ -56,6 +56,11 @@ public class Bullet : MonoBehaviour
         }
     }
 
+    void OnDestroy()
+{
+    Gun.ActiveProjectileCount--;
+}
+
     void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Player"))

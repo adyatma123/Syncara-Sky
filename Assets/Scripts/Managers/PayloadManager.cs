@@ -224,6 +224,18 @@ public class PayloadManager : MonoBehaviour
 
         if (currentPayload.isMissile && currentPayload.multiTargets)
         {
+            if (
+                currentSlot.hardpoints == null ||
+                currentSlot.hardpoints.Length == 0
+            )
+            {
+                Debug.LogError(
+                    $"{currentPayload.payloadName} has no hardpoints."
+                );
+
+                return;
+            }
+
             // Multi-target missile: Fire from ALL available hardpoints.
             launchPoints.AddRange(currentSlot.hardpoints);
             ammoCost = currentSlot.hardpoints.Length;
@@ -259,6 +271,15 @@ public class PayloadManager : MonoBehaviour
             // Hanya tembak jika spawnPoint valid (diperlukan untuk kasus multi-target yang mungkin memiliki hardpoint null)
             if (spawnPoint == null) continue;
 
+            if (currentPayload.payloadPrefab == null)
+            {
+                Debug.LogError(
+                    $"Payload Prefab missing on {currentPayload.payloadName}"
+                );
+
+                continue;
+            }
+
             // Instantiate the payload prefab
             GameObject newPayload = Instantiate(currentPayload.payloadPrefab, spawnPoint.position, spawnPoint.rotation);
             InitializePayload(newPayload, currentPayload);
@@ -288,7 +309,10 @@ public class PayloadManager : MonoBehaviour
         if (SoundManager.Instance != null)
         {
             string soundKey = currentPayload.isMissile ? "Player Missile" : "Player Rocket";
-            SoundManager.Instance.PlaySFX(soundKey);
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySFX(soundKey);
+            }
         }
         // ----------------------------
 
@@ -316,7 +340,11 @@ public class PayloadManager : MonoBehaviour
         if (rocketScript != null)
         {
             // Call a dedicated public method on Rocket.cs to set its private properties.
-            rocketScript.SetPayloadData(currentPayload.speed, currentPayload.damage, currentPayload.lifeTime);
+            rocketScript.SetPayloadData(
+                Mathf.Max(1f, currentPayload.speed),
+                Mathf.Max(0, currentPayload.damage),
+                Mathf.Max(0.1f, currentPayload.lifeTime)
+            );
 
             // Note: Additional missile-specific properties (lockRadius, etc.) might need to be passed here
             // if the Rocket script handles homing logic.
@@ -329,11 +357,16 @@ public class PayloadManager : MonoBehaviour
     /// </summary>
     private IEnumerator ReloadPayload(PayloadSlot slotToReload)
     {
+        // Use the Payload's reload time for the wait duration
         slotToReload.isReloading = true;
         Debug.Log($"Reloading {slotToReload.payload.payloadName}...");
 
-        // Use the Payload's reload time for the wait duration
-        yield return new WaitForSeconds(slotToReload.payload.reloadTime);
+        float reloadTime = Mathf.Max(
+            0.1f,
+            slotToReload.payload.reloadTime
+        );
+
+        yield return new WaitForSeconds(reloadTime);
 
         // Ketika memuat ulang, kita mengembalikan amunisi ke nilai maksimum
         // dari payload yang bersangkutan dikalikan dengan jumlah total hardpoint yang 

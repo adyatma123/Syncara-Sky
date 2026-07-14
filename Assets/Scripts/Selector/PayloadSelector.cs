@@ -213,8 +213,10 @@ public class PayloadSelector : MonoBehaviour
     public void OnSlotButtonClick(int slotIndex)
     {
         currentSlotIndex = slotIndex;
-        SoundManager.Instance.PlaySFX("Click");
-
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySFX("Click");
+        }
         if (vhcChgr.MenuController != null)
         {
             vhcChgr.MenuController.TransitionToPayloadItemConfig();

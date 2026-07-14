@@ -36,6 +36,11 @@ public class Gun : MonoBehaviour
     public TextMeshProUGUI overheatText;
     public Aimbot aimbot;
 
+    private const int MAX_ALLOWED_DAMAGE = 10000;
+    private const float MAX_ALLOWED_ROF = 3000f;
+    private const float MIN_ALLOWED_ROF = 1f;
+    private const int MAX_GUNS_PER_STAGE = 16;
+
     private float nextFireTime;
 
     // --- LOCAL HEAT MANAGEMENT (Aircraft Specific) ---
@@ -56,6 +61,9 @@ public class Gun : MonoBehaviour
     // UI Visuals
     public float blinkDuration = 1f;
     private float blinkTimer = 0f;
+
+    public static int ActiveProjectileCount;
+    public int maxProjectileCount = 300;
 
     // Spread is still local, but could be moved to the Guns SO later
     public float gunSpread = 0.1f;
@@ -133,6 +141,7 @@ public class Gun : MonoBehaviour
     /// <param name="newGuns">The Guns Scriptable Object to be selected and applied.</param>
     public void ApplyGunProperties(Guns newGuns)
     {
+        
         if (newGuns == null)
         {
             Debug.LogError("Cannot apply null Gun data!");
@@ -141,6 +150,8 @@ public class Gun : MonoBehaviour
 
         // --- Core Modularity Step: Assign the new data container ---
         this.guns = newGuns;
+
+        ValidateGunData();
 
         // Recalculate based on vehicle's max heat
         overheatMinCD = maxHeat * 0.20f;
@@ -188,10 +199,22 @@ public class Gun : MonoBehaviour
             if (Input.GetButton("Gun") && Time.time >= nextFireTime)
             {
                 Shoot();
-                // Use RateOfFire from the SO
-                nextFireTime = Time.time + (60f / guns.rateOfFire);
 
-                SoundManager.Instance.PlaySFX(guns.ShootSoundKey);
+                float safeRateOfFire = Mathf.Clamp(
+                guns.rateOfFire,
+                MIN_ALLOWED_ROF,
+                MAX_ALLOWED_ROF
+                );
+
+                nextFireTime = Time.time + (60f / safeRateOfFire);
+
+                if (
+                SoundManager.Instance != null &&
+                !string.IsNullOrWhiteSpace(guns.ShootSoundKey)
+                )
+                    {
+                        SoundManager.Instance.PlaySFX(guns.ShootSoundKey);
+                    }
 
                 // Increase heat (using heatRate from SO and totalGunActive, compared against local maxHeat)
                 currentHeat += guns.heatRate * totalGunActive;
@@ -244,14 +267,20 @@ public class Gun : MonoBehaviour
                 Transform[] currentSpawnPoints = gunStages[index].spawnPoints;
 
                 // Iterate through all active spawn points in the selected layout and fire/play VFX
+                int firedCount = 0;
+
                 foreach (Transform spawnPoint in currentSpawnPoints)
                 {
-                    // Always check for null since transforms can be deleted in the editor
-                    if (spawnPoint != null && spawnPoint.gameObject.activeInHierarchy)
-                    {
-                        FireBullet(spawnPoint);
-                        PlayShotVFX(spawnPoint);
-                    }
+                    if (firedCount >= MAX_GUNS_PER_STAGE)
+                        break;
+
+                    if (spawnPoint == null || !spawnPoint.gameObject.activeInHierarchy)
+                continue;
+
+                    FireBullet(spawnPoint);
+                    PlayShotVFX(spawnPoint);
+
+                    firedCount++;
                 }
             }
             else
@@ -276,6 +305,22 @@ public class Gun : MonoBehaviour
     // Helper function to fire a bullet (Uses SO properties)
     private void FireBullet(Transform spawnPoint)
     {
+        if (guns == null)
+        {
+            Debug.LogError("[Gun] Guns SO is null.");
+            return;
+        }
+
+    if (guns.bulletPrefab == null)
+        {
+            Debug.LogError($"[Gun] Bullet Prefab missing on {guns.name}");
+            return;
+        }
+    if (ActiveProjectileCount >= maxProjectileCount)
+        {
+            return;
+        }
+
         // Calculate random X rotation offset
         float randomXRotation = Random.Range(-gunSpread, gunSpread);
 
@@ -292,7 +337,11 @@ public class Gun : MonoBehaviour
         Bullet bulletScript = bulletInstance.GetComponent<Bullet>();
         if (bulletScript != null)
         {
-            bulletScript.damage = guns.damage;
+            bulletScript.damage = Mathf.Clamp(
+    guns.damage,
+    0,
+    MAX_ALLOWED_DAMAGE
+);
         }
 
         // Use the bullet speed from the *active* Guns SO
@@ -301,6 +350,8 @@ public class Gun : MonoBehaviour
         {
             rb.velocity = bulletRotation * Vector3.forward * guns.bulletSpeed;
         }
+
+        ActiveProjectileCount++;
     }
 
     // 4. SIMPLIFIED ACTIVE GUN COUNT LOGIC
@@ -327,5 +378,17 @@ public class Gun : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void ValidateGunData()
+    {
+        if (guns == null) return;
+
+        guns.damage = Mathf.Clamp(guns.damage, 0, MAX_ALLOWED_DAMAGE);
+        guns.bulletSpeed = Mathf.Max(1f, guns.bulletSpeed);
+        guns.rateOfFire = Mathf.Clamp(guns.rateOfFire, MIN_ALLOWED_ROF, MAX_ALLOWED_ROF);
+        guns.heatRate = Mathf.Max(0f, guns.heatRate);
+        guns.Tier = Mathf.Max(1, guns.Tier);
+        guns.Price = Mathf.Max(0, guns.Price);
     }
 }
